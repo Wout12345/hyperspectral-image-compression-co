@@ -8,23 +8,26 @@ import st_hosvd
 def load_indian_pines():
 	return loadmat("../data/Indian_pines.mat")["indian_pines"]
 
+def load_cuprite():
+	return loadmat("../data/Cuprite_f970619t01p02_r02_sc03.a.rfl.mat")["X"]
+
 def plot_intensity(data):
 	# Shows the cumulative intensity per pixel using grayscale
 	plt.imshow(np.sum(data, axis=2))
 	plt.gray()
 	plt.show()
 
-def plot_comparison(original, compressed):
+def plot_comparison(original, decompressed):
 	# Shows the cumulative intensity per pixel using grayscale for two images simultaneously
 	plt.imshow(np.sum(original, axis=2))
 	plt.gray()
 	plt.show()
-	plt.imshow(np.sum(compressed, axis=2))
+	plt.imshow(np.sum(decompressed, axis=2))
 	plt.gray()
 	plt.show()
 
-def print_difference(original, compressed):
-	diff = np.linalg.norm(original - compressed)
+def print_difference(original, decompressed):
+	diff = np.linalg.norm(original - decompressed)
 	norm = np.linalg.norm(original)
 	print("Absolute error:", diff)
 	print("Initial norm:", norm)
@@ -40,8 +43,8 @@ def print_compression_rate(original, compressed):
 	print("Compression ratio:", compressed_size/original_size)
 
 def main():
-	data = load_indian_pines()
-	compressed = st_hosvd.compress(data)
+	data = load_cuprite()
+	compressed = st_hosvd.compress(data, 0.2, print_progress=True)
 	decompressed = st_hosvd.decompress(compressed)
 	print_difference(data, decompressed)
 	print_compression_rate(data, compressed)

@@ -1,7 +1,7 @@
 import numpy as np
 from operator import itemgetter
 
-def compress(data, relative_target_error=0.025):
+def compress(data, relative_target_error, print_progress=False):
 	
 	# This function calculates the ST-HOSVD of the given 3D tensor (see https://epubs.siam.org/doi/abs/10.1137/110836067) using the mode order: 2, 0, 1
 	# data should be a numpy array
@@ -24,6 +24,9 @@ def compress(data, relative_target_error=0.025):
 	for mode_index in range(len(mode_order)):
 		
 		mode = mode_order[mode_index]
+		
+		if print_progress:
+			print("Processing mode %s"%mode)
 		
 		# Transpose modes if necessary to bring current mode to front (unless current mode is at front of back already)
 		if mode != 0 and mode != data.ndim - 1:
@@ -77,6 +80,7 @@ def compress(data, relative_target_error=0.025):
 		if mode != 0 and mode != data.ndim - 1:
 			# Transpose back to original order
 			core_tensor = np.transpose(core_tensor, transposition_order)
+			current_sizes[0], current_sizes[mode] = current_sizes[mode], current_sizes[0]
 	
 	return factor_matrices, core_tensor
 
@@ -126,5 +130,6 @@ def decompress(compressed):
 		if mode != 0 and mode != data.ndim - 1:
 			# Transpose back to original order
 			data = np.transpose(data, transposition_order)
+			current_sizes[0], current_sizes[mode] = current_sizes[mode], current_sizes[0]
 	
 	return data		
