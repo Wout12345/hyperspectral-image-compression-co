@@ -11,6 +11,9 @@ def load_indian_pines():
 def load_cuprite():
 	return loadmat("../data/Cuprite_f970619t01p02_r02_sc03.a.rfl.mat")["X"]
 
+def load_botswana():
+	return loadmat("../data/Botswana.mat")["Botswana"]
+
 def plot_intensity(data):
 	# Shows the cumulative intensity per pixel using grayscale
 	plt.imshow(np.sum(data, axis=2))
@@ -19,12 +22,8 @@ def plot_intensity(data):
 
 def plot_comparison(original, decompressed):
 	# Shows the cumulative intensity per pixel using grayscale for two images simultaneously
-	plt.imshow(np.sum(original, axis=2))
-	plt.gray()
-	plt.show()
-	plt.imshow(np.sum(decompressed, axis=2))
-	plt.gray()
-	plt.show()
+	plot_intensity(original)
+	plot_intensity(decompressed)
 
 def print_difference(original, decompressed):
 	diff = np.linalg.norm(original - decompressed)
@@ -43,8 +42,8 @@ def print_compression_rate(original, compressed):
 	print("Compression ratio:", compressed_size/original_size)
 
 def main():
-	data = load_cuprite()
-	compressed = st_hosvd.compress(data, 0.2, print_progress=True)
+	data = load_botswana()
+	compressed = st_hosvd.compress(data, 0.05, print_progress=True)
 	decompressed = st_hosvd.decompress(compressed)
 	print_difference(data, decompressed)
 	print_compression_rate(data, compressed)
