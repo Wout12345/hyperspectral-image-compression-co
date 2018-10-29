@@ -1,9 +1,10 @@
 import numpy as np
 from scipy.io import loadmat
 import matplotlib.pyplot as plt
-from functools import reduce
+from time import time, clock
 
 import st_hosvd
+import hodct
 
 def load_indian_pines():
 	return loadmat("../data/Indian_pines.mat")["indian_pines"]
@@ -28,25 +29,40 @@ def plot_comparison(original, decompressed):
 def print_difference(original, decompressed):
 	diff = np.linalg.norm(original - decompressed)
 	norm = np.linalg.norm(original)
-	print("Absolute error:", diff)
-	print("Initial norm:", norm)
-	print("Relative error:", abs(diff)/norm)
+	#print("Absolute error:", diff)
+	#print("Initial norm:", norm)
+	print("Relative error:", diff/norm)
 
-def print_compression_rate(original, compressed):
-	original_size = original.ndim + reduce((lambda x, y: x * y), original.shape)
-	factor_matrices, core_tensor = compressed
-	compressed_size = 2*original.ndim + sum([factor_matrix.shape[0]*factor_matrix.shape[1] for factor_matrix in factor_matrices]) + reduce((lambda x, y: x * y), core_tensor.shape)
-	print("Sizes in number of floats:")
-	print("Original shape:", original.shape, "\toriginal size:", original_size)
-	print("Compressed shape:", core_tensor.shape, "\tcompressed size:", compressed_size)
-	print("Compression ratio:", compressed_size/original_size)
+def test_compression_ratio():
+	
+	data = load_cuprite()
+	#compressed = st_hosvd.compress_tucker(data, 0.0294533218462, print_progress=True)
+	compressed = st_hosvd.load_tucker("../data/tucker_cuprite_0.025.npz")
+	decompressed = st_hosvd.decompress_tucker(compressed)
+	print_difference(data, decompressed)
+	st_hosvd.print_compression_rate_tucker(data, compressed)
+	#plot_comparison(data, decompressed)
+	#st_hosvd.plot_core_tensor_magnitudes(compressed)
+	
+	#st_hosvd.save_tucker(compressed, "../data/tucker_cuprite_0.025.npz")
+	
+	compressed_quantize = st_hosvd.compress_quantize2(compressed)
+	decompressed = st_hosvd.decompress_tucker(st_hosvd.decompress_quantize2(compressed_quantize))
+	print_difference(data, decompressed)
+	st_hosvd.print_compression_rate_quantize2(data, compressed_quantize)
+	plot_comparison(data, decompressed)
+	#st_hosvd.plot_core_tensor_magnitudes(compressed)
+
+def test_time():
+	# Tests performance on random data, ignoring compression ratio
+	data = np.random.rand(101, 101, 10001)
+	compressed = st_hosvd.compress_tucker(data, 0, rank=(22, 21, 19), print_progress=True)
+	decompressed = st_hosvd.decompress_tucker(compressed)
+	print_difference(data, decompressed)
+	st_hosvd.print_compression_rate_tucker(data, compressed)
+	plot_comparison(data, decompressed)
 
 def main():
-	data = load_botswana()
-	compressed = st_hosvd.compress(data, 0.05, print_progress=True)
-	decompressed = st_hosvd.decompress(compressed)
-	print_difference(data, decompressed)
-	print_compression_rate(data, compressed)
-	plot_comparison(data, decompressed)
+	test_compression_ratio()
 
 main()

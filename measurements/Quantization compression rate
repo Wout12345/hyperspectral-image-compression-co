@@ -1,0 +1,221 @@
+Rounding every value in core tensor to 1 byte using maximal absolute value:
+
+Relative error: 0.0247647563965
+Sizes in number of floats:
+Original shape: (512, 614, 224) 	original size: 70418435
+Compressed shape: (501, 596, 12) 	compressed size: 4208302
+Compression ratio: 0.059761367886122435*4
+Relative error: 0.0294533218462
+Sizes in number of floats:
+Original shape: (512, 614, 224) 	original size: 70418435
+Compressed shape: (501, 596, 12) 	compressed size: 4208302
+Compression ratio: 0.059761367886122435
+
+Calculated compression ratio: 0.06095211
+
+Versus pure SVD:
+
+Relative error: 0.0292745878241
+Sizes in number of floats:
+Original shape: (512, 614, 224) 	original size: 70418435
+Compressed shape: (498, 589, 10) 	compressed size: 3552088
+Compression ratio: 0.05044258651871488*4
+
+
+
+Quantizing each layer using 1 byte with equidistant steps, variable scale per layer:
+
+Relative error: 0.0247647563965
+Sizes in number of floats:
+Original shape: (512, 614, 224) 	original size: 70418435
+Compressed shape: (501, 596, 12) 	compressed size: 4208302
+Compression ratio (bytes): 0.23904547154448974
+Relative error: 0.0250038712829
+Sizes in bytes:
+Original size: 140836864
+Factor matrices: 5001152
+Meta quantization size: 9520
+Core tensor (including meta quantization): 3592680
+Compressed size: 8593832
+Compression ratio: 0.06101976255307701
+
+
+
+Same as before but also quantizing factor matrices using constant steps (11 bits per value):
+
+Relative error: 0.0247647563965
+Sizes in number of floats:
+Original shape: (512, 614, 224) 	original size: 70418435
+Compressed shape: (501, 596, 12) 	compressed size: 4208302
+Compression ratio (bytes): 0.23904547154448974
+Relative error: 0.0269236016341
+Sizes in bytes:
+Original size: 140836864
+Factor matrices: 859573
+Meta quantization size: 9520
+Core tensor (including meta quantization): 3592680
+Compressed size: 4452253
+Compression ratio: 0.03161283824098782
+
+
+
+Quantizing each layer with constant steps, variable amount of bits used per layer:
+
+Step size 100:
+Relative error: 0.0247647563965
+Sizes in number of floats:
+Original shape: (512, 614, 224) 	original size: 70418435
+Compressed shape: (501, 596, 12) 	compressed size: 4208302
+Compression ratio (bytes): 0.23904547154448974
+Relative error: 0.0248734793273
+Sizes in bytes:
+Original size: 140836864
+Factor matrices: 5001152
+Meta quantization size: 4760
+Core tensor (including meta quantization): 3927808
+Compressed size: 8928960
+Compression ratio: 0.06339930999883667
+
+Step size 1000:
+Relative error: 0.0247647563965
+Sizes in number of floats:
+Original shape: (512, 614, 224) 	original size: 70418435
+Compressed shape: (501, 596, 12) 	compressed size: 4208302
+Compression ratio (bytes): 0.23904547154448974
+Relative error: 0.0331119912325
+Sizes in bytes:
+Original size: 140836864
+Factor matrices: 5001152
+Meta quantization size: 4760
+Core tensor (including meta quantization): 2452632
+Compressed size: 7453784
+Compression ratio: 0.05292495010397278
+
+Step size 500:
+Relative error: 0.0247647563965
+Sizes in number of floats:
+Original shape: (512, 614, 224) 	original size: 70418435
+Compressed shape: (501, 596, 12) 	compressed size: 4208302
+Compression ratio (bytes): 0.23904547154448974
+Relative error: 0.0273502228042
+Sizes in bytes:
+Original size: 140836864
+Factor matrices: 5001152
+Meta quantization size: 4760
+Core tensor (including meta quantization): 2896786
+Compressed size: 7897938
+Compression ratio: 0.056078627254864184
+
+Step size 300:
+Relative error: 0.0247647563965
+Sizes in number of floats:
+Original shape: (512, 614, 224) 	original size: 70418435
+Compressed shape: (501, 596, 12) 	compressed size: 4208302
+Compression ratio (bytes): 0.23904547154448974
+Relative error: 0.0257272355432
+Sizes in bytes:
+Original size: 140836864
+Factor matrices: 5001152
+Meta quantization size: 4760
+Core tensor (including meta quantization): 3218683
+Compressed size: 8219835
+Compression ratio: 0.058364229126828614
+
+Step 150:
+Relative error: 0.0247647563965
+Sizes in number of floats:
+Original shape: (512, 614, 224) 	original size: 70418435
+Compressed shape: (501, 596, 12) 	compressed size: 4208302
+Compression ratio (bytes): 0.23904547154448974
+Relative error: 0.025197375549
+Sizes in bytes:
+Original size: 140836864
+Factor matrices: 5001152
+Meta quantization size: 4760
+Core tensor (including meta quantization): 3482618
+Compressed size: 8483770
+Compression ratio: 0.060238276819341845
+
+Step size 150:
+Relative error: 0.0247647563965
+Sizes in number of floats:
+Original shape: (512, 614, 224) 	original size: 70418435
+Compressed shape: (501, 596, 12) 	compressed size: 4208302
+Compression ratio (bytes): 0.23904547154448974
+Relative error: 0.0250087683722
+Sizes in bytes:
+Original size: 140836864
+Factor matrices: 5001152
+Meta quantization size: 4760
+Core tensor (including meta quantization): 3668080
+Compressed size: 8669232
+Compression ratio: 0.061555133746800834
+
+
+
+Quantizing each layer into 256 custom-picked quantization steps (picked through inverse cumulative distribution function), quantization steps are also quantized using equidistant quantization
+
+Storing quantization steps with 10 bits of precision after decimal point:
+
+Relative error: 0.0247647563965
+Sizes in number of floats:
+Original shape: (512, 614, 224) 	original size: 70418435
+Compressed shape: (501, 596, 12) 	compressed size: 4208302
+Compression ratio: 0.059761367886122435*4
+Relative error: 0.0415532315291
+Sizes in bytes:
+Original size: 140836864
+Factor matrices: 5001152
+Core tensor: 4078368
+Compressed size: 9079520
+Compression ratio: 0.06446834828699395
+
+Versus pure SVD:
+
+Relative error: 0.0414784958314
+Sizes in number of floats:
+Original shape: (512, 614, 224) 	original size: 70418435
+Compressed shape: (485, 566, 7) 	compressed size: 2518988
+Compression ratio: 0.035771712336407364*4
+
+With 0 bits:
+
+Relative error: 0.0247647563965
+Sizes in number of floats:
+Original shape: (512, 614, 224) 	original size: 70418435
+Compressed shape: (501, 596, 12) 	compressed size: 4208302
+Compression ratio: 0.059761367886122435*4
+Relative error: 0.041553145429
+Sizes in bytes:
+Original size: 140836864
+Factor matrices: 5001152
+Meta quantization size: 300696
+Core tensor (including meta quantization): 3890848
+Compressed size: 8892000
+Compression ratio: 0.06313687870812006
+
+Main bottle-neck seems to be the core tensor, meta quantization takes up significant but not most space
+With 16 quantization steps:
+
+Relative error: 0.0247647563965
+Sizes in number of floats:
+Original shape: (512, 614, 224) 	original size: 70418435
+Compressed shape: (501, 596, 12) 	compressed size: 4208302
+Compression ratio: 0.059761367886122435*4
+Relative error: 0.278037784627
+Sizes in bytes:
+Original size: 140836864
+Factor matrices: 5001152
+Meta quantization size: 25386
+Core tensor (including meta quantization): 1824462
+Compressed size: 6825614
+Compression ratio: 0.048464683223846845
+
+Error gets a bit out of hand ... compare to pure SVD compression:
+
+Relative error: 0.246654241486
+Sizes in number of floats:
+Original shape: (512, 614, 224) 	original size: 70418435
+Compressed shape: (15, 1, 3) 	compressed size: 9017
+Compression ratio: 0.00012804885538850728*4
+

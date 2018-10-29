@@ -1,0 +1,35 @@
+Case from "A new truncation strategy for the higher-order SVD"
+
+Input size: 101, 101, 10001
+Output size: 22, 21, 19
+Mode order: 0, 1, 2
+
+Time in paper for ST-HOSVD: 74.73
+
+Own time:
+
+Processing mode 0
+Finished mode
+Real time: 29.084864616394043
+CPU time: 29.011696999999998
+Processing mode 1
+Finished mode
+Real time: 6.2128825187683105
+CPU time: 6.119299000000002
+Processing mode 2
+Finished mode
+Real time: 2.008887529373169
+CPU time: 1.9808599999999998
+
+Finished compression
+Total CPU time spent: 37.323
+Total CPU time spent on SVD: 36.785149000000004
+Ratio: 0.9855892881065296
+
+Absolute error: 2911.84252636
+Initial norm: 5832.00111166
+Relative error: 0.49928703212
+Sizes in number of floats:
+Original shape: (101, 101, 10001) 	original size: 102020204
+Compressed shape: (22, 21, 19) 	compressed size: 203146
+Compression ratio: 0.0019912330306651807
