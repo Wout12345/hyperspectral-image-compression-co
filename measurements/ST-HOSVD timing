@@ -1,0 +1,291 @@
+Cuprite, compressing to rank 501, 596, 12, standard ST-HOSVD:
+
+Processing mode 2
+CPU time spent on SVD: 17.924756
+Finished mode
+Real time: 19.441840648651123
+CPU time: 18.354001
+Processing mode 0
+CPU time spent on SVD: 2.2375229999999995
+Finished mode
+Real time: 2.6015334129333496
+CPU time: 2.5621589999999976
+Processing mode 1
+CPU time spent on SVD: 2.0800470000000004
+Finished mode
+Real time: 2.494760513305664
+CPU time: 2.4539670000000022
+
+Finished compression
+Total CPU time spent: 24.76104
+Total CPU time spent on SVD: 22.242326
+Ratio: 0.8982791514411348
+
+Method: Tucker
+Data type: float32
+Original shape: (512, 614, 224) 	original size: 140836864
+Compressed shape: (501, 596, 12) 	compressed size: 17580328
+Compression ratio: 0.12482760195512448
+Relative error: 0.0247647563964
+
+
+
+
+Cuprite, compressing to rank 501, 596, 12, using random sample of 140 times starting rank for mode 2 only:
+
+Processing mode 2
+CPU time spent on SVD: 1.8053970000000001
+Finished mode
+Real time: 3.10313081741333
+CPU time: 2.2348799999999995
+Processing mode 0
+CPU time spent on SVD: 2.239237
+Finished mode
+Real time: 2.5991597175598145
+CPU time: 2.5665060000000004
+Processing mode 1
+CPU time spent on SVD: 2.1141050000000012
+Finished mode
+Real time: 2.541928291320801
+CPU time: 2.498996000000001
+
+Finished compression
+Total CPU time spent: 8.514734
+Total CPU time spent on SVD: 6.1587390000000015
+Ratio: 0.7233037461886656
+
+Method: Tucker
+Data type: float32
+Original shape: (512, 614, 224) 	original size: 140836864
+Compressed shape: (501, 596, 12) 	compressed size: 17580328
+Compression ratio: 0.12482760195512448
+Relative error: 0.0247656650363
+
+
+
+
+Cuprite, compressing to rank 501, 596, 12, using random sample of 10% of total vectors (around 140x) for mode 2, using Gram matrix for modes 0 and 1:
+
+Processing mode 2
+CPU time spent on SVD: 1.7760090000000002
+Finished mode
+Real time: 3.1828277111053467
+CPU time: 2.1987820000000005
+Processing mode 0
+CPU time spent on SVD: 0.7644919999999997
+Finished mode
+Real time: 1.0997817516326904
+CPU time: 1.0917979999999998
+Processing mode 1
+CPU time spent on SVD: 0.919251
+Finished mode
+Real time: 1.318744421005249
+CPU time: 1.2962280000000002
+
+Finished compression
+Total CPU time spent: 5.8729569999999995
+Total CPU time spent on SVD: 3.459752
+Ratio: 0.589098813425673
+
+Method: Tucker
+Data type: float32
+Original shape: (512, 614, 224) 	original size: 140836864
+Compressed shape: (501, 596, 12) 	compressed size: 17580328
+Compression ratio: 0.12482760195512448
+Relative error: 0.0373778217455
+
+
+
+Cuprite, compressing to rank 501, 596, 12, using random sample of 100 times starting rank for all modes:
+
+Processing mode 2
+CPU time spent on SVD: 1.2327780000000002
+Finished mode
+Real time: 2.5317625999450684
+CPU time: 1.6545489999999998
+Processing mode 0
+CPU time spent on SVD: 2.236054
+Finished mode
+Real time: 2.592325210571289
+CPU time: 2.562449
+Processing mode 1
+CPU time spent on SVD: 2.1012510000000013
+Finished mode
+Real time: 2.5214130878448486
+CPU time: 2.4797700000000003
+
+Finished compression
+Total CPU time spent: 7.910412999999999
+Total CPU time spent on SVD: 5.570083000000002
+Ratio: 0.7041456621797121
+
+Method: Tucker
+Data type: float32
+Original shape: (512, 614, 224) 	original size: 140836864
+Compressed shape: (501, 596, 12) 	compressed size: 17580328
+Compression ratio: 0.12482760195512448
+Relative error: 0.0247663568049
+
+
+
+Cuprite, compressing to rank 501, 596, 12, using random sample of 50 times starting rank for all modes:
+
+Processing mode 2
+CPU time spent on SVD: 0.584508
+Finished mode
+Real time: 1.891852617263794
+CPU time: 1.025039
+Processing mode 0
+CPU time spent on SVD: 2.2742130000000005
+Finished mode
+Real time: 2.6480157375335693
+CPU time: 2.6149250000000004
+Processing mode 1
+CPU time spent on SVD: 2.15287
+Finished mode
+Real time: 2.5785419940948486
+CPU time: 2.537102000000001
+
+Finished compression
+Total CPU time spent: 7.391630000000001
+Total CPU time spent on SVD: 5.011591000000001
+Ratio: 0.6780089100780208
+
+Method: Tucker
+Data type: float32
+Original shape: (512, 614, 224) 	original size: 140836864
+Compressed shape: (501, 596, 12) 	compressed size: 17580328
+Compression ratio: 0.12482760195512448
+Relative error: 0.0247684130492
+
+
+
+Cuprite, compressing to rank 501, 596, 12, using random sample of 25 times starting rank for all modes:
+
+Processing mode 2
+CPU time spent on SVD: 0.26547199999999993
+Finished mode
+Real time: 1.5669734477996826
+CPU time: 0.6661410000000001
+Processing mode 0
+CPU time spent on SVD: 2.1584149999999998
+Finished mode
+Real time: 2.496551275253296
+CPU time: 2.466093
+Processing mode 1
+CPU time spent on SVD: 1.9785259999999996
+Finished mode
+Real time: 2.3728976249694824
+CPU time: 2.332943
+
+Finished compression
+Total CPU time spent: 6.690822000000001
+Total CPU time spent on SVD: 4.402412999999999
+Ratio: 0.6579778986797136
+
+Method: Tucker
+Data type: float32
+Original shape: (512, 614, 224) 	original size: 140836864
+Compressed shape: (501, 596, 12) 	compressed size: 17580328
+Compression ratio: 0.12482760195512448
+Relative error: 0.0247748594018
+
+
+
+Cuprite, compressing to rank 501, 596, 12, using random sample of 20 times starting rank for all modes:
+
+Processing mode 2
+CPU time spent on SVD: 0.21505200000000002
+Finished mode
+Real time: 1.5422601699829102
+CPU time: 0.6135869999999999
+Processing mode 0
+CPU time spent on SVD: 2.2012970000000003
+Finished mode
+Real time: 2.5377776622772217
+CPU time: 2.5085990000000002
+Processing mode 1
+CPU time spent on SVD: 1.9806599999999994
+Finished mode
+Real time: 2.3784852027893066
+CPU time: 2.340155
+
+Finished compression
+Total CPU time spent: 6.7179079999999995
+Total CPU time spent on SVD: 4.397009
+Ratio: 0.6545205739643949
+
+Method: Tucker
+Data type: float32
+Original shape: (512, 614, 224) 	original size: 140836864
+Compressed shape: (501, 596, 12) 	compressed size: 17580328
+Compression ratio: 0.12482760195512448
+Relative error: 0.0247760983151
+
+
+
+Cuprite, compressing to rank 501, 596, 12, using random sample of 15 times starting rank for all modes:
+
+Processing mode 2
+CPU time spent on SVD: 0.17672199999999982
+Finished mode
+Real time: 1.5118255615234375
+CPU time: 0.593969
+Processing mode 0
+CPU time spent on SVD: 2.3403589999999994
+Finished mode
+Real time: 2.690706491470337
+CPU time: 2.6576499999999994
+Processing mode 1
+CPU time spent on SVD: 2.0632479999999997
+Finished mode
+Real time: 2.4773926734924316
+CPU time: 2.4391180000000006
+
+Finished compression
+Total CPU time spent: 6.953178
+Total CPU time spent on SVD: 4.580328999999999
+Ratio: 0.6587389248484647
+
+Method: Tucker
+Data type: float32
+Original shape: (512, 614, 224) 	original size: 140836864
+Compressed shape: (501, 596, 12) 	compressed size: 17580328
+Compression ratio: 0.12482760195512448
+Relative error: 0.0247822823263
+
+
+
+Cuprite, compressing to rank 501, 596, 12, using random sample of 10 times starting rank for all modes:
+
+Processing mode 2
+CPU time spent on SVD: 0.11447600000000024
+Finished mode
+Real time: 1.4631750583648682
+CPU time: 0.5375590000000003
+Processing mode 0
+CPU time spent on SVD: 1.568666
+Finished mode
+Real time: 1.9443981647491455
+CPU time: 1.8960979999999998
+Processing mode 1
+CPU time spent on SVD: 1.990068
+Finished mode
+Real time: 2.3909947872161865
+CPU time: 2.350414
+
+Finished compression
+Total CPU time spent: 6.059802
+Total CPU time spent on SVD: 3.67321
+Ratio: 0.6061600692563882
+
+Method: Tucker
+Data type: float32
+Original shape: (512, 614, 224) 	original size: 140836864
+Compressed shape: (501, 596, 12) 	compressed size: 17580328
+Compression ratio: 0.12482760195512448
+Relative error: 0.0286707953427
+
+
+
+Sorting indices for random sample does not seem to affect time

@@ -1,0 +1,129 @@
+This time with more consistent measurements, taking into account the data type used for scalar storage from the beginning! All tested on Cuprite with 0.025 target error and 32-bit storage for Tucker decomposition.
+
+
+
+
+
+Pure Tucker:
+
+Method: Pure Tucker
+Data type: float64
+Original shape: (512, 614, 224) 	original size: 140836864
+Compressed shape: (501, 596, 12) 	compressed size: 33666368
+Compression ratio: 0.23904514090856213
+Relative error: 0.0247647563965
+
+Method: Pure Tucker
+Data type: float32
+Original shape: (512, 614, 224) 	original size: 140836864
+Compressed shape: (501, 596, 12) 	compressed size: 19333760
+Compression ratio: 0.13727769456724057
+Relative error: 0.0247647563964
+
+Method: Pure Tucker
+Data type: float16
+Original shape: (512, 614, 224) 	original size: 140836864
+Compressed shape: (501, 596, 12) 	compressed size: 12167456
+Compression ratio: 0.08639397139657981
+Relative error: nan
+
+Judging by timing my CPU doesn't seem to support half-precision FP arithmetic, so let's not go this far. Also seems that a lot of values can't be represented in this range.
+
+
+
+
+
+Method 1
+Quantizing each layer into 256 custom-picked quantization steps (picked through inverse cumulative distribution function), quantization steps are also quantized using equidistant quantization
+
+Method: Tucker + Quantization of core tensor with custom-picked quantization levels per layer and meta-quantization
+Original size: 140836864
+Factor matrices: 5001152
+Meta quantization size: 300696
+Core tensor: 3883848
+Compressed size: 8885000
+Compression ratio: 0.063087175812151
+Relative error: 0.041553139132
+
+Just comparing the core tensor sizes this method is easily beaten by the other core tensor quantization methods, so didn't look into it further.
+
+
+
+
+
+Method 2
+Quantizing core tensor with constant bits/variable quantization step per layer + zlib
+
+Method: Tucker + Quantizing core tensor with 8 bits/variable quantization step per layer + zlib
+Using graycode: False
+Original size: 140836864
+Factor matrices: 5001152
+Meta quantization size: 9520
+Core tensor (no zlib): 3592675
+Core tensor: 2718142
+Compressed size: 7719294
+Compression ratio: 0.054810180948079046
+Relative error: 0.0250038718062
+
+Method: Tucker + Quantizing core tensor with 8 bits/variable quantization step per layer + zlib
+Using graycode: True
+Original size: 140836864
+Factor matrices: 5001152
+Meta quantization size: 9520
+Core tensor (no zlib): 3592675
+Core tensor: 2719874
+Compressed size: 7721026
+Compression ratio: 0.05482247886462453
+Relative error: 0.0250038718062
+
+Graycode doesn't seem to make a significant difference.
+
+
+
+
+
+Method 3
+Quantizing core tensor with variable bits/constant quantization step per layer + zlib
+
+Method: Tucker + Quantizing core tensor with variable bits/quantization step 150 per layer + zlib
+Using graycode: False
+Original size: 140836864
+Factor matrices: 5001152
+Meta quantization size: 4760
+Core tensor (no zlib): 3668076
+Core tensor: 2846473
+Compressed size: 7847625
+Compression ratio: 0.05572138413987974
+Relative error: 0.0250087683698
+
+Method: Tucker + Quantizing core tensor with variable bits/quantization step 150 per layer + zlib
+Using graycode: True
+Original size: 140836864
+Factor matrices: 5001152
+Meta quantization size: 4760
+Core tensor (no zlib): 3668076
+Core tensor: 2790629
+Compressed size: 7791781
+Compression ratio: 0.05532486863666604
+Relative error: 0.0250087683698
+
+Graycode is a small improvement. Method 2 looks slightly more promising, so continuing with that.
+
+
+
+
+
+Method 2
+Quantizing factor matrices with constant precision + Quantizing core tensor with constant bits/variable quantization step per layer + zlib
+
+Method: Tucker + Quantizing factor matrices with constant precision (11 bits) + Quantizing core tensor with 8 bits/variable quantization step per layer + zlib
+Using graycode: True
+Original size: 140836864
+Factor matrices (no zlib): 859573
+Factor matrices: 835150
+Meta quantization size: 9520
+Core tensor (no zlib): 3592675
+Core tensor: 2719874
+Compressed size: 3555024
+Compression ratio: 0.025242141148499302
+Relative error: 0.0269235968571

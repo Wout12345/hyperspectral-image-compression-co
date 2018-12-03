@@ -1,0 +1,388 @@
+Using Cuprite 0.025
+Only copying errors for first matrix
+
+
+
+Standard re-calculation of triangle in columns 1-39
+
+Decompressing factor matrix
+2.8033131371785203e-15
+5.664007896855013e-15
+4.885451133639569e-13
+5.385228268610557e-13
+1.1372089309810324e-12
+1.8290646142938002e-12
+2.3269962002004987e-12
+2.6836848628350696e-11
+4.767635178201386e-11
+3.813853848397916e-10
+6.194237573006505e-10
+1.3625828411412093e-09
+2.1201609267298958e-09
+2.6446506937487452e-09
+3.535412685089871e-09
+1.316156486818735e-07
+1.4381649817489947e-07
+1.5232866172908647e-07
+1.7583011016416945e-07
+3.956159285139339e-07
+7.276045068255824e-07
+1.0041798428715672e-05
+1.9857309444695027e-05
+2.129271290742866e-05
+2.178091315229432e-05
+2.507136075334762e-05
+3.330323096138536e-05
+3.367930120409829e-05
+7.617013604961225e-05
+0.00033175020064517724
+0.0008263961853629656
+0.0008609745826827697
+0.0008726550011448346
+0.0013046355450017475
+0.001353404937004489
+0.001468165025743391
+0.001558871073037837
+0.0022837239485217404
+0.0024375444909485663
+
+Using columns 10-19
+
+4.2875121256129937e-13
+1.4428358392349632e-12
+1.4949530152955396e-12
+1.5211561341717721e-12
+2.025731154375126e-12
+2.0757207317160704e-12
+2.3204235930532835e-12
+2.430550871241249e-12
+3.75545704665721e-12
+3.970643548874324e-12
+
+So error is causing a chain reaction.
+
+Using columns 1-39, normalizing solution vector after every step:
+
+9.51322354225681e-15
+9.227204453032996e-14
+3.436202717698532e-13
+4.2539249620861877e-13
+3.39352830978293e-12
+5.15236282173349e-12
+1.4586498130434233e-11
+1.0811136395998436e-10
+1.7328076021760958e-10
+1.9703807258927274e-09
+4.0197281587707416e-09
+8.195996785059163e-09
+1.1836605959782785e-08
+1.357013177675018e-08
+1.8282602896522592e-08
+6.000424642671945e-06
+7.094148758109268e-06
+7.515469287930672e-06
+8.720696030042787e-06
+1.7140813228327112e-05
+2.1065127815285763e-05
+0.00015198160923318694
+0.00018201594240871877
+0.0002382712564958006
+0.0002732755313247973
+0.00029064848130905545
+0.00031078210924620643
+0.0003845259509238725
+0.0004331683054656459
+0.001995230228248723
+0.007021400500906137
+0.0071234580009295915
+0.007721092816936714
+0.013723468968571118
+0.01387753096508803
+0.01781221824920865
+0.019751668395991386
+0.03653266825394092
+0.05280170445750217
+
+Doesn't help.
+
+Using columns 1-39, keeping a margin of 10 values and solving the least-squares problem:
+
+9.288802144125086e-09
+9.498808179142558e-09
+1.1175135676052739e-08
+7.685484127712186e-08
+7.69396915968685e-08
+8.567662154024731e-08
+9.226559062689017e-08
+9.476084788571069e-08
+1.0128987091989157e-07
+1.0985073186056237e-07
+1.1479795077004693e-07
+2.003353850291816e-07
+2.13542705202802e-07
+2.228906800426975e-07
+4.78954547769485e-07
+1.0429732172243171e-06
+1.0539111510587918e-06
+1.2337216104911211e-06
+1.3162071857592843e-06
+1.3429335028092695e-06
+1.427375143380889e-06
+1.7625876752434385e-06
+2.056567593143628e-06
+2.462039882604959e-06
+2.7168531644063705e-06
+2.893963655282122e-06
+3.0097209554026063e-06
+3.0458416184106417e-06
+3.278708821670016e-06
+3.5959720246980815e-06
+4.45284761092889e-06
+4.6031895479232495e-06
+4.7053775626609945e-06
+5.174878825524249e-06
+5.317887020447016e-06
+5.7029663045918245e-06
+6.262843988953861e-06
+6.732401875434653e-06
+7.135469941363162e-06
+
+
+
+
+
+Applying to full matrix:
+
+
+
+Pure solving, no margins:
+
+Decompressing factor matrix
+Frobenius norm of error in matrix: 257.1729719904493
+Done! Took 1.332693 seconds
+Decompressing factor matrix
+Frobenius norm of error in matrix: 373.13384218655085
+Done! Took 2.5495790000000005 seconds
+Decompressing factor matrix
+Frobenius norm of error in matrix: 5.574391083044733
+Done! Took 0.0004490000000005878 seconds
+Method: Pure Tucker
+Data type: float32
+Original shape: (512, 614, 224) 	original size: 140836864
+Compressed shape: (501, 596, 12) 	compressed size: 19333760
+Compression ratio: 0.13727769456724057
+Relative error: 25.756985529
+
+Method: Tucker + Quantizing factor matrices with constant precision + Quantizing core tensor with 8 bits/variable quantization step per layer + zlib
+Using graycode: True
+Original size: 140836864
+Factor matrices (no zlib): 859573
+Factor matrices: 839454
+Meta quantization size: 9520
+Core tensor (no zlib): 3592675
+Core tensor: 2719874
+Compressed size: 3559328
+Compression ratio: 0.02527270132910656
+Decompressing factor matrix
+Frobenius norm of error in matrix: 591.8335923588082
+Done! Took 1.3659420000000004 seconds
+Decompressing factor matrix
+Frobenius norm of error in matrix: 221.7678123857484
+Done! Took 2.5212070000000004 seconds
+Decompressing factor matrix
+Frobenius norm of error in matrix: 6.308148157628865
+Done! Took 0.000408000000000186 seconds
+Relative error: 82.7693636866
+
+
+
+Margin 10:
+
+Decompressing factor matrix
+Frobenius norm of error in matrix: 1.4037933876023327
+Done! Took 12.252213 seconds
+Decompressing factor matrix
+Frobenius norm of error in matrix: 7.033747138482889
+Done! Took 23.184402 seconds
+Decompressing factor matrix
+Frobenius norm of error in matrix: 1.8014408298405726e-09
+Done! Took 0.0002420000000000755 seconds
+Method: Pure Tucker
+Data type: float32
+Original shape: (512, 614, 224) 	original size: 140836864
+Compressed shape: (501, 596, 12) 	compressed size: 19333760
+Compression ratio: 0.13727769456724057
+Relative error: 0.041057151509
+
+Method: Tucker + Quantizing factor matrices with constant precision + Quantizing core tensor with 8 bits/variable quantization step per layer + zlib
+Using graycode: True
+Original size: 140836864
+Factor matrices (no zlib): 859573
+Factor matrices: 835214
+Meta quantization size: 9520
+Core tensor (no zlib): 3592675
+Core tensor: 2719874
+Compressed size: 3555088
+Compression ratio: 0.025242595574976733
+Decompressing factor matrix
+Frobenius norm of error in matrix: 15.006138664951965
+Done! Took 12.941158000000001 seconds
+Decompressing factor matrix
+Frobenius norm of error in matrix: 16.24409786569927
+Done! Took 24.055584000000003 seconds
+Decompressing factor matrix
+Frobenius norm of error in matrix: 0.00023049802247454565
+Done! Took 0.00021800000000382624 seconds
+Relative error: 0.146954389988
+
+
+
+Margin 10 + 1 reconstruction step:
+
+Decompressing factor matrix
+Frobenius norm of error in matrix: 3.601470093448399e-06
+Done! Took 0.057015999999999956 seconds
+Decompressing factor matrix
+Frobenius norm of error in matrix: 3.803458565169543e-06
+Done! Took 0.08563900000000002 seconds
+Decompressing factor matrix
+Frobenius norm of error in matrix: 1.8014408298405726e-09
+Done! Took 0.000204000000000093 seconds
+Method: Tucker
+Data type: float32
+Original shape: (512, 614, 224) 	original size: 140836864
+Compressed shape: (501, 596, 12) 	compressed size: 18164800
+Compression ratio: 0.12897759495695674
+Relative error: 0.0247647563982
+
+Method: Tucker + Quantizing factor matrices with constant precision + Quantizing core tensor with 8 bits/variable quantization step per layer + zlib
+Using graycode: True
+Original size: 140836864
+Factor matrices (no zlib): 640096
+Factor matrices: 622404
+Meta quantization size: 9520
+Core tensor (no zlib): 3592675
+Core tensor: 2719874
+Compressed size: 3342278
+Compression ratio: 0.02373155653338035
+Decompressing factor matrix
+Frobenius norm of error in matrix: 0.8729770213511842
+Done! Took 0.05688099999999974 seconds
+Decompressing factor matrix
+Frobenius norm of error in matrix: 1.0631541182196693
+Done! Took 0.0857070000000002 seconds
+Decompressing factor matrix
+Frobenius norm of error in matrix: 0.00023049802247454565
+Done! Took 0.000204000000000093 seconds
+Relative error: 0.0282077488599
+
+
+
+Margin 10 + 3 reconstruction steps:
+
+Decompressing factor matrix
+Frobenius norm of error in matrix: 2.5430213868777826e-05
+Done! Took 0.11486299999999994 seconds
+Decompressing factor matrix
+Frobenius norm of error in matrix: 2.8891190865635087e-05
+Done! Took 0.18024399999999985 seconds
+Decompressing factor matrix
+Frobenius norm of error in matrix: 1.8014408298405726e-09
+Done! Took 0.00024700000000010824 seconds
+Method: Tucker
+Data type: float32
+Original shape: (512, 614, 224) 	original size: 140836864
+Compressed shape: (501, 596, 12) 	compressed size: 17580328
+Compression ratio: 0.12482760195512448
+Relative error: 0.0247647563921
+
+Method: Tucker + Quantizing factor matrices with constant precision + Quantizing core tensor with 8 bits/variable quantization step per layer + zlib
+Using graycode: True
+Original size: 140836864
+Factor matrices (no zlib): 329479
+Factor matrices: 320628
+Meta quantization size: 9520
+Core tensor (no zlib): 3592675
+Core tensor: 2719874
+Compressed size: 3040502
+Compression ratio: 0.021588822085672116
+Decompressing factor matrix
+Frobenius norm of error in matrix: 4.941100962679674
+Done! Took 0.1257830000000002 seconds
+Decompressing factor matrix
+Frobenius norm of error in matrix: 6.789509310629163
+Done! Took 0.19763700000000028 seconds
+Decompressing factor matrix
+Frobenius norm of error in matrix: 0.00023049802247454565
+Done! Took 0.00020799999999976393 seconds
+Relative error: 0.0543742196074
+
+
+
+Margin 2 + 100 steps:
+
+Using graycode: True
+Original size: 140836864
+Factor matrices (no zlib): 437250
+Factor matrices: 424674
+Meta quantization size: 9520
+Core tensor (no zlib): 3592675
+Core tensor: 2719874
+Compressed size: 3144548
+Compression ratio: 0.022327591730528736
+Decompressing factor matrix
+Decompressing factor matrix
+Decompressing factor matrix
+Relative error: 0.329209463963
+
+
+
+Margin 2 + 100 steps + orthogonalizing full columns:
+
+Method: Tucker + Quantizing factor matrices with constant precision + Quantizing core tensor with 8 bits/variable quantization step per layer + zlib
+Using graycode: True
+Original size: 140836864
+Factor matrices (no zlib): 437250
+Factor matrices: 424674
+Meta quantization size: 9520
+Core tensor (no zlib): 3592675
+Core tensor: 2719874
+Compressed size: 3144548
+Compression ratio: 0.022327591730528736
+Relative error: 0.401079374079
+
+
+
+Margin 5 + 30 steps:
+
+Method: Tucker + Quantizing factor matrices with constant precision + Quantizing core tensor with 8 bits/variable quantization step per layer + zlib
+Using graycode: True
+Original size: 140836864
+Factor matrices (no zlib): 426587
+Factor matrices: 414471
+Meta quantization size: 9520
+Core tensor (no zlib): 3592675
+Core tensor: 2719874
+Compressed size: 3134345
+Compression ratio: 0.02225514620944698
+Relative error: 0.294601968581
+
+
+
+Margin 5 + 30 steps + orthogonalizing full columns:
+
+Method: Tucker + Quantizing factor matrices with constant precision + Quantizing core tensor with 8 bits/variable quantization step per layer + zlib
+Using graycode: True
+Original size: 140836864
+Factor matrices (no zlib): 426587
+Factor matrices: 414471
+Meta quantization size: 9520
+Core tensor (no zlib): 3592675
+Core tensor: 2719874
+Compressed size: 3134345
+Compression ratio: 0.02225514620944698
+Relative error: 0.285549816971
+
+
+
+FIXED BUG INVOLVING FACTOR MATRIX BIT ENCODING
