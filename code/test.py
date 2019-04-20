@@ -1,44 +1,18 @@
 import numpy as np
-from scipy.io import loadmat
 import matplotlib.pyplot as plt
 from time import time, clock
+from math import floor
 
 import st_hosvd
-#import blockwise_st_hosvd
-import hodct
+import tensor_trains
+import other_compression
+from tools import *
 
-def load_indian_pines():
-	return loadmat("../data/Indian_pines.mat")["indian_pines"]
-
-def load_cuprite():
-	return loadmat("../data/Cuprite_f970619t01p02_r02_sc03.a.rfl.mat")["X"]
-
-def load_botswana():
-	return loadmat("../data/Botswana.mat")["Botswana"]
-
-def plot_intensity(data):
-	# Shows the cumulative intensity per pixel using grayscale
-	plt.imshow(np.sum(data, axis=2))
-	plt.gray()
-	plt.show()
-
-def plot_comparison(original, decompressed):
-	# Shows the cumulative intensity per pixel using grayscale for two images simultaneously
-	fig, axes = plt.subplots(1, 3, figsize=(9, 3), sharey=True)
-	axes[0].imshow(np.sum(original, axis=2), cmap="gray")
-	axes[1].imshow(np.sum(decompressed, axis=2), cmap="gray")
-	axes[2].imshow(np.sqrt(np.sum((original - decompressed)**2, axis=2)), cmap="gray")
-	plt.show()
-
-def print_difference(original, decompressed):
-	diff = np.linalg.norm(original - decompressed)
-	norm = np.linalg.norm(original)
-	print("Relative error: %s\n"%(diff/norm))
-
-def test_compression_ratio():
+def test_compression_ratio_tucker():
 	
 	data = load_cuprite()
-	compressed = st_hosvd.compress_tucker(data, 0.025, print_progress=True, rank=(501, 596, 12))#(501, 596, 12))
+	start = time()
+	compressed = st_hosvd.compress_tucker(data, 0.025, print_progress=True, randomized_svd=True)
 	#st_hosvd.save_tucker(compressed, "../data/tucker_cuprite_0.025.npz")
 	#compressed = st_hosvd.load_tucker("../data/tucker_cuprite_0.025.npz")
 	decompressed = st_hosvd.decompress_tucker(compressed)
@@ -46,17 +20,154 @@ def test_compression_ratio():
 	print_difference(data, decompressed)
 	#plot_comparison(data, decompressed)
 	
-	"""method = 2
-	if method == 2:
-		compressed_quantized = st_hosvd.compress_quantize2(compressed)
-		st_hosvd.print_compression_rate_quantize2(data, compressed_quantized)
-		decompressed = st_hosvd.decompress_tucker(st_hosvd.decompress_quantize2(compressed_quantized))
-		print_difference(data, decompressed)
-		#plot_comparison(data, decompressed)
-	else:
-		compressed_quantized = st_hosvd.compress_quantize3(compressed)
-		st_hosvd.print_compression_rate_quantize3(data, compressed_quantized)
-		print_difference(data, st_hosvd.decompress_tucker(st_hosvd.decompress_quantize3(compressed_quantized)))"""
+	"""compressed_quantized = st_hosvd.compress_quantize2(compressed)
+	print("Time for compression:", time() - start)
+	st_hosvd.print_compression_rate_quantize2(data, compressed_quantized)
+	start = time()
+	decompressed = st_hosvd.decompress_tucker(st_hosvd.decompress_quantize2(compressed_quantized))
+	print("Time for decompression:", time() - start)
+	print_difference(data, decompressed)
+	plot_comparison(data, decompressed)"""
+
+def test_compression_ratio_tensor_trains():
+	
+	data = load_pavia()
+	compressed = tensor_trains.compress_tensor_trains(data, 0.025, print_progress=True)#(501, 596, 12))
+	#st_hosvd.save_tucker(compressed, "../data/tucker_cuprite_0.025.npz")
+	#compressed = st_hosvd.load_tucker("../data/tucker_cuprite_0.025.npz")
+	decompressed = tensor_trains.decompress_tensor_trains(compressed)
+	tensor_trains.print_compression_rate_tensor_trains(data, compressed)
+	print_difference(data, decompressed)
+	#plot_comparison(data, decompressed)
+
+def test_compress_jpeg():
+	
+	# Test series of JPEG compressions and plot results
+	data = load_cuprite()
+	original_size = data.dtype.itemsize*data.size
+	rel_errors = []
+	compression_ratios = []
+	
+	for quality in range(5, 100, 5):
+		print(quality)
+		compressed = other_compression.compress_jpeg(data, quality)
+		decompressed = other_compression.decompress_jpeg(compressed)
+		rel_errors.append(np.linalg.norm(data - decompressed)/np.linalg.norm(data))
+		compression_ratios.append(other_compression.get_compress_jpeg_size(compressed)/original_size)
+	
+	print("rel_errors =", rel_errors)
+	print("compression_ratios =", compression_ratios)
+	plt.plot(rel_errors, compression_ratios, "bo")
+	plt.plot(rel_errors, compression_ratios, "b")
+	plt.show()
+
+def test_compress_video():
+	
+	# Test series of video compressions and plot results
+	data = load_cuprite()
+	original_size = data.dtype.itemsize*data.size
+	rel_errors = []
+	compression_ratios = []
+	
+	for quality in range(0, 55, 5):
+		print(quality)
+		compressed = other_compression.compress_video(data, quality)
+		decompressed = other_compression.decompress_video(compressed)
+		rel_errors.append(np.linalg.norm(data - decompressed)/np.linalg.norm(data))
+		compression_ratios.append(other_compression.get_compress_video_size(compressed)/original_size)
+		print(rel_errors[-1])
+		print(compression_ratios[-1])
+	
+	print("rel_errors =", rel_errors)
+	print("compression_ratios =", compression_ratios)
+	plt.plot(rel_errors, compression_ratios, "bo")
+	plt.plot(rel_errors, compression_ratios, "b")
+	plt.show()
+
+def test_compress_variable_tucker():
+	
+	# Test series of Tucker compressions
+	data = load_cuprite()
+	original_size = data.dtype.itemsize*data.size
+	rel_errors = []
+	compression_ratios = []
+	
+	for rel_error in (0.01, 0.015, 0.02, 0.025, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.1, 0.12, 0.14, 0.16, 0.18, 0.2):
+		print(rel_error)
+		compressed = st_hosvd.compress_quantize2(st_hosvd.compress_tucker(data, rel_error, print_progress=False))
+		decompressed = st_hosvd.decompress_tucker(st_hosvd.decompress_quantize2(compressed))
+		rel_errors.append(np.linalg.norm(data - decompressed)/np.linalg.norm(data))
+		compression_ratios.append(st_hosvd.get_compress_quantize2_size(compressed)/original_size)
+	
+	print("rel_errors =", rel_errors)
+	print("compression_ratios =", compression_ratios)
+
+def compare_times():
+	
+	data = load_cuprite()
+	original_size = data.dtype.itemsize*data.size
+	
+	st_hosvd.print_compression_rate_tucker(data, st_hosvd.compress_tucker(data, 0.025))
+	start = time()
+	compressed = st_hosvd.compress_quantize2(st_hosvd.compress_tucker(data, 0.025))
+	print("Time for compression:", time() - start)
+	start = time()
+	decompressed = st_hosvd.decompress_tucker(st_hosvd.decompress_quantize2(compressed))
+	print("Time for decompression:", time() - start)
+	st_hosvd.print_compression_rate_quantize2(data, compressed)
+	print_difference(data, decompressed)
+	
+	start = time()
+	compressed = other_compression.compress_jpeg(data, 50)
+	print("Time for compression:", time() - start)
+	start = time()
+	decompressed = other_compression.decompress_jpeg(compressed)
+	print("Time for decompression:", time() - start)
+	print("Compressed size:", other_compression.get_compress_jpeg_size(compressed))
+	print("Compression ratio:", other_compression.get_compress_jpeg_size(compressed)/original_size)
+	print_difference(data, decompressed)
+	
+	start = time()
+	compressed = other_compression.compress_video(data, 28)
+	print("Time for compression:", time() - start)
+	start = time()
+	decompressed = other_compression.decompress_video(compressed)
+	print("Time for decompression:", time() - start)
+	print("Compressed size:", other_compression.get_compress_video_size(compressed))
+	print("Compression ratio:", other_compression.get_compress_video_size(compressed)/original_size)
+	print_difference(data, decompressed)
+
+def plot_compression_comparison(case):
+	
+	if case == "Cuprite":
+		
+		# Data from after removal of artifacts
+		
+		# JPEG
+		rel_errors = [0.069768410441197526, 0.051173216770713778, 0.043522255430459282, 0.038944788220625359, 0.035658346265431483, 0.033276775378738473, 0.031179055306833577, 0.029885557750992806, 0.028402234192627676, 0.027363422064088927, 0.026670468078529231, 0.025822467909564634, 0.024491226346233783, 0.022801805007577097, 0.021616049683549157, 0.020205891672578732, 0.018518622063243624, 0.016236008280671756, 0.012827399346320779]
+		compression_ratios = [0.0008665464477434425, 0.0011646822061707098, 0.0015114933185914196, 0.0018500736314396536, 0.002181488356254286, 0.002484479302835162, 0.0027840234843776786, 0.0030242485675520746, 0.0033047005587819303, 0.003544009015916981, 0.003788846527837305, 0.004094453416311289, 0.004482541999051732, 0.00493647279286495, 0.005430425404889208, 0.006210557874512472, 0.007317048976459369, 0.00934832367095084, 0.014015886008218327]
+		plt.plot(rel_errors, compression_ratios, "bo", label="JPEG")
+		plt.plot(rel_errors, compression_ratios, "b")
+
+		plt.plot([0.002097713132559369], [0.0652392427446747], "go", label="PNG")
+		
+		# Tucker
+		rel_errors = [0.014693139740447031, 0.018374881315268106, 0.022566815728485956, 0.027152063012008478, 0.031709331021400763, 0.041182250879728537, 0.050791957291718315, 0.060864564540400894, 0.07001124642517631, 0.080075736334746891, 0.098840662979154351, 0.10531174310127328, 0.10531143056310975, 0.10531147153484054, 0.1053116029285092, 0.10531231654627704]
+		compression_ratios = [0.003823820624571404, 0.001676255802786945, 0.001002223843594634, 0.0006744170258389765, 0.0005096733764250814, 0.0002706599975355735, 0.00015068662405708896, 9.987456872535574e-05, 4.7591307672938456e-05, 2.1689297424138522e-05, 1.8667361349219956e-06, 1.485854995285445e-07, 7.743188003600205e-08, 4.1855070289730845e-08, 4.1855070289730845e-08, 4.1855070289730845e-08]
+		plt.plot(rel_errors, compression_ratios, "ro", label="Tucker")
+		plt.plot(rel_errors, compression_ratios, "r")
+		
+		# Video
+		rel_errors = [0.002097713132559369, 0.0045815692796644727, 0.0066331424987280153, 0.0097938837928269254, 0.014852849349730041, 0.021659202931874257, 0.030225506603691398, 0.040570163008044717, 0.05211904497792906, 0.064799973736880748, 0.082406679060748014]
+		compression_ratios = [0.03375462624091912, 0.017664591296958042, 0.008621292729004157, 0.0033488911419938283, 0.0011946441582376137, 0.0005533700698075604, 0.0002901246979738128, 	0.00015207202688367907, 7.965229151487228e-05, 4.2355238379693125e-05, 2.49895697164838e-05]
+		plt.plot(rel_errors, compression_ratios, "co", label="libx264")
+		plt.plot(rel_errors, compression_ratios, "c")
+	
+	plt.xlabel("Relative error")
+	plt.ylabel("Compression ratio")
+	plt.title("Compression comparison (%s)"%case)
+	plt.legend()
+	plt.show()
 
 def test_time():
 	# Tests performance on random data, ignoring compression ratio
@@ -67,7 +178,4 @@ def test_time():
 	st_hosvd.print_compression_rate_tucker(data, compressed)
 	plot_comparison(data, decompressed)
 
-def main():
-	test_compression_ratio()
-
-main()
+test_compression_ratio_tucker()
