@@ -1,0 +1,6 @@
+- Variabele quantizatie factormatrices
+- DCT
+- Andere heuristiek om compressierang per mode te kiezen
+- Heuristieken om steekproefgrootte te kiezen bij randomized SVD
+- Efficiëntere reconstructie factormatrices
+- Werken met iteratief SVD-algoritme om te stoppen wanneer som van kwadraten van singuliere waarden al groot genoeg is

@@ -1,0 +1,106 @@
+Tucker
+
+Processing mode 2
+CPU time spent on SVD: 0.2838790000000002
+Finished mode
+Real time: 1.6722102165222168
+CPU time: 0.7160870000000004
+Processing mode 0
+CPU time spent on SVD: 2.318058
+Finished mode
+Real time: 2.6844425201416016
+CPU time: 2.64974
+Processing mode 1
+CPU time spent on SVD: 2.1233839999999997
+Finished mode
+Real time: 2.543097972869873
+CPU time: 2.5007680000000008
+
+Finished compression
+Total CPU time spent: 7.180534999999999
+Total CPU time spent on SVD: 4.725321
+Ratio: 0.6580736672128192
+
+Method: Tucker
+Data type: float32
+Original shape: (512, 614, 224) 	original size: 140836864
+Compressed shape: (501, 596, 12) 	compressed size: 19333760
+Compression ratio: 0.13727769456724057
+Relative error: 0.0247748852903
+
+
+
+
+
+Tensor trains. Does speed up compression but takes almost twice as much space for same error
+
+Processing mode 2
+CPU time spent on SVD: 0.329534
+Finished mode
+Real time: 0.9682407379150391
+CPU time: 0.7752360000000003
+Processing mode 0
+CPU time spent on SVD: 1.93905
+Finished mode
+Real time: 2.42364501953125
+CPU time: 2.366023
+Processing mode 1
+(596, 614)
+CPU time spent on SVD: 0.3106409999999995
+Finished mode
+Real time: 0.3490138053894043
+CPU time: 0.3466940000000003
+
+Finished compression
+Total CPU time spent: 4.022481
+Total CPU time spent on SVD: 2.579224999999999
+Ratio: 0.6412025314724915
+
+Method: Tensor trains
+Data type: float32
+Original shape: (512, 614, 224) 	original size: 140836864
+Compressed shape: (596, 581) 	compressed size: 33555072
+Factor matrices:
+(6144, 596)
+(614, 581)
+(224, 12)
+Compression ratio: 0.238254893264309
+Relative error: 0.0247385227441
+
+
+
+
+
+Pavia:
+
+Finished compression
+Total CPU time spent: 13.812327
+Total CPU time spent on SVD: 10.79553
+Ratio: 0.7815866218632096
+
+Method: Tensor trains
+Data type: float32
+Original shape: (1089, 676, 102) 	original size: 150177456
+Compressed shape: (676,) 	compressed size: 30924468
+Factor matrices:
+(102, 20)
+(660, 341)
+(11253, 629)
+(16354, 26)
+Compression ratio: 0.20591950898409145
+Relative error: 0.0235684337022
+
+
+
+Finished compression
+Total CPU time spent: 22.426277
+Total CPU time spent on SVD: 17.586335000000002
+Ratio: 0.7841843298377168
+
+Method: Tucker
+Data type: float32
+Original shape: (1089, 676, 102) 	original size: 150177456
+Compressed shape: (918, 620, 17) 	compressed size: 44385104
+Compression ratio: 0.2955510446254996
+Relative error: 0.0252236720151
+

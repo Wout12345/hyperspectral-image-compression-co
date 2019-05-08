@@ -1,0 +1,57 @@
+This is BibTeX, Version 0.99d (TeX Live 2017/Debian)
+Capacity: max_strings=100000, hash_size=100000, hash_prime=85009
+The top-level auxiliary file: masterproef.aux
+A level-1 auxiliary file: inleiding.aux
+A level-1 auxiliary file: achtergrond.aux
+A level-1 auxiliary file: methodologie.aux
+A level-1 auxiliary file: tucker.aux
+A level-1 auxiliary file: tensor_trains.aux
+A level-1 auxiliary file: resultaten.aux
+A level-1 auxiliary file: besluit.aux
+A level-1 auxiliary file: app-A.aux
+A level-1 auxiliary file: app-n.aux
+The style file: abbrv.bst
+Database file #1: referenties.bib
+Warning--I didn't find a database entry for "h2g2"
+You've used 6 entries,
+            2118 wiz_defined-function locations,
+            529 strings with 4352 characters,
+and the built_in function-call counts, 1273 in all, are:
+= -- 115
+> -- 48
+< -- 0
++ -- 20
+- -- 14
+* -- 37
+:= -- 217
+add.period$ -- 17
+call.type$ -- 6
+change.case$ -- 25
+chr.to.int$ -- 0
+cite$ -- 6
+duplicate$ -- 42
+empty$ -- 133
+format.name$ -- 14
+if$ -- 276
+int.to.chr$ -- 0
+int.to.str$ -- 6
+missing$ -- 0
+newline$ -- 32
+num.names$ -- 12
+pop$ -- 50
+preamble$ -- 1
+purify$ -- 19
+quote$ -- 0
+skip$ -- 49
+stack$ -- 0
+substring$ -- 30
+swap$ -- 6
+text.length$ -- 0
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 24
+warning$ -- 0
+while$ -- 12
+width$ -- 7
+write$ -- 55
+(There was 1 warning)

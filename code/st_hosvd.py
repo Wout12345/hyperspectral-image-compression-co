@@ -1,4 +1,5 @@
 import numpy as np
+import scipy.linalg
 from operator import itemgetter
 from time import time, clock
 from functools import reduce
@@ -17,13 +18,56 @@ def custom_eigh(A):
 	# Returns eigenvalue decomposition with the result sorted based on the eigenvalues and the sqrt of the eigenvalues instead of the eigenvalues
 	# Matrix must be symmetric
 	lambdas, X = np.linalg.eigh(A)
-	if not np.all(lambdas > -epsilon):
-		print("Not all eigenvalues are larger than -%s!"%epsilon)
-		print(lambdas)
+	if not np.all(lambdas > -epsilon) and np.amin(lambdas)/np.amax(lambdas) < -epsilon:
+		print("Not all eigenvalues are larger than -%s! Largest eigenvalue: %s, smallest eigenvalue: %s"%(epsilon, np.amax(lambdas), np.amin(lambdas)))
 	lambdas = lambdas.clip(0, None)
 	return np.sqrt(lambdas[::-1]), X[:, ::-1]
 
-def compress_tucker(data, relative_target_error, extra_output=False, print_progress=False, mode_order=(2, 0, 1), output_type="float32", compression_rank=None, randomized_svd=True, sample_factor=25, store_rel_estimated_S_errors=False, use_pure_gramian=False, use_qr_gramian=False):
+def custom_lanczos(A, bound, transpose=False):
+	
+	# Computes the square roots of biggest eigenvalues and corresponding eigenvectors of A*A^T (or A^T*A if transpose) until the sum of the eigenvalues is >= bound
+	
+	# Initialization
+	vectors_dimension = A.shape[0] if not transpose else A.shape[1]
+	Q = np.empty([vectors_dimension, vectors_dimension])
+	Q[:, 0] = 0
+	Q[0, 0] = 1
+	alphas = np.empty(vectors_dimension)
+	betas = np.empty(vectors_dimension) # Index 0 is not needed but kept for simplicity
+	
+	# First iteration, corner case
+	w = A @ (A.T @ Q[:, 0]) if not transpose else A.T @ (A @ Q[:, 0])
+	alphas[0] = np.dot(w, Q[:, 0])
+	w = w - alphas[0]*Q[:, 0]
+	
+	# Iterations
+	i = 1
+	alpha_sum = alphas[0]
+	while i < vectors_dimension:
+		
+		# Stop criterion
+		if alpha_sum >= bound:
+			break
+		
+		betas[i] = np.linalg.norm(w)
+		Q[:, i] = w/betas[i] # betas[i] should be non-zero for input of full rank
+		w = A @ (A.T @ Q[:, i]) if not transpose else A.T @ (A @ Q[:, i])
+		alphas[i] = np.dot(w, Q[:, i])
+		alpha_sum += alphas[i]
+		w = w - alphas[i]*Q[:, i] - betas[i]*Q[:, i - 1]
+		
+		# Re-orthogonalize
+		w = w - Q[:, :i] @ (Q[:, :i].T @ w)
+		
+		i += 1
+	
+	# Calculate eigenvalue decomposition and transform
+	lambdas, X = scipy.linalg.eigh_tridiagonal(alphas[:i], betas[1:i])
+	transformed_X = Q[:, :i] @ X
+	
+	return np.sqrt(lambdas[::-1]), transformed_X[:, ::-1]
+
+def compress_tucker(data, relative_target_error, extra_output=False, print_progress=False, mode_order=None, output_type="float32", compression_rank=None, randomized_svd=False, sample_ratio=0.1, samples_per_dimension=5, sort_indices=False, use_pure_gramian=False, use_qr_gramian=False, use_lanczos_gramian=False, store_rel_estimated_S_errors=False):
 	
 	# This function calculates the ST-HOSVD of the given 3D tensor (see https://epubs.siam.org/doi/abs/10.1137/110836067)
 	# data should be a numpy array and will not be changed by this call
@@ -35,7 +79,7 @@ def compress_tucker(data, relative_target_error, extra_output=False, print_progr
 	# compressed result is a dictionary of the form:
 	#	- mode_order: given mode order
 	#	- original_shape: relevant for reshaping
-	#	- factor_matrices: list of factor matrices according to the original modes in output_type
+	#	- factor_matrices: list of factor matrices in order of mode handling (so each time a mode is processed a factor matrix is appended)
 	#	- core_tensor: core tensor in output_type
 	
 	# extra_output fields:
@@ -45,7 +89,7 @@ def compress_tucker(data, relative_target_error, extra_output=False, print_progr
 	#	- total_cpu_time
 	#	- cpu_times
 	#	- cpu_times_svd
-	#	- population_sized
+	#	- population_sizes
 	#	- sample_sizes
 	#	- rel_estimated_S_errors: only if store_rel_estimated_S_errors
 	
@@ -54,22 +98,27 @@ def compress_tucker(data, relative_target_error, extra_output=False, print_progr
 	total_cpu_start = clock()
 	
 	# Initialization
+	core_tensor = data.astype("float64")
+	if mode_order is None:
+		mode_order = [core_tensor.ndim - 1,] # Spectral dimension
+		mode_order.extend(np.flip(np.argsort(core_tensor.shape[:-1])).tolist()) # Spatial dimensions, from large to small
+	factor_matrices = []
+	data_norm = np.linalg.norm(data)
+	sq_abs_target_error = (relative_target_error*data_norm)**2
+	sq_error_so_far = 0
+	modes = core_tensor.ndim
 	output = {
 		"total_cpu_time": 0,
 		"cpu_times": [],
-		"cpu_times_svd": [], # Also counts transposition time
+		"cpu_times_svd": [],
 		"population_sizes": [],
-		"sample_sizes": []
+		"sample_sizes": [],
+		"rel_estimated_S_errors": []
 	}
 	compressed = {
 		"original_shape": data.shape,
 		"mode_order": mode_order
 	}
-	core_tensor = data.astype("float64")
-	factor_matrices = []
-	sq_abs_target_error = (relative_target_error*np.linalg.norm(data))**2
-	sq_error_so_far = 0
-	modes = core_tensor.ndim
 	
 	# Process modes
 	for mode_index, mode in enumerate(mode_order):
@@ -80,67 +129,54 @@ def compress_tucker(data, relative_target_error, extra_output=False, print_progr
 		
 		# Calculate population and sample size
 		population_size = core_tensor.size//core_tensor.shape[mode]
-		sample_size = core_tensor.shape[mode]*sample_factor
+		output["population_sizes"].append(population_size)
+		sample_size = round(min(population_size, max(core_tensor.shape[mode]*samples_per_dimension, population_size*sample_ratio)))
 		
 		# Transpose modes if necessary to bring current mode to front (unless current mode is at front of back already)
 		# transposition_order is also its own inverse order since just two elements are swapped
-		"""transposition_order = list(range(modes))
+		transposition_order = list(range(modes))
 		if mode != modes - 1:
 			transposition_order[mode] = 0
 			transposition_order[0] = mode
-		core_tensor = np.transpose(core_tensor, transposition_order)"""
+		core_tensor = np.transpose(core_tensor, transposition_order)
 		
 		# Take sample vectors from tensor
 		use_sample = randomized_svd and sample_size < population_size
-		"""if use_sample:
+		if use_sample:
 			sample_indices = np.random.choice(population_size, size=sample_size, replace=False)
-			#sample_indices.sort()
-			output["population_sizes"].append(population_size)
-			output["sample_sizes"].append(sample_indices.size)"""
-		"""transposed_ranks = list(core_tensor.shape)"""
-		
-		# Without sampling, Einsum calculation
-		transposition_order = list(range(modes))
-		transposition_order[mode] = 0
-		transposition_order[0] = mode
-		modulus = product(core_tensor.shape[mode + 1:])
-		if mode > 0:
-			sample_indices1 = np.random.choice(product(core_tensor.shape[:mode]), sample_size)
-		if mode < core_tensor.ndim - 1:
-			sample_indices2 = np.random.choice(product(core_tensor.shape[mode + 1:]), sample_size)
-		original_shape = list(core_tensor.shape)
-		if mode == 0:
-			core_tensor.shape = (core_tensor.shape[0], product(core_tensor.shape[1:]))
-			sample_matrix = core_tensor[:, sample_indices2]
-		elif mode < core_tensor.ndim - 1:
-			core_tensor.shape = (product(core_tensor.shape[:mode]), core_tensor.shape[mode], product(core_tensor.shape[mode + 1:]))
-			sample_matrix = core_tensor[sample_indices1, :, sample_indices2]
+			if sort_indices:
+				sample_indices.sort()
+			output["sample_sizes"].append(sample_size)
 		else:
-			core_tensor.shape = (product(core_tensor.shape[:-1]), core_tensor.shape[-1])
-			sample_matrix = core_tensor[sample_indices1, :]
-		core_tensor.shape = original_shape
-		
-		"""if mode == modes - 1:
+			output["sample_sizes"].append(population_size)
+		transposed_ranks = list(core_tensor.shape)
+		if mode == modes - 1:
 			# Mode is already in back, convert to matrix of row vectors
 			core_tensor = np.reshape(core_tensor, (-1, core_tensor.shape[-1]))
 			sample_matrix = core_tensor[sample_indices] if use_sample else core_tensor
 		else:
 			# Mode is in front (possibly due to transposition)
 			core_tensor = np.reshape(core_tensor, (core_tensor.shape[0], -1))
-			sample_matrix = core_tensor[:, sample_indices] if use_sample else core_tensor"""
+			sample_matrix = core_tensor[:, sample_indices] if use_sample else core_tensor
 		
 		# Calculate SVD of sample vectors, we only need U and S (V is useful too but can only be calculated without random sampling)
 		# Pure Gramian: Calculate eigenvalue decomposition of A*A^T
-		# QR Gramian: Calculate QR-decompositiion of A, calculate eigenvalue decomposition of R*R^T and use this to reconstruct eigenvalue decomposition of A*A^T
+		# QR Gramian: Calculate QR-decompositiion of A^T, calculate eigenvalue decomposition of R^T*R
+		# Lanczos Gramian: Use Lanczos algorithm to calculate the truncated eigendecomposition of A*A^T
 		cpu_start_svd = clock()
-		"""if mode == modes - 1:"""
-		if mode > 0:
+		sq_mode_target_error = (sq_abs_target_error - sq_error_so_far)/(modes - mode_index)
+		if mode == modes - 1:
 			# We used row vectors instead of column vectors, so convert SVD to corresponding format
 			if use_pure_gramian:
 				S, U = custom_eigh(sample_matrix.T @ sample_matrix)
 			elif use_qr_gramian:
 				R = np.linalg.qr(sample_matrix, mode="r")
 				S, U = custom_eigh(R.T @ R)
+			elif use_lanczos_gramian:
+				sq_mode_target_norm = data_norm**2 - sq_error_so_far - sq_mode_target_error
+				S, U = custom_lanczos(sample_matrix, sq_mode_target_norm, transpose=True)
+				sq_abs_norm_so_far = np.sum(np.square(S))
+				truncation_rank = S.size
 			else:
 				V, S, Uh = np.linalg.svd(sample_matrix, full_matrices=False)
 				U = Uh.T
@@ -151,6 +187,11 @@ def compress_tucker(data, relative_target_error, extra_output=False, print_progr
 			elif use_qr_gramian:
 				R = np.linalg.qr(sample_matrix.T, mode="r")
 				S, U = custom_eigh(R.T @ R)
+			elif use_lanczos_gramian:
+				sq_mode_target_norm = data_norm**2 - sq_error_so_far - sq_mode_target_error
+				S, U = custom_lanczos(sample_matrix, sq_mode_target_norm)
+				sq_abs_norm_so_far = np.sum(np.square(S))
+				truncation_rank = S.size
 			else:
 				U, S, Vh = np.linalg.svd(sample_matrix, full_matrices=False)
 		if use_sample:
@@ -161,33 +202,37 @@ def compress_tucker(data, relative_target_error, extra_output=False, print_progr
 			print("CPU time spent on SVD:", output["cpu_times_svd"][-1])
 		
 		# Estimate actual S using sample S
+		S_calculation_time = clock()
 		if store_rel_estimated_S_errors:
 			_, exact_S, _ = np.linalg.svd(core_tensor, full_matrices=False)
 			output["rel_estimated_S_errors"].append(np.linalg.norm(S - exact_S)/np.linalg.norm(exact_S))
+		S_calculation_time = clock() - S_calculation_time
+		cpu_start += S_calculation_time
+		total_cpu_start += S_calculation_time
 		
 		# Determine compression rank
-		if compression_rank is None:
-			# Using relative target error
-			sq_mode_target_error = (sq_abs_target_error - sq_error_so_far)/(modes - mode_index)
-			sq_mode_error_so_far = 0
-			truncation_rank = S.shape[0]
-			for i in range(S.shape[0] - 1, -1, -1):
-				new_error = S[i]**2 # We can use the singular values of the sample but need to scale to account for the full population
-				if sq_mode_error_so_far + new_error > sq_mode_target_error:
-					# Target error was excdeeded, truncate at previous rank
-					truncation_rank = i + 1
-					break
-				else:
-					# Target error was not exceeded, add error and continue
-					sq_mode_error_so_far += new_error
-			sq_error_so_far += sq_mode_error_so_far
-		else:
-			truncation_rank = compression_rank[mode]
+		if not use_lanczos_gramian:
+			if compression_rank is None:
+				# Using relative target error
+				sq_mode_error_so_far = 0
+				truncation_rank = S.shape[0]
+				for i in range(S.shape[0] - 1, -1, -1):
+					new_error = S[i]**2 # We can use the singular values of the sample but need to scale to account for the full population
+					if sq_mode_error_so_far + new_error > sq_mode_target_error:
+						# Target error was excdeeded, truncate at previous rank
+						truncation_rank = i + 1
+						break
+					else:
+						# Target error was not exceeded, add error and continue
+						sq_mode_error_so_far += new_error
+				sq_error_so_far += sq_mode_error_so_far
+			else:
+				truncation_rank = compression_rank[mode]
 		
 		# Apply compression and fold back into tensor
 		# Use V or Vh if possible
 		factor_matrices.append(U[:, :truncation_rank])
-		"""no_V = use_sample or use_pure_gramian or use_qr_gramian
+		no_V = use_sample or use_pure_gramian or use_qr_gramian or use_lanczos_gramian
 		if mode == modes - 1:
 			if no_V:
 				core_tensor = core_tensor @ factor_matrices[-1]
@@ -196,23 +241,13 @@ def compress_tucker(data, relative_target_error, extra_output=False, print_progr
 			transposed_ranks[-1] = truncation_rank
 		else:
 			if no_V:
-				core_tensor = factor_matrices[-1].T @ core_tensor
+				core_tensor = factor_matrices[-1].T.copy() @ core_tensor
 			else:
 				core_tensor = S[:truncation_rank, None]*Vh[:truncation_rank, :]
 			transposed_ranks[0] = truncation_rank
 		core_tensor = np.reshape(core_tensor, transposed_ranks)
-		
 		# Transpose back to original order
-		core_tensor = np.transpose(core_tensor, transposition_order)"""
-		
-		axes1 = list(range(core_tensor.ndim))
-		axes1[mode] = core_tensor.ndim + 1
-		axes2 = list(range(core_tensor.ndim))
-		axes2[mode] = core_tensor.ndim
-		print(factor_matrices[-1].shape)
-		print(core_tensor.shape)
-		print(axes1, axes2)
-		core_tensor = np.einsum(factor_matrices[-1], [core_tensor.ndim + 1, core_tensor.ndim], core_tensor, axes1, axes2, optimize=True)
+		core_tensor = np.transpose(core_tensor, transposition_order)
 		
 		output["cpu_times"].append(clock() - cpu_start)
 		if print_progress:
@@ -227,10 +262,10 @@ def compress_tucker(data, relative_target_error, extra_output=False, print_progr
 	compressed["factor_matrices"] = factor_matrices
 	
 	# Print timings
+	output["total_cpu_time"] = clock() - total_cpu_start
 	if print_progress:
 		print("")
 		print("Finished compression")
-		output["total_cpu_time"] = clock() - total_cpu_start
 		print("Total CPU time spent:", output["total_cpu_time"])
 		print("Total CPU time spent on SVD:", sum(output["cpu_times_svd"]))
 		print("Ratio:", sum(output["cpu_times_svd"])/output["total_cpu_time"])
@@ -354,6 +389,9 @@ def get_compress_tucker_size(compressed):
 	compressed_size = factor_matrices_size + compressed["core_tensor"].dtype.itemsize*compressed["core_tensor"].size
 	
 	return compressed_size
+
+def get_compression_factor_tucker(original, compressed):
+	return (original.dtype.itemsize*original.size)/get_compress_tucker_size(compressed)
 
 def print_compression_rate_tucker(original, compressed):
 	

@@ -1,0 +1,25 @@
+Stijl:
+- referentie voor randomized svd?
+- referentie voor Gram met QR?
+- hoe Engelse woorden gebruiken in Nederlandse tekst? cursief? te veel? bv. "Randomized SVD" als titel
+- hoe spreken over ik, we, men, ...
+- caption bij elke figuur en tabel? alleen bij figuren, alleen bij tabellen?
+- optionele dingen in template: lijst van figuren, lijst van tabellen, lijst van afkortingen en symbolen?
+- . of , in getallen
+
+Inhoud:
+- timings single-threaded of multi-threaded?
+
+Inhoud, later:
+- Gram-matrix met QR-decompositie: klopt?
+- numerieke instabiliteit Gram-matrix?
+- numerieke verbetering met QR bij Gram-matrix?
+- steekproefgrootte bij randomized SVD?
+- bespreking T-HOSVD nodig in achtergrond, of niet?
+
+29/04/2019
+
+- Referentie randomized SVD
+- Waarom nut van tensor-gebaseerde technieken bij methodologie? Lijkt me meer iets voor inleiding.
+- Voorwoord?
+- Inleveren in juni?

@@ -337,7 +337,7 @@ Relative error: 0.329209463963
 
 
 
-Margin 2 + 100 steps + orthogonalizing full columns:
+Margin 2 + 100 steps + orthogonalizing full columns block by block:
 
 Method: Tucker + Quantizing factor matrices with constant precision + Quantizing core tensor with 8 bits/variable quantization step per layer + zlib
 Using graycode: True
@@ -386,3 +386,150 @@ Relative error: 0.285549816971
 
 
 FIXED BUG INVOLVING FACTOR MATRIX BIT ENCODING
+
+
+
+Margin 2 + 100 steps without orthonormalization:
+
+Done! Took 2.869752 seconds
+Done! Took 4.169651999999999 seconds
+Done! Took 0.0008949999999998681 seconds
+Method: Tucker
+Data type: float32
+Original shape: (512, 614, 224) 	original size: 140836864
+Compressed shape: (501, 596, 12) 	compressed size: 16949952
+Compression ratio: 0.12035167156235459
+Relative error: 0.242050113576
+
+Method: Tucker + Quantizing factor matrices with constant precision + Quantizing core tensor with 8 bits/variable quantization step per layer + zlib
+Using graycode: True
+Original size: 140836864
+Factor matrices (no zlib): 446144
+Factor matrices: 433088
+Meta quantization size: 9520
+Core tensor (no zlib): 3592675
+Core tensor: 2719874
+Compressed size: 3152962
+Compression ratio: 0.02238733461148354
+Done! Took 2.734150999999999 seconds
+Done! Took 4.1962340000000005 seconds
+Done! Took 0.0009230000000002292 seconds
+Relative error: 0.329235665771
+
+
+
+Margin 2 + 100 steps + orthonormalizing full columns one by one:
+
+Done! Took 13.88269 seconds
+Done! Took 28.736124999999998 seconds
+Done! Took 0.004162000000000887 seconds
+Method: Tucker
+Data type: float32
+Original shape: (512, 614, 224) 	original size: 140836864
+Compressed shape: (501, 596, 12) 	compressed size: 16949952
+Compression ratio: 0.12035167156235459
+Relative error: 0.16066908413
+
+Method: Tucker + Quantizing factor matrices with constant precision + Quantizing core tensor with 8 bits/variable quantization step per layer + zlib
+Using graycode: True
+Original size: 140836864
+Factor matrices (no zlib): 446144
+Factor matrices: 431744
+Meta quantization size: 9520
+Core tensor (no zlib): 3592675
+Core tensor: 2719874
+Compressed size: 3151618
+Compression ratio: 0.02237779165545748
+Done! Took 14.693972000000002 seconds
+Done! Took 27.673783 seconds
+Done! Took 0.004551000000006411 seconds
+Relative error: 0.203025269948
+
+
+
+
+Margin 2 + 100 steps + orthonormalizing full columns blockwise:
+
+Done! Took 5.236161 seconds
+Done! Took 9.127495 seconds
+Done! Took 0.004811999999999372 seconds
+Method: Tucker
+Data type: float32
+Original shape: (512, 614, 224) 	original size: 140836864
+Compressed shape: (501, 596, 12) 	compressed size: 16949952
+Compression ratio: 0.12035167156235459
+Relative error: 0.164756081781
+
+Method: Tucker + Quantizing factor matrices with constant precision + Quantizing core tensor with 8 bits/variable quantization step per layer + zlib
+Using graycode: True
+Original size: 140836864
+Factor matrices (no zlib): 446144
+Factor matrices: 430165
+Meta quantization size: 9520
+Core tensor (no zlib): 3592675
+Core tensor: 2719874
+Compressed size: 3150039
+Compression ratio: 0.022366580102209602
+Done! Took 5.639638999999999 seconds
+Done! Took 8.855188999999996 seconds
+Done! Took 0.004483999999997934 seconds
+Relative error: 0.216733748337
+
+
+
+Margin 10 + 0 steps without orthonormalization:
+
+Done! Took 0.00031700000000012274 seconds
+Done! Took 0.000484000000000151 seconds
+Done! Took 2.1000000000048757e-05 seconds
+Method: Tucker
+Data type: float32
+Original shape: (512, 614, 224) 	original size: 140836864
+Compressed shape: (501, 596, 12) 	compressed size: 19333760
+Compression ratio: 0.13727769456724057
+Relative error: 0.0247647563964
+
+Method: Tucker + Quantizing factor matrices with constant precision + Quantizing core tensor with 8 bits/variable quantization step per layer + zlib
+Using graycode: True
+Original size: 140836864
+Factor matrices (no zlib): 841011
+Factor matrices: 817542
+Meta quantization size: 9520
+Core tensor (no zlib): 3592675
+Core tensor: 2719874
+Compressed size: 3537416
+Compression ratio: 0.025117117063895997
+Done! Took 0.0003010000000003288 seconds
+Done! Took 0.0004290000000004568 seconds
+Done! Took 1.09999999997612e-05 seconds
+Relative error: 0.0269235968571
+
+
+
+Margin 10 + 1 steps without orthonormalization:
+
+Done! Took 0.055527000000000104 seconds
+Done! Took 0.08680700000000008 seconds
+Done! Took 0.0001769999999998717 seconds
+Method: Tucker
+Data type: float32
+Original shape: (512, 614, 224) 	original size: 140836864
+Compressed shape: (501, 596, 12) 	compressed size: 18164800
+Compression ratio: 0.12897759495695674
+Relative error: 0.0247647563982
+
+Method: Tucker + Quantizing factor matrices with constant precision + Quantizing core tensor with 8 bits/variable quantization step per layer + zlib
+Using graycode: True
+Original size: 140836864
+Factor matrices (no zlib): 640096
+Factor matrices: 622404
+Meta quantization size: 9520
+Core tensor (no zlib): 3592675
+Core tensor: 2719874
+Compressed size: 3342278
+Compression ratio: 0.02373155653338035
+Done! Took 0.05573099999999975 seconds
+Done! Took 0.08416799999999913 seconds
+Done! Took 0.00014599999999997948 seconds
+Relative error: 0.0282077488599
+

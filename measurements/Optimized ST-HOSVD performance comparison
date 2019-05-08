@@ -1,0 +1,22 @@
+No sampling, explicit
+Total CPU time spent: 15.367054999999999
+Total CPU time spent on SVD: 14.979981
+Ratio: 0.9748114391469284
+
+Sampling, factor = 25, explicit
+Total CPU time spent: 1.413439
+Total CPU time spent on SVD: 0.9076530000000003
+Ratio: 0.6421593008258583
+
+Sampling, factor = 25, Einsum
+Mess to program, slower time, less compressed, lower error, not going to figure out why
+Total CPU time spent: 6.510344000000001
+Total CPU time spent on SVD: 5.793056999999999
+Ratio: 0.8898234870538329
+
+Method: Tucker
+Data type: float32
+Original shape: (512, 614, 190) 	original size: 119459840
+Compressed shape: (315, 348, 4) 	compressed size: 3256768
+Compression ratio: 0.027262450711469228
+Relative error: 0.015471210509227321

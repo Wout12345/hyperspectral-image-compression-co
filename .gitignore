@@ -1,2 +1,15 @@
 code/__pycache__
 data
+
+*.aux
+*.log
+*.nav
+*.out
+*.pdf
+*.snm
+*.synctex.gz
+*.toc
+*.bbl
+*.lof
+*.lot
+

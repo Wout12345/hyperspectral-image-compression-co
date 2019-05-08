@@ -12,7 +12,7 @@ def test_compression_ratio_tucker():
 	
 	data = load_cuprite()
 	start = time()
-	compressed = st_hosvd.compress_tucker(data, 0.025, print_progress=True, randomized_svd=True)
+	compressed = st_hosvd.compress_tucker(data, 0.025, print_progress=True, use_pure_gramian=True)
 	#st_hosvd.save_tucker(compressed, "../data/tucker_cuprite_0.025.npz")
 	#compressed = st_hosvd.load_tucker("../data/tucker_cuprite_0.025.npz")
 	decompressed = st_hosvd.decompress_tucker(compressed)
@@ -28,6 +28,20 @@ def test_compression_ratio_tucker():
 	print("Time for decompression:", time() - start)
 	print_difference(data, decompressed)
 	plot_comparison(data, decompressed)"""
+
+def test_sorting():
+	
+	amount = 10
+	
+	data = load_cuprite()
+	for sort in (False, True):
+		times = np.zeros(amount)
+		for i in range(amount):
+			output = st_hosvd.compress_tucker(data, 0.025, extra_output=True, randomized_svd=True, sort_indices=sort)
+			times[i] = output["total_cpu_time"]
+		print("Sort:", sort)
+		print("Mean:", np.mean(times))
+		print("Stdev:", np.std(times))
 
 def test_compression_ratio_tensor_trains():
 	

@@ -43,10 +43,11 @@ def plot_comparison(original, decompressed):
 	axes[2].imshow(np.sqrt(np.sqrt(np.sum((original - decompressed)**2, axis=2))), cmap="gray")
 	plt.show()
 
+def rel_error(original, decompressed):
+	return np.linalg.norm(original - decompressed)/np.linalg.norm(original)
+
 def print_difference(original, decompressed):
-	diff = np.linalg.norm(original - decompressed)
-	norm = np.linalg.norm(original)
-	print("Relative error: %s\n"%(diff/norm))
+	print("Relative error: %s\n"%rel_error(original, decompressed))
 
 def print_bands():
 	
@@ -72,7 +73,6 @@ def print_bands():
 
 def plot_intensities(data):
 	
-	intensities = []
 	intensities = list(np.sum(data, axis=(0, 1)))
 	plt.plot(range(data.shape[2]), intensities, "b")
 	plt.show()
