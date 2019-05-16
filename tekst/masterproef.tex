@@ -1,4 +1,4 @@
-\documentclass[master=cws,masteroption=ci]{kulemt}
+-\documentclass[master=cws,masteroption=ci]{kulemt}
 \setup{title={Hyperspectrale afbeeldingscompressie via tensordecomposities},
   author={Wouter Baert},
   promotor={Dr.\ Nick Vannieuwenhoven\and Prof.\,dr.\,ir.\ Karl Meerbergen},
@@ -7,7 +7,7 @@
 % De volgende \setup mag verwijderd worden als geen fiche gewenst is.
 \setup{filingcard,
   translatedtitle={Hyperspectral image compression via tensor decompositions},
-  udc=621.3,
+  udc=681.3,
   shortabstract={Hier komt een heel bondig abstract van hooguit 500
     woorden. \LaTeX\ commando's mogen hier gebruikt worden. Blanco lijnen
     (of het commando \texttt{\string\pa r}) zijn wel niet toegelaten!
@@ -35,6 +35,7 @@
 \usepackage{verbatim}
 \usepackage[]{algorithm2e}
 \usepackage{hhline}
+\usepackage{subcaption}
 
 %%%%%%%
 % Om wat tekst te genereren wordt hier het lipsum pakket gebruikt.
@@ -111,9 +112,8 @@
 % Indien er bijlagen zijn:
 \appendixpage*          % indien gewenst
 \appendix
-\include{app-A}
-% ... en zo verder tot
-\include{app-n}
+\include{app-code-algoritmen}
+\include{app-code-voorverwerker}
 
 \backmatter
 % Na de bijlagen plaatst men nog de bibliografie.

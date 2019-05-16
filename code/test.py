@@ -8,6 +8,9 @@ import tensor_trains
 import other_compression
 from tools import *
 
+def main():
+	test_compression_ratio_tucker()
+
 def test_compression_ratio_tucker():
 	
 	data = load_cuprite()
@@ -28,6 +31,57 @@ def test_compression_ratio_tucker():
 	print("Time for decompression:", time() - start)
 	print_difference(data, decompressed)
 	plot_comparison(data, decompressed)"""
+
+def plot_mauna_kea_range():
+	
+	data = load_mauna_kea()
+	for i in range(3):
+		axes = list(range(3))
+		axes.remove(i)
+		plt.plot(range(data.shape[i]), np.amax(data, axis=tuple(axes)))
+		plt.plot(range(data.shape[i]), np.amin(data, axis=tuple(axes)))
+		plt.show()
+
+def compress_mauna_kea():
+	
+	data = load_mauna_kea()
+	compressed = st_hosvd.compress_tucker(data, 0.025, print_progress=True, use_pure_gramian=True)
+	print("Relative error:", custom_norm(st_hosvd.decompress_tucker(compressed).__isub__(data))/custom_norm(data))
+	st_hosvd.print_compression_rate_tucker(data, compressed)
+
+def compress_zip_cuprite():
+	
+	data = load_cuprite()
+	data.tofile("../data/cuprite_raw")
+
+def plot_intensities_mauna_kea():
+	
+	data = load_mauna_kea()
+	samples = np.mean(data, axis=(0, 1))
+	channels = range(samples.size)
+	plt.plot(channels, samples)
+	plt.scatter(channels, samples)
+	plt.show()
+
+def make_video_mauna_kea_raw():
+	
+	data = load_mauna_kea_raw()
+	quality = 0
+	compressed = other_compression.compress_video(data, quality)
+	
+	with open("../data/mauna_kea_raw.mkv", "wb") as f:
+		f.write(compressed[0])
+
+def make_video_mauna_kea():
+	
+	data = load_mauna_kea()
+	quality = 0
+	compressed = other_compression.compress_video(data, quality)
+	
+	with open("../data/mauna_kea.mkv", "wb") as f:
+		f.write(compressed[0])
+	
+	print(rel_error(other_compression.decompress_video(compressed), data))
 
 def test_sorting():
 	
@@ -192,4 +246,4 @@ def test_time():
 	st_hosvd.print_compression_rate_tucker(data, compressed)
 	plot_comparison(data, decompressed)
 
-test_compression_ratio_tucker()
+main()

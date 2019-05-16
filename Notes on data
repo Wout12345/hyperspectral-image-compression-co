@@ -1,2 +1,15 @@
 Cuprite
 Artifacts in bands 0-2, 106-113 and 154-169
+
+Spatial dimensions: (lines, samples)
+
+Mauna Kea
+Spatial dimensions: 2816, 1047 originally, 2704, 729 after pre-processing
+Spectral dimension: 224 originally, we only keep ranges ((2, 103), (104, 107), (114, 153), (168, 224)), so 199 after filtering
+Rotate by -4.07 degrees (counterclockwise)
+2763, 740 is biggest rectangle after rotating
+2704, 729 is biggest rectangle after rotating with perfect squares
+
+Yellowstone
+Spatial dimensions: 11491, 777
+Spectral dimension: 224

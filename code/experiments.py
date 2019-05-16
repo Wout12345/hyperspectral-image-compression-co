@@ -1,5 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.misc import imsave
+import gc
 
 from tools import *
 import st_hosvd
@@ -8,15 +10,21 @@ default_experiments_amount = 10
 
 # Hoofdstuk 3: Methodologie
 
-def save_cuprite_image():
-	data = load_cuprite()
+def save_image(data, path):
 	image = np.sum(data, axis=2)
-	imsave("../tekst/images/cuprite_sum.png", np.rint(image/np.amax(image)*255).astype(int))
+	imsave(path, np.rint((image - np.amin(image))/(np.amax(image) - np.amin(image))*255).astype(int))
+
+def save_cuprite_image():
+	save_image(load_cuprite(), "../tekst/images/cuprite_sum.png")
 
 def save_pavia_image():
-	data = load_pavia()
-	image = np.sum(data, axis=2)
-	imsave("../tekst/images/pavia_sum.png", np.rint(image/np.amax(image)*255).astype(int))
+	save_image(load_pavia(), "../tekst/images/pavia_sum.png")
+
+def save_mauna_kea_raw_image():
+	save_image(load_mauna_kea_raw(), "../tekst/images/mauna_kea_raw_sum.png")
+
+def save_mauna_kea_image():
+	save_image(load_mauna_kea(), "../tekst/images/mauna_kea_sum.png")
 
 # Hoofdstuk 4: De Tuckerdecompositie
 
@@ -79,6 +87,23 @@ def lanczos():
 	with open("../tekst/data/gram-matrix-lanczos.tex", "w") as f:
 		f.write(lines[0])
 		f.write(lines[1])
+
+def lanczos_rank_comparison():
+	
+	data = load_cuprite()
+	test_truncation_rank_limit = 15
+	
+	for name, rank in (("Gram-matrix", None), ("Lanczos", 6), ("Lanczos", 10), ("Lanczos", 15)):
+		output = st_hosvd.compress_tucker(data, 0.025, extra_output=True, print_progress=True, use_pure_gramian=(name == "Gram-matrix"), use_lanczos_gramian=(name == "Lanczos"), test_all_truncation_ranks=True, calculate_explicit_errors=True, test_truncation_rank_limit=test_truncation_rank_limit, compression_rank=None if rank is None else (163, 261, rank))
+		errors = total_rank = output["truncation_rank_errors"][2]
+		plt.plot(range(1, len(errors) + 1), errors, label=name if rank is None else name + " (%s)"%rank)
+	
+	plt.xlabel("Compressierang")
+	plt.ylabel("Relatieve fout")
+	plt.legend()
+	plt.xlim(0, test_truncation_rank_limit)
+	plt.savefig("../tekst/images/lanczos_rank_comparison.png")
+	plt.close()
 
 def randomized_svd_cuprite_test():
 	
@@ -175,7 +200,7 @@ def randomized_svd_pavia_ratios():
 		times = np.zeros(amount)
 		for i in range(amount):
 			print("Testing sample ratio", sample_ratio)
-			output = st_hosvd.compress_tucker(data, 0.025, extra_output=True, randomized_svd=True, sample_ratio=sample_ratio)
+			output = st_hosvd.compress_tucker(data, 0.025, extra_output=True, use_pure_gramian=True, randomized_svd=True, sample_ratio=sample_ratio, samples_per_dimension=0)
 			errors[i] = rel_error(data, st_hosvd.decompress_tucker(output["compressed"]))
 		measurements.append((sample_ratio, np.mean(errors),  np.mean(errors) - np.amin(errors), np.amax(errors) - np.mean(errors)))
 	
@@ -206,7 +231,7 @@ def randomized_svd_pavia_test():
 	for method_index, randomized_svd in enumerate([False, True]):
 		for i in range(amount):
 			print(randomized_svd)
-			output = st_hosvd.compress_tucker(data, 0.025, extra_output=True, use_pure_gramian=True, randomized_svd=randomized_svd, sample_ratio=0.2, samples_per_dimension=100, store_rel_estimated_S_errors=True)
+			output = st_hosvd.compress_tucker(data, 0.025, extra_output=True, use_pure_gramian=True, randomized_svd=randomized_svd, sample_ratio=0.2, samples_per_dimension=1000, store_rel_estimated_S_errors=True)
 			if not randomized_svd:
 				print(output["compressed"]["core_tensor"].shape)
 				compression_rank_default = output["compressed"]["core_tensor"].shape
@@ -235,4 +260,69 @@ def randomized_svd_pavia_test():
 	with open("../tekst/data/randomized-svd-pavia-test.tex", "w") as f:
 		f.writelines([line + "\n" for line in lines])
 
-randomized_svd_pavia_test()
+def randomized_svd_mauna_kea_factors():
+	
+	# Plots errors for various sample factors
+	
+	amount = 3
+	sample_factors = []
+	measurements = [(5, 0.02717880737646068, 0.00012861920327634016, 0.00015362455127352487), (10, 0.02502612674184154, 0.00024805838640050773, 0.00023499619384074327), (20, 0.024994331423124776, 9.843555069857096e-05, 9.79481495378097e-05)]
+	
+	# Calculate errors
+	data = load_mauna_kea()
+	norm = custom_norm(data)
+	for sample_factor in sample_factors:
+		
+		errors = np.zeros(amount)
+		for i in range(amount):
+			print("Testing sample factor", sample_factor)
+			errors[i] = custom_norm(st_hosvd.decompress_tucker(st_hosvd.compress_tucker(data, 0.025, use_pure_gramian=True, randomized_svd=True, samples_per_dimension=sample_factor, sample_ratio=0)).__isub__(data))/norm
+			gc.collect()
+		measurements.append((sample_factor, np.mean(errors),  np.mean(errors) - np.amin(errors), np.amax(errors) - np.mean(errors)))
+		print(measurements[-1])
+	
+	# Plot errors
+	plt.errorbar([x[0] for x in measurements], [x[1] for x in measurements], yerr=[[x[2] for x in measurements], [x[3] for x in measurements]], capsize=5)
+	print("measurements =", measurements)
+	
+	plt.xlabel("Steekproeffactor")
+	plt.ylabel("Relatieve fout")
+	plt.savefig("../tekst/images/randomized_svd_mauna_kea_factors.png")
+	plt.close()
+
+def randomized_svd_mauna_kea_average():
+	
+	amount = default_experiments_amount
+	data = load_mauna_kea()
+	lines = []
+	modes = 3
+	
+	# Measurements
+	rel_errors = np.empty((2, amount))
+	compression_factors = np.empty((2, amount))
+	total_times = np.empty((2, amount))
+	
+	norm = custom_norm(data)
+	for method_index, (randomized_svd, samples_per_dimension) in enumerate([[False, 1000], [True, 20]]):
+		for i in range(amount):
+			print(randomized_svd)
+			output = st_hosvd.compress_tucker(data, 0.025, extra_output=True, use_pure_gramian=True, randomized_svd=randomized_svd, sample_ratio=0, samples_per_dimension=samples_per_dimension)
+			
+			rel_errors[method_index][i] = custom_norm(st_hosvd.decompress_tucker(output["compressed"]).__isub__(data))/norm
+			gc.collect()
+			compression_factors[method_index][i] = st_hosvd.get_compression_factor_tucker(data, output["compressed"])
+			total_times[method_index][i] = output["total_cpu_time"]
+	
+	lines.append("Min. relatieve fout & {:.8f} & {:.8f} \\\\ \\hline".format(np.amin(rel_errors[0]), np.amin(rel_errors[1])))
+	lines.append("Gem. relatieve fout & {:.8f} & {:.8f} \\\\ \\hline".format(np.mean(rel_errors[0]), np.mean(rel_errors[1])))
+	lines.append("Max. relatieve fout & {:.8f} & {:.8f} \\\\ \\hline".format(np.amax(rel_errors[0]), np.amax(rel_errors[1])))
+	lines.append("Min. compressiefactor & {:.8f} & {:.8f} \\\\ \\hline".format(np.amin(compression_factors[0]), np.amin(compression_factors[1])))
+	lines.append("Gem. compressiefactor & {:.8f} & {:.8f} \\\\ \\hline".format(np.mean(compression_factors[0]), np.mean(compression_factors[1])))
+	lines.append("Max. compressiefactor & {:.8f} & {:.8f} \\\\ \\hline".format(np.amax(compression_factors[0]), np.amax(compression_factors[1])))
+	lines.append("Totale tijd (s) & {:.2f} & {:.2f} \\\\ \\hline".format(np.mean(total_times[0]), np.mean(total_times[1])))
+	
+	with open("../tekst/data/randomized-svd-mauna-kea-average.tex", "w") as f:
+		f.writelines([line + "\n" for line in lines])
+
+save_mauna_kea_raw_image()
+save_mauna_kea_image()

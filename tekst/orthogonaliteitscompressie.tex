@@ -1,0 +1,28 @@
+\section{Orthogonaliteitscompressie}
+
+Men zou kunnen denken dat bij de Tuckerdecompositie de meeste ruimte ingenomen wordt door de kerntensor. Wanneer men namelijk naar tensoren met $k$ modes kijkt, waarbij de lengte per mode $n$ constant blijft en telkens gecomprimeerd wordt naar constante rang $r$, dan groeit de gecomprimeerde kerntensor met $O(r^k)$ en de factormatrices slechts met $O(knr)$, dus met $n, r$ constant en groeiende $k$ worden de factormatrices verwaarloosbaar.\\
+
+In de praktijk werken we echter met een beperkt aantal modes en vaak lage compressierangen. Zelfs als we later reshapen verhogen we hiermeee $k$, maar verlagen we $n$ en $r$, dus het aandeel van de kerntensor zal hierdoor niet zozeer veel verhogen. Bijvoorbeeld, wanneer men de ST-HOSVD toepast op Cuprite met relatieve doelfout 0.025, comprimeert men van rang (512, 614, 190) naar (139, 192, 4) en nemen de factormatrices 64\% van het geheugen in. Bij Mauna Kea, een veel grotere dataset, is dit percentage 55\%. We kunnen dus concluderen dat het zeker interessant is om te kijken naar specifieke compressietechnieken voor de factormatrices.\\
+
+We weten dat de factormatrices orthogonaal zijn en dit kunnen we benutten. Stel namelijk, we hebben een factormatrix $U \in \mathbb{R}^{n \times r}$ en verdelen deze op de volgende wijze:
+\[
+U = \begin{bmatrix}
+A & c & \dots \\
+B & x & \dots \\
+\end{bmatrix}
+\]
+met $A \in \mathbb{R}^{(n-k) \times k}$, $B \in \mathbb{R}^{k \times k}$, $c \in \mathbb{R}^{n-k}$, $x \in \mathbb{R}^{k}$, voor willekeurige $1 \leq k < n$. Vanwege orthogonaliteit weten we dat:
+\begin{align*}
+\begin{bmatrix}
+A \\
+B \\
+\end{bmatrix}^T
+\begin{bmatrix}
+c \\
+x \\
+\end{bmatrix}
+&= 0 \\
+A^T c + B^T x &= 0 \\
+B^T x &= -A^T c
+\end{align*}
+Bijgevolg kunnen we $x$ berekenen als de oplossing van een lineair stelsel met $k$ onafhankelijke vergelijkingen en $k$ variabelen en moeten deze waarden niet opgeslagen worden. Theoretisch gezien kan men dus, door dit proces sequentieel uit te voeren voor $k = 1, \dots, n - 1$, een hele driehoek van $r (r - 1)/2$ elementen uit de matrix laten vallen. Om terug te komen op de eerdere voorbeelden: dit zou bij Cuprite en Mauna Kea neerkomen op 9.4\% en 7.5\% van alle waarden (inclusief kerntensor) respectievelijk. Men kan ook kiezen om de kolommen in een andere volgorde te verwerken, maar dit leek ons het beste zodat de herberekende waarden vooral zitten in de latere singuliere vectoren, die minder belangrijk zijn.

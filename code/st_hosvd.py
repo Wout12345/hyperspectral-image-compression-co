@@ -8,8 +8,12 @@ import matplotlib.pyplot as plt
 import bitarray
 import zlib
 
+from tools import *
+
 # Constants
 epsilon = 1e-9
+
+# Helper functions
 
 def product(iterable):
 	return reduce(lambda x, y: x*y, iterable, 1)
@@ -18,12 +22,12 @@ def custom_eigh(A):
 	# Returns eigenvalue decomposition with the result sorted based on the eigenvalues and the sqrt of the eigenvalues instead of the eigenvalues
 	# Matrix must be symmetric
 	lambdas, X = np.linalg.eigh(A)
-	if not np.all(lambdas > -epsilon) and np.amin(lambdas)/np.amax(lambdas) < -epsilon:
+	if not np.all(lambdas > -epsilon) and np.amin(lambdas)/np.amax(lambdas) < -1e-6:
 		print("Not all eigenvalues are larger than -%s! Largest eigenvalue: %s, smallest eigenvalue: %s"%(epsilon, np.amax(lambdas), np.amin(lambdas)))
 	lambdas = lambdas.clip(0, None)
 	return np.sqrt(lambdas[::-1]), X[:, ::-1]
 
-def custom_lanczos(A, bound, transpose=False):
+def custom_lanczos(A, bound, truncation_rank=None, transpose=False):
 	
 	# Computes the square roots of biggest eigenvalues and corresponding eigenvectors of A*A^T (or A^T*A if transpose) until the sum of the eigenvalues is >= bound
 	
@@ -43,11 +47,7 @@ def custom_lanczos(A, bound, transpose=False):
 	# Iterations
 	i = 1
 	alpha_sum = alphas[0]
-	while i < vectors_dimension:
-		
-		# Stop criterion
-		if alpha_sum >= bound:
-			break
+	while (truncation_rank is None and i < vectors_dimension and alpha_sum < bound) or i < truncation_rank:
 		
 		betas[i] = np.linalg.norm(w)
 		Q[:, i] = w/betas[i] # betas[i] should be non-zero for input of full rank
@@ -67,7 +67,9 @@ def custom_lanczos(A, bound, transpose=False):
 	
 	return np.sqrt(lambdas[::-1]), transformed_X[:, ::-1]
 
-def compress_tucker(data, relative_target_error, extra_output=False, print_progress=False, mode_order=None, output_type="float32", compression_rank=None, randomized_svd=False, sample_ratio=0.1, samples_per_dimension=5, sort_indices=False, use_pure_gramian=False, use_qr_gramian=False, use_lanczos_gramian=False, store_rel_estimated_S_errors=False):
+# Phase 1
+
+def compress_tucker(data, relative_target_error, extra_output=False, print_progress=False, mode_order=None, output_type="float32", compression_rank=None, randomized_svd=False, sample_ratio=0.1, samples_per_dimension=5, sort_indices=False, use_pure_gramian=False, use_qr_gramian=False, use_lanczos_gramian=False, store_rel_estimated_S_errors=False, test_all_truncation_ranks=False, calculate_explicit_errors=False, test_truncation_rank_limit=None):
 	
 	# This function calculates the ST-HOSVD of the given 3D tensor (see https://epubs.siam.org/doi/abs/10.1137/110836067)
 	# data should be a numpy array and will not be changed by this call
@@ -77,6 +79,7 @@ def compress_tucker(data, relative_target_error, extra_output=False, print_progr
 	# ...
 	
 	# compressed result is a dictionary of the form:
+	#	- method: for now just "st-hosvd"
 	#	- mode_order: given mode order
 	#	- original_shape: relevant for reshaping
 	#	- factor_matrices: list of factor matrices in order of mode handling (so each time a mode is processed a factor matrix is appended)
@@ -92,18 +95,19 @@ def compress_tucker(data, relative_target_error, extra_output=False, print_progr
 	#	- population_sizes
 	#	- sample_sizes
 	#	- rel_estimated_S_errors: only if store_rel_estimated_S_errors
+	#	- truncation_rank_errors: only if test_all_truncation_ranks, dictionary mapping modes to list of errors, else {}
 	
 	
 	# Start time measurements
 	total_cpu_start = clock()
 	
 	# Initialization
-	core_tensor = data.astype("float64")
+	core_tensor = data.astype("float32")
 	if mode_order is None:
 		mode_order = [core_tensor.ndim - 1,] # Spectral dimension
 		mode_order.extend(np.flip(np.argsort(core_tensor.shape[:-1])).tolist()) # Spatial dimensions, from large to small
 	factor_matrices = []
-	data_norm = np.linalg.norm(data)
+	data_norm = custom_norm(data)
 	sq_abs_target_error = (relative_target_error*data_norm)**2
 	sq_error_so_far = 0
 	modes = core_tensor.ndim
@@ -113,9 +117,11 @@ def compress_tucker(data, relative_target_error, extra_output=False, print_progr
 		"cpu_times_svd": [],
 		"population_sizes": [],
 		"sample_sizes": [],
-		"rel_estimated_S_errors": []
+		"rel_estimated_S_errors": [],
+		"truncation_rank_errors": {}
 	}
 	compressed = {
+		"method": "st-hosvd",
 		"original_shape": data.shape,
 		"mode_order": mode_order
 	}
@@ -131,6 +137,9 @@ def compress_tucker(data, relative_target_error, extra_output=False, print_progr
 		population_size = core_tensor.size//core_tensor.shape[mode]
 		output["population_sizes"].append(population_size)
 		sample_size = round(min(population_size, max(core_tensor.shape[mode]*samples_per_dimension, population_size*sample_ratio)))
+		
+		if core_tensor.shape[mode] >= core_tensor.size//core_tensor.shape[mode]:
+			raise Exception("Less vectors than dimensions for SVD!")
 		
 		# Transpose modes if necessary to bring current mode to front (unless current mode is at front of back already)
 		# transposition_order is also its own inverse order since just two elements are swapped
@@ -174,7 +183,7 @@ def compress_tucker(data, relative_target_error, extra_output=False, print_progr
 				S, U = custom_eigh(R.T @ R)
 			elif use_lanczos_gramian:
 				sq_mode_target_norm = data_norm**2 - sq_error_so_far - sq_mode_target_error
-				S, U = custom_lanczos(sample_matrix, sq_mode_target_norm, transpose=True)
+				S, U = custom_lanczos(sample_matrix, sq_mode_target_norm, transpose=True, truncation_rank=None if compression_rank is None else compression_rank[mode])
 				sq_abs_norm_so_far = np.sum(np.square(S))
 				truncation_rank = S.size
 			else:
@@ -189,7 +198,7 @@ def compress_tucker(data, relative_target_error, extra_output=False, print_progr
 				S, U = custom_eigh(R.T @ R)
 			elif use_lanczos_gramian:
 				sq_mode_target_norm = data_norm**2 - sq_error_so_far - sq_mode_target_error
-				S, U = custom_lanczos(sample_matrix, sq_mode_target_norm)
+				S, U = custom_lanczos(sample_matrix, sq_mode_target_norm, truncation_rank=None if compression_rank is None else compression_rank[mode])
 				sq_abs_norm_so_far = np.sum(np.square(S))
 				truncation_rank = S.size
 			else:
@@ -209,6 +218,35 @@ def compress_tucker(data, relative_target_error, extra_output=False, print_progr
 		S_calculation_time = clock() - S_calculation_time
 		cpu_start += S_calculation_time
 		total_cpu_start += S_calculation_time
+		
+		# Test all truncation ranks if requested
+		if test_all_truncation_ranks:
+			output["truncation_rank_errors"][mode] = []
+			current_norm = custom_norm(core_tensor)
+			orthogonality_factor = np.linalg.norm(U.T @ U - np.eye(S.shape[0]))/math.sqrt(S.shape[0])
+			max_truncation_rank = min(S.shape[0], test_truncation_rank_limit)
+			if not calculate_explicit_errors and orthogonality_factor < 1e-3:
+				# Factor matrix is considered orthogonal enough
+				# Should work mathematically, also tested for low ranks to give approximately the same results
+				if mode == modes - 1:
+					sq_norms = np.sum(np.square(core_tensor @ U), axis=0)
+				else:
+					sq_norms = np.sum(np.square(U.T.copy() @ core_tensor), axis=1)
+				accumulated_sq_norm = current_norm**2
+				for truncation_rank2 in range(1, max_truncation_rank + 1):
+					accumulated_sq_norm -= sq_norms[truncation_rank2 - 1]
+					# accumulated_sq_norm should be positive mathematically, but may be a bit negative because of numerics, unorthogonality in the factor matrix, ...
+					# Difference didn't seem significant enough to look into further
+					output["truncation_rank_errors"][mode].append(math.sqrt(max(0, accumulated_sq_norm))/current_norm)
+			else:
+				# Factor matrix is not very orthogonal, brute-force each truncation rank
+				for truncation_rank2 in range(1, max_truncation_rank + 1):
+					factor_matrix = U[:, :truncation_rank2]
+					if mode == modes - 1:
+						decompressed_tensor = core_tensor @ (factor_matrix @ factor_matrix.T)
+					else:
+						decompressed_tensor = (factor_matrix @ factor_matrix.T) @ core_tensor
+					output["truncation_rank_errors"][mode].append(custom_norm(decompressed_tensor - core_tensor)/current_norm)
 		
 		# Determine compression rank
 		if not use_lanczos_gramian:
@@ -287,44 +325,10 @@ def decompress_tucker(compressed):
 	# returns the full tensor
 	
 	# Cast to higher-precision float
-	core_tensor = compressed["core_tensor"].astype(np.dtype("float64"))
+	core_tensor = compressed["core_tensor"].astype(np.dtype("float32"))
 	factor_matrices = []
 	for factor_matrix in compressed["factor_matrices"]:
-		factor_matrices.append(factor_matrix.astype(np.dtype("float64")))
-	
-	# Decompress factor matrices by reconstructing orthogonal components
-	"""for factor_matrix in factor_matrices:
-		
-		cpu_start = clock()
-		
-		rows, cols = factor_matrix.shape
-		error = 0
-		exact = np.copy(factor_matrix)
-		for step in range(1, factor_matrix_reconstruction_steps + 1):
-			
-			start_col = int(round(step/(factor_matrix_reconstruction_steps + 1)*(factor_matrix.shape[1] - factor_matrix_reconstruction_margin))) + factor_matrix_reconstruction_margin
-			end_col = int(round((step + 1)/(factor_matrix_reconstruction_steps + 1)*(factor_matrix.shape[1] - factor_matrix_reconstruction_margin))) + factor_matrix_reconstruction_margin
-			start_row = factor_matrix.shape[0] - start_col + factor_matrix_reconstruction_margin
-			
-			if end_col == start_col or start_row >= factor_matrix.shape[0]:
-				continue
-			
-			factor_matrix[start_row:, start_col:end_col], _, _, _ = np.linalg.lstsq(factor_matrix[start_row:, :start_col].T, -factor_matrix[:start_row, :start_col].T @ factor_matrix[:start_row, start_col:end_col])
-			
-			# Orthonormalize full column
-			for col in range(start_col, end_col):
-				for _ in range(2):
-					factor_matrix[:, col] = factor_matrix[:, col] - factor_matrix[:, :col] @ factor_matrix[:, :col].T @ factor_matrix[:, col]
-					norm = np.linalg.norm(factor_matrix[:, col])
-					if norm >= epsilon:
-						factor_matrix[:, col] = factor_matrix[:, col]/norm
-			
-			# Blockwise orthonormalization
-			for _ in range(2):
-				factor_matrix[:, start_col:end_col] = factor_matrix[:, start_col:end_col] - factor_matrix[:, :start_col] @ factor_matrix[:, :start_col].T @ factor_matrix[:, start_col:end_col]
-				norms = np.linalg.norm(factor_matrix[:, start_col:end_col], axis=0)
-				np.putmask(norms, norms < epsilon, 1)
-				factor_matrix[:, start_col:end_col] = factor_matrix[:, start_col:end_col] @ np.diag(1./norms)"""
+		factor_matrices.append(factor_matrix.astype(np.dtype("float32")))
 	
 	# Mode order is mathematically irrelevant, but may affect processing time (and maybe precision) significantly
 	modes = core_tensor.ndim
@@ -373,11 +377,11 @@ def get_compress_tucker_size(compressed):
 	for factor_matrix in compressed["factor_matrices"]:
 		
 		factor_matrix_size = factor_matrix.size
-		for step in range(1, factor_matrix_reconstruction_steps + 1):
+		for step in range(1, orthogonality_reconstruction_steps + 1):
 			
-			start_col = int(round(step/(factor_matrix_reconstruction_steps + 1)*(factor_matrix.shape[1] - factor_matrix_reconstruction_margin))) + factor_matrix_reconstruction_margin
-			end_col = int(round((step + 1)/(factor_matrix_reconstruction_steps + 1)*(factor_matrix.shape[1] - factor_matrix_reconstruction_margin))) + factor_matrix_reconstruction_margin
-			start_row = factor_matrix.shape[0] - start_col + factor_matrix_reconstruction_margin
+			start_col = int(round(step/(orthogonality_reconstruction_steps + 1)*(factor_matrix.shape[1] - orthogonality_reconstruction_margin))) + orthogonality_reconstruction_margin
+			end_col = int(round((step + 1)/(orthogonality_reconstruction_steps + 1)*(factor_matrix.shape[1] - orthogonality_reconstruction_margin))) + orthogonality_reconstruction_margin
+			start_row = factor_matrix.shape[0] - start_col + orthogonality_reconstruction_margin
 			
 			if end_col == start_col or start_row >= factor_matrix.shape[0]:
 				continue
@@ -413,13 +417,52 @@ def save_tucker(compressed, path):
 	arrays = compressed["factor_matrices"] + [compressed["core_tensor"]]
 	np.savez(path, arrays)
 
+# Phase 2
+
 target_bits_after_point = 0
 meta_quantization_step = 2**-target_bits_after_point
 quantization_steps = 256
 starting_layer = 10
 
-factor_matrix_reconstruction_margin = 10
-factor_matrix_reconstruction_steps = 0
+def compress_orthogonality(data, orthogonality_reconstruction_margin=10, orthogonality_reconstruction_steps=0):
+	
+
+def decompress_orthogonality(data, normalize=False):
+	
+	"""for factor_matrix in factor_matrices:
+		
+		cpu_start = clock()
+		
+		rows, cols = factor_matrix.shape
+		error = 0
+		exact = np.copy(factor_matrix)
+		for step in range(1, orthogonality_reconstruction_steps + 1):
+			
+			start_col = int(round(step/(orthogonality_reconstruction_steps + 1)*(factor_matrix.shape[1] - orthogonality_reconstruction_margin))) + orthogonality_reconstruction_margin
+			end_col = int(round((step + 1)/(orthogonality_reconstruction_steps + 1)*(factor_matrix.shape[1] - orthogonality_reconstruction_margin))) + orthogonality_reconstruction_margin
+			start_row = factor_matrix.shape[0] - start_col + orthogonality_reconstruction_margin
+			
+			if end_col == start_col or start_row >= factor_matrix.shape[0]:
+				continue
+			
+			factor_matrix[start_row:, start_col:end_col], _, _, _ = np.linalg.lstsq(factor_matrix[start_row:, :start_col].T, -factor_matrix[:start_row, :start_col].T @ factor_matrix[:start_row, start_col:end_col])
+			
+			# Orthonormalize full column
+			for col in range(start_col, end_col):
+				for _ in range(2):
+					factor_matrix[:, col] = factor_matrix[:, col] - factor_matrix[:, :col] @ factor_matrix[:, :col].T @ factor_matrix[:, col]
+					norm = np.linalg.norm(factor_matrix[:, col])
+					if norm >= epsilon:
+						factor_matrix[:, col] = factor_matrix[:, col]/norm
+			
+			# Blockwise orthonormalization
+			for _ in range(2):
+				factor_matrix[:, start_col:end_col] = factor_matrix[:, start_col:end_col] - factor_matrix[:, :start_col] @ factor_matrix[:, :start_col].T @ factor_matrix[:, start_col:end_col]
+				norms = np.linalg.norm(factor_matrix[:, start_col:end_col], axis=0)
+				np.putmask(norms, norms < epsilon, 1)
+				factor_matrix[:, start_col:end_col] = factor_matrix[:, start_col:end_col] @ np.diag(1./norms)"""
+	
+	pass
 
 def compress_quantize1(data):
 	
@@ -644,6 +687,8 @@ def print_compression_rate_quantize2(original, compressed):
 	print("Compressed size:", compressed_size)
 	print("Compression ratio:", compressed_size/original_size)
 
+orthogonality_reconstruction_margin = 10
+orthogonality_reconstruction_steps = 0
 def get_compress_quantize2_size(compressed, full_output=False):
 	
 	factor_matrices_quantized, core_tensor_quantized = compressed
@@ -658,11 +703,11 @@ def get_compress_quantize2_size(compressed, full_output=False):
 	else:
 		code = {x - 2**(factor_matrix_bits - 1): bitarray.bitarray(format(x, "0%sb"%factor_matrix_bits)) for x in range(2**factor_matrix_bits)} # Storing with shifted notation
 	for factor_matrix in factor_matrices_quantized:
-		for step in range(0, factor_matrix_reconstruction_steps + 1):
+		for step in range(0, orthogonality_reconstruction_steps + 1):
 			
-			start_col = int(round(step/(factor_matrix_reconstruction_steps + 1)*(factor_matrix.shape[1] - factor_matrix_reconstruction_margin))) + factor_matrix_reconstruction_margin
-			end_col = int(round((step + 1)/(factor_matrix_reconstruction_steps + 1)*(factor_matrix.shape[1] - factor_matrix_reconstruction_margin))) + factor_matrix_reconstruction_margin
-			end_row = factor_matrix.shape[0] - start_col + factor_matrix_reconstruction_margin
+			start_col = int(round(step/(orthogonality_reconstruction_steps + 1)*(factor_matrix.shape[1] - orthogonality_reconstruction_margin))) + orthogonality_reconstruction_margin
+			end_col = int(round((step + 1)/(orthogonality_reconstruction_steps + 1)*(factor_matrix.shape[1] - orthogonality_reconstruction_margin))) + orthogonality_reconstruction_margin
+			end_row = factor_matrix.shape[0] - start_col + orthogonality_reconstruction_margin
 			if end_col == start_col:
 				continue
 			factor_matrices_bits.encode(code, factor_matrix[:end_row, start_col:end_col].flatten())

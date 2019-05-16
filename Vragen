@@ -19,7 +19,24 @@ Inhoud, later:
 
 29/04/2019
 
-- Referentie randomized SVD
-- Waarom nut van tensor-gebaseerde technieken bij methodologie? Lijkt me meer iets voor inleiding.
-- Voorwoord?
-- Inleveren in juni?
+Af:
+- Inleveren in juni? Ok
+- Welk algoritme voor lossless compressie datasets?
+- Weinig ... gebruiken, betere formulering: onder meer A en B i.p.v. A, B, ...
+- zlib, ... erg vreemd, maar een opsomming
+- Welke kant van afbeelding afgehakt bij Pavia Centre
+- QR algoritme: niet alleen trager, maar ook geen invloed op fout
+- eventueel \cdot i.p.v. *
+- symm. tridiag matrix eigenwaardenontbinding: erg snel, hoe snel? O(k^2) met referentie naar bv. boek van Demmel
+- geef aan welke implementatie gebruikt wordt voor symmetrische tridiagonale matrix
+- Referentie randomized SVD: door papers heen gaan en referenties volgen, specifieke versie, referentie naar literatuur
+- Lanczos werkt goed, 200 naar 4 of 200 naar 6, zeker een valabele techniek, maar in dit geval niet precies genoeg
+- eventueel bij Lanczos nog plots toevoegen met verdeling relatieve fout in functie van compressierang, bespreken dat een beetje hoger betekent dat men voor dezelfde fout een pakje verder moet gaan kijken op de rang-as vanwege de hyperbool-achtige vorm van de grafiek (ook verdeling van singuliere waarden)
+- Grotere dataset, eventueel berg, rond ~1GB
+
+Info:
+- Waarom nut van tensor-gebaseerde technieken bij methodologie? Lijkt me meer iets voor inleiding.: Inleiding OK, bands zien er visueel erg soortgelijk uit, vandaar dat we misschien iets met tensor-gebaseerde technieken doen of iets anders dat de spectrale verbanden behoudt
+
+Todo:
+
+09/05/2019

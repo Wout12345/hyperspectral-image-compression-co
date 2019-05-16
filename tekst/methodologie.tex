@@ -7,13 +7,13 @@ We zullen zowel bij het vergelijken van de uiteindelijke algoritmes in hoofdstuk
 Om rekening te houden met variantie, zullen tijdsmetingen in deze tekst uitgemiddeld worden over 10 experimenten, tenzij anders vermeld. Technisch gezien zijn de resultaten van stochastische algoritmen ook niet compleet deterministisch, maar aangezien de variantie hierop vaak minimaal is zal de nood aan een grotere steekproef geval per geval behandeld worden. Daarnaast zullen tijdsmetingen ook uitgedrukt worden in CPU-tijd.
 
 \section{Hardware}
-Tenzij anders vermeld werden de tijdsmetingen in deze tekst uitgevoerd op \'e\'en core van een Intel(R) Core(TM) i7-4700HQ CPU @ 2.40GHz processor met 6GB RAM (waarvan meestal slechts een klein deel gebruikt werd weliswaar).
+Tenzij anders vermeld werden de tijdsmetingen in deze tekst uitgevoerd op \'e\'en core van een Intel(R) Core(TM) i7-4700HQ CPU @ 2.40GHz processor met 6GB RAM.
 
 \section{Compressiefactor}
 
-De compressiefactor is een belangrijke variabele die we zullen gebruiken in deze tekst. Hiermee hebben we het over de verhouding tussen de grootte van de originele, ongecomprimeerde 3D-tensor (dus bijvoorbeeld voor een $100 \times 100 \times 10$ tensor bestaande uit 16-bit integers is dit 200000 bytes) en de grootte van de gecomprimeerde versie. Dit is echter een erg simpel formaat en niet altijd de beste manier om deze data op te slaan. Men moet er dus rekening mee houden dat men zelfs door alleen simpele lossless compressie hierop uit te voeren al een compressiefactor van bv. 1.5 kan bekomen. Bijgevolg dient deze factor vooral relatief bekeken te worden, om verschillende compressietechnieken met elkaar te kunnen vergelijken.\\
+De compressiefactor is een belangrijke variabele die we zullen gebruiken in deze tekst. Hiermee hebben we het over de verhouding tussen de grootte van de originele, ongecomprimeerde 3D-tensor (dus bijvoorbeeld voor een $100 \times 100 \times 10$ tensor bestaande uit 16-bit integers is dit 200000 bytes) en de grootte van de gecomprimeerde versie (met als datatype voor niet-gehele getallen 32-bit floats, tenzij anders vermeld). Dit is echter een erg simpel formaat en niet altijd de beste manier om deze data op te slaan. Men moet er dus rekening mee houden dat men alleen al door de rauwe data op te slaan in een Zip-archief een compressiefactor van bijvoorbeeld 1.35 kan bekomen. Bijgevolg dient deze factor vooral relatief bekeken te worden, om verschillende compressietechnieken met elkaar te kunnen vergelijken.\\
 
-Verder zal het geheugengebruik van metadata (afmetingen van tensoren, compressieparameters, ...) verwaarloosd worden, aangezien dit veel kleiner is dan de benodigde opslagruimte voor tensoren, matrices, ...
+Verder zal het geheugengebruik van metadata (onder meer afmetingen van tensoren, compressieparameters en modevolgorde) verwaarloosd worden, aangezien dit veel kleiner is dan de benodigde opslagruimte voor tensoren en matrices.
 
 \section{Compressiefout}
 
@@ -25,33 +25,61 @@ Om de fouten ge\"introduceerd door de lossy compressie te vergelijken, zullen we
 
 \section{Implementatie}
 
-De implementatie van de besproken algoritmen gebeurde in Python, waarbij het zware rekenwerk wordt uitgevoerd via library calls, voornamelijk aan de hand van NumPy/SciPy maar ook bijvoorbeeld zlib, ... Hierbij zijn ook alternatieve strategie\"en getest (zoals het al dan niet minimaliseren van transposities, het gebruik van \texttt{numpy.einsum}, ...), waarbij telkens de meest performante werd gekozen. Deze keuzes zullen niet behandeld worden in deze tekst vanwege de sterke afhankelijkheid van de gekozen programmeertaal. Desalniettemin kan het dat er nog steeds merkbare ineffici\"enties in de implementatie zijn.
+De implementatie van de besproken algoritmen gebeurde in Python, waarbij het zware rekenwerk werd uitgevoerd via library calls, voornamelijk aan de hand van NumPy, SciPy en zlib. Hierbij zijn ook alternatieve strategie\"en getest (zoals het al dan niet minimaliseren van transposities, het gebruik van \texttt{numpy.einsum}, ...), waarbij telkens de meest performante werd gekozen. Deze keuzes zullen niet behandeld worden in deze tekst vanwege de sterke afhankelijkheid van de gekozen programmeertaal. Desalniettemin kan het dat er nog steeds merkbare ineffici\"enties in de implementatie zijn.
 
-\newpage
 \section{Datasets}
 
-Om een idee te krijgen van de effici\"entie van de verschillende compressietechnieken, moet men gebruik maken van echte hyperspectrale afbeeldingen. Hieronder volgen enkele voorbeelden met hun bijbehorende eigenschappen. De afbeeldingen zijn slechts een 2D-voorstelling van de volledige data, verkregen door alle frequentiekanalen bij elkaar op te tellen en deze sommen voor te stellen met grijswaarden.
+Om een idee te krijgen van de effici\"entie van de verschillende compressietechnieken, moet men gebruik maken van echte hyperspectrale afbeeldingen. Hieronder volgen enkele voorbeelden met hun bijbehorende eigenschappen. De afbeeldingen zijn slechts een 2D-voorstelling van de hyperspectrale data, verkregen door alle frequentiekanalen bij elkaar op te tellen en deze sommen voor te stellen met grijswaarden. Dit zijn ook telkens voorstellingen van de finale datasets waarmee we werken, zonder eventuele verwijderde spatiale en spectrale banden.\\
+
+Bij de voorverwerking zullen we vaak bepaalde spectrale banden weglaten indien blijkt dat deze artefacten bevatten (onder meer banden met waarde 0, banden met veel te hoge, willekeurig verdeelde intensiteiten en naburige banden). Op spatiaal vlak zullen we soms de afmetingen naar beneden afronden tot het dichtsbijzijnde kwadraat; hierdoor kan men deze assen eventueel later nog makkelijk reshapen. Verder is het ook in sommige gevallen nodig om een geroteerde in plaats van as-gealigneerde rechthoek te selecteren. Hierbij vallen de roosterpunten in het nieuwe assenstelsel niet exact op oude roosterpunten en zal de nieuwe dataset gereconstrueerd worden door bilineair te interpoleren \cite{ref:bilinear_interpolation} over de twee spatiale assen.\\
+
+Omdat de geproduceerde bestanden te groot zijn om in bijlage toe te voegen en deze voorverwerking niet triviaal is om formeel te beschrijven, hebben we de code van de voorverwerker toegevoegd in bijlage \ref{app:voorverwerker}.
 
 \subsection{Cuprite}
 
 \begin{figure}[H]
   \centering
   \includegraphics[scale=0.5]{images/cuprite_sum.png}
-  \caption{Cuprite, VS. Bron: AVIRIS \cite{ref:cuprite}}.
+  \caption{Cuprite, VS. Bron: AVIRIS \cite{ref:cuprite}}
   \label{fig:cuprite_sum}
 \end{figure}
 
 \textbf{Spatiale dimensies:} $512 \times 614$\\
-\textbf{Spectrale dimensie:} 224 origineel, maar voor verder gebruik zijn de frequentiekanalen 0-3, 106-113, 152-168 en 219-223 verwijderd aangezien deze artefacten bevatten (banden met waarde 0, banden met veel te hoge, willekeurig verdeelde intensiteiten en naburige banden), dus de uiteindelijke spectrale dimensie is 190.
+\textbf{Spectrale dimensie:} 190\\
+\textbf{Voorverwerking:} De originele spectrale dimensie was 224, maar banden 0-3, 106-113, 152-168 en 219-223 werden verwijderd.
 
 \subsection{Pavia Centre}
 
 \begin{figure}[H]
   \centering
   \includegraphics[scale=0.4]{images/pavia_sum.png}
-  \caption{Pavia Centre, Itali\"e. Bron: ROSIS \cite{ref:pavia}}.
+  \caption{Pavia Centre, Itali\"e. Bron: ROSIS \cite{ref:pavia}}
   \label{fig:pavia_sum}
 \end{figure}
 
-\textbf{Spatiale dimensies:} Na het verwijderen van de banden zonder informatie, $1096 \times 715$ (zie de download van \cite{ref:pavia}), maar om makkelijker te kunnen reshapen zullen we werken met de $1089 \times 676$ pixels met laagste indices.\\
-\textbf{Spectrale dimensie:} 102
+\textbf{Spatiale dimensies:} $1089 \times 676$\\
+\textbf{Spectrale dimensie:} 102\\
+\textbf{Voorverwerking:} De download van de EHU \cite{ref:pavia} heeft al een reeks spatiale banden zonder informatie weggelaten en heeft spatiale dimensies $1096 \times 715$. Hiervan selecteerden we de pixels met de laagste indices. De weggelaten rijen en kolommen zouden zich dus onder en rechts van de afbeelding hierboven bevinden.
+
+\newpage
+\subsection{Mauna Kea}
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[scale=0.14]{images/mauna_kea_raw_sum.png}
+  \caption{Origineel}
+\end{subfigure}%
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[scale=0.14]{images/mauna_kea_sum.png}
+  \caption{Na voorverwerking}
+\end{subfigure}
+\caption{Mauna Kea, VS. Bron: AVIRIS \cite{ref:aviris}}
+\label{fig:mauna_kea}
+\end{figure}
+
+\textbf{Spatiale dimensies:} $2704 \times 729$\\
+\textbf{Spectrale dimensie:} 199\\
+\textbf{Voorverwerking:} Op spatiaal vlak werd een rechthoek geselecteerd, beginnend in (40, 240) en 4.07 graden wijzerzin gedraaid ten opzichte van het originele assenstelsel. Op spectraal vlak werden van de 224 originele banden de banden 0-1, 103, 107-113 en 153-167 verwijderd. Hierna werden alle waarden verschoven en geschaald zodat het bereik ervan exact overeenkomt met dat van unsigned 16-bit integers, het data type dat ook voor de andere datasets gebruikt werd.

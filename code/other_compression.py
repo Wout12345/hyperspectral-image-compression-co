@@ -3,6 +3,7 @@ from PIL import Image
 from io import BytesIO
 import subprocess as sp
 import threading
+import gc
 
 def compress_jpeg(data, quality):
 	
@@ -65,7 +66,11 @@ def compress_video(data, crf=23):
 	# Quantize data and convert to bytes
 	min_value = np.amin(data)
 	scale = (np.amax(data) - min_value)/255
-	data = np.rint((data - min_value)/scale).astype("uint8")
+	# Next lines could be one line, but often exceeds memory
+	output_data = np.empty(data.shape, dtype="uint8")
+	for i in range(data.shape[2]):
+		output_data[:, :, i] = np.rint((data[:, :, i] - min_value)/scale).astype("uint8")
+	output_data = np.transpose(output_data, (2, 0, 1)).tobytes()
 	
 	# Set up process
 	command = [
@@ -93,9 +98,10 @@ def compress_video(data, crf=23):
 		video.extend(p.stdout.read())
 	
 	# Wait for output while sending input
+	gc.collect()
 	thread = threading.Thread(target=read_output)
 	thread.start()
-	p.stdin.write(np.transpose(data, (2, 0, 1)).tobytes())
+	p.stdin.write(output_data)
 	p.stdin.close()
 	thread.join()
 	
@@ -123,11 +129,12 @@ def decompress_video(compressed):
 	p = sp.Popen(command, stdin=sp.PIPE, stdout=sp.PIPE, bufsize=buffer_size)
 	
 	# Set up output handler
-	raw_data = bytearray()
+	data = bytearray()
 	def read_output():
-		raw_data.extend(p.stdout.read())
+		data.extend(p.stdout.read())
 	
 	# Wait for output while sending input
+	gc.collect()
 	thread = threading.Thread(target=read_output)
 	thread.start()
 	p.stdin.write(video)
@@ -135,10 +142,7 @@ def decompress_video(compressed):
 	thread.join()
 	
 	# Reshape and scale data
-	data = np.fromstring(bytes(raw_data), dtype="uint8")
-	data = np.reshape(data, (shape[2], shape[0], shape[1])) # Reshape into video-formatted shape
-	data = np.transpose(data, (1, 2, 0)) # Re-order dimensions
-	data = data*scale + min_value
+	data = np.transpose(np.reshape(np.fromstring(bytes(data), dtype="uint8").astype("float32"), (shape[2], shape[0], shape[1])), (1, 2, 0)).__imul__(scale).__iadd__(min_value)
 	
 	return data
 
