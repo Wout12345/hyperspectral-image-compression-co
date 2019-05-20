@@ -1,13 +1,14 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.misc import imsave
+from time import clock
 import gc
+from copy import deepcopy
 
 from tools import *
 import st_hosvd
 
 default_experiments_amount = 10
-
 # Hoofdstuk 3: Methodologie
 
 def save_image(data, path):
@@ -324,5 +325,257 @@ def randomized_svd_mauna_kea_average():
 	with open("../tekst/data/randomized-svd-mauna-kea-average.tex", "w") as f:
 		f.writelines([line + "\n" for line in lines])
 
-save_mauna_kea_raw_image()
-save_mauna_kea_image()
+# Sectie 4.2.1: Methode met stelsels
+
+def orthogonality_compression_basic():
+	
+	data = load_cuprite()
+	compressed1 = st_hosvd.compress_tucker(data, 0.025)
+	
+	factor_matrix_index = 1
+	reference = compressed1["factor_matrices"][factor_matrix_index].copy()
+	cols = range(reference.shape[1])
+	for name, quantize in (("Geen quantisatie", False), ("Quantisatie", True)):
+		compressed2 = st_hosvd.decompress_orthogonality(st_hosvd.compress_orthogonality(compressed1, quantize=quantize, orthogonality_reconstruction_steps=500, orthogonality_reconstruction_margin=0, method="systems"), renormalize=None)
+		plt.plot(cols, np.linalg.norm(reference - compressed2["factor_matrices"][factor_matrix_index], axis=0), label=name)
+		
+	plt.xlabel("Kolomindex")
+	plt.ylabel("Relatieve fout")
+	plt.legend()
+	plt.savefig("../tekst/images/orthogonality_compression_basic.png")
+	plt.close()
+
+def orthogonality_compression_basic_matrix():
+	
+	data = load_cuprite()
+	compressed1 = st_hosvd.compress_tucker(data, 0.025)
+	
+	factor_matrix_index = 1
+	reference = compressed1["factor_matrices"][factor_matrix_index].copy()
+	cols = range(reference.shape[1])
+	for name, quantize in (("Geen quantisatie", False), ("Quantisatie", True)):
+		compressed2 = st_hosvd.decompress_orthogonality(st_hosvd.compress_orthogonality(compressed1, quantize=quantize, orthogonality_reconstruction_steps=500, orthogonality_reconstruction_margin=0, method="systems"), renormalize=None)
+		plt.plot(cols, [rel_error(reference[:, :i + 1], compressed2["factor_matrices"][factor_matrix_index][:, :i + 1]) for i in cols], label=name)
+		
+	plt.xlabel("Maximale kolomindex (exclusief)")
+	plt.ylabel("Relatieve fout")
+	plt.legend()
+	plt.savefig("../tekst/images/orthogonality_compression_basic_matrix.png")
+	plt.close()
+
+def orthogonality_compression_basic_inverse_norm_kept_values():
+	
+	# Not used in text
+	
+	data = load_cuprite()
+	compressed1 = st_hosvd.compress_tucker(data, 0.025)
+	
+	factor_matrix_index = 1
+	reference = compressed1["factor_matrices"][factor_matrix_index].copy()
+	cols = range(reference.shape[1])
+	for name, quantize in (("Geen quantisatie", False), ("Quantisatie", True)):
+		compressed2 = st_hosvd.decompress_orthogonality(st_hosvd.compress_orthogonality(compressed1, quantize=quantize, orthogonality_reconstruction_steps=500, orthogonality_reconstruction_margin=0, method="systems"), renormalize=None)
+		plt.plot(cols, 1/np.flip(np.linalg.norm(np.triu(np.flip(compressed2["factor_matrices"][factor_matrix_index], axis=1)), axis=0)), label=name)
+		
+	plt.xlabel("Kolomindex")
+	plt.ylabel("Inverse norm van behouden waarden")
+	plt.legend()
+	plt.savefig("../tekst/images/orthogonality_compression_basic_inverse_norm_kept_values.png")
+	plt.close()
+
+def orthogonality_compression_basic_error():
+	
+	data = load_cuprite()
+	compressed1 = st_hosvd.compress_tucker(data, 0.025)
+	
+	reference = data.copy()
+	for name, quantize in (("Geen quantisatie", False), ("Quantisatie", True)):
+		decompressed = st_hosvd.decompress_tucker(st_hosvd.decompress_orthogonality(st_hosvd.compress_orthogonality(compressed1, quantize=quantize, orthogonality_reconstruction_steps=500, orthogonality_reconstruction_margin=0, method="systems"), renormalize=None))
+		print(name + ":", "{:.4f}".format(rel_error(reference, decompressed)))
+
+def orthogonality_compression_basic_timing():
+	
+	amount = default_experiments_amount
+	
+	for name, loader in (("Cuprite", load_cuprite), ("Pavia Centre", load_pavia)):
+		data = loader()
+		compressed1 = st_hosvd.compress_tucker(data, 0.025)
+		total_time = 0
+		for i in range(amount):
+			print("Testing", name, i)
+			start = clock()
+			compressed2 = st_hosvd.decompress_orthogonality(st_hosvd.compress_orthogonality(compressed1, quantize=True, orthogonality_reconstruction_steps=500, orthogonality_reconstruction_margin=0, method="systems"), renormalize=None)
+			total_time += clock() - start
+		print(name, "{:.2f}".format(total_time/amount))
+
+# Sectie 4.2.1.1: Hernormalisatie
+
+def orthogonality_compression_norms():
+	
+	data = load_cuprite()
+	compressed1 = st_hosvd.compress_tucker(data, 0.025)
+	
+	factor_matrix_index = 1
+	cols = range(compressed1["factor_matrices"][factor_matrix_index].shape[1])
+	compressed2 = st_hosvd.decompress_orthogonality(st_hosvd.compress_orthogonality(compressed1, quantize=True, orthogonality_reconstruction_steps=500, orthogonality_reconstruction_margin=0, method="systems"), renormalize=None)
+	plt.plot(cols, np.linalg.norm(compressed2["factor_matrices"][factor_matrix_index], axis=0))
+		
+	plt.xlabel("Kolomindex")
+	plt.ylabel("Norm")
+	plt.savefig("../tekst/images/orthogonality_compression_norms1.png")
+	plt.ylim(0.975, 1.2)
+	plt.savefig("../tekst/images/orthogonality_compression_norms2.png")
+	plt.close()
+
+def orthogonality_compression_renormalization():
+	
+	data = load_cuprite()
+	compressed1 = st_hosvd.compress_tucker(data, 0.025)
+	
+	factor_matrix_index = 1
+	reference = compressed1["factor_matrices"][factor_matrix_index].copy()
+	cols = range(reference.shape[1])
+	compressed2 = st_hosvd.decompress_orthogonality(st_hosvd.compress_orthogonality(deepcopy(compressed1), quantize=True, orthogonality_reconstruction_steps=500, orthogonality_reconstruction_margin=0, method="systems"), renormalize=True)
+	plt.plot(cols, np.linalg.norm(reference - compressed2["factor_matrices"][factor_matrix_index], axis=0))
+	print("Relative error:", "{:.4f}".format(rel_error(data, st_hosvd.decompress_tucker(compressed2))))
+		
+	plt.xlabel("Kolomindex")
+	plt.ylabel("Relatieve fout")
+	plt.savefig("../tekst/images/orthogonality_compression_renormalization.png")
+	plt.close()
+
+# Sectie 4.2.1.2: Blokken
+
+def orthogonality_compression_blocks():
+	
+	data = load_cuprite()
+	compressed1 = st_hosvd.compress_tucker(data, 0.025)
+	
+	factor_matrix_index = 1
+	reference = compressed1["factor_matrices"][factor_matrix_index].copy()
+	cols = range(reference.shape[1])
+	compressed2 = st_hosvd.decompress_orthogonality(st_hosvd.compress_orthogonality(deepcopy(compressed1), quantize=True, orthogonality_reconstruction_steps=10, orthogonality_reconstruction_margin=0, method="systems"), renormalize=True)
+	plt.plot(cols, np.linalg.norm(reference - compressed2["factor_matrices"][factor_matrix_index], axis=0))
+	print("Relative error:", "{:.4f}".format(rel_error(data, st_hosvd.decompress_tucker(compressed2))))
+		
+	plt.xlabel("Kolomindex")
+	plt.ylabel("Relatieve fout")
+	plt.savefig("../tekst/images/orthogonality_compression_blocks.png")
+	plt.close()
+
+def orthogonality_compression_blocks_timing():
+	
+	amount = default_experiments_amount
+	
+	for name, loader in (("Cuprite", load_cuprite), ("Pavia Centre", load_pavia)):
+		data = loader()
+		compressed1 = st_hosvd.compress_tucker(data, 0.025)
+		total_time = 0
+		for i in range(amount):
+			print("Testing", name, i)
+			start = clock()
+			compressed2 = st_hosvd.decompress_orthogonality(st_hosvd.compress_orthogonality(compressed1, quantize=True, orthogonality_reconstruction_steps=10, orthogonality_reconstruction_margin=0, method="systems"), renormalize=True)
+			total_time += clock() - start
+		print(name, "{:.2f}".format(total_time/amount))
+
+# Sectie 4.2.1.3: Marge
+
+def orthogonality_compression_margin():
+	
+	data = load_cuprite()
+	compressed1 = st_hosvd.compress_tucker(data, 0.025)
+	
+	factor_matrix_index = 1
+	reference = compressed1["factor_matrices"][factor_matrix_index].copy()
+	cols = range(reference.shape[1])
+	compressed2 = st_hosvd.decompress_orthogonality(st_hosvd.compress_orthogonality(deepcopy(compressed1), quantize=True, orthogonality_reconstruction_steps=500, orthogonality_reconstruction_margin=3, method="systems"), renormalize=True)
+	plt.plot(cols, np.linalg.norm(reference - compressed2["factor_matrices"][factor_matrix_index], axis=0))
+	print("Relative error:", "{:.4f}".format(rel_error(data, st_hosvd.decompress_tucker(compressed2))))
+		
+	plt.xlabel("Kolomindex")
+	plt.ylabel("Relatieve fout")
+	plt.savefig("../tekst/images/orthogonality_compression_margin.png")
+	plt.close()
+
+# Sectie 4.2.1.5: Samenvatting
+
+def orthogonality_compression_systems_summary():
+	
+	amount = default_experiments_amount
+	measurements = []
+	datasets = (("Cuprite", load_cuprite), ("Pavia Centre", load_pavia))
+	settings = (("Standaard", False, 500, 0), ("Hernormalisatie (HN)", True, 500, 0), ("HN + 10 blokken", True, 10, 0), ("HN + marge 3", True, 500, 3), ("HN + 10 blokken + marge 3", True, 10, 3))
+	
+	# Perform experiments
+	for name, loader in datasets:
+		measurements.append({"times": [], "errors": []})
+		data = loader()
+		compressed1 = st_hosvd.compress_tucker(data, 0.025)
+		for setting_name, renormalize, steps, margin in settings:
+			total_time = 0
+			for i in range(amount):
+				print("Testing", name, "with setting", setting_name, "on run", i)
+				copy = deepcopy(compressed1)
+				start = clock()
+				compressed2 = st_hosvd.decompress_orthogonality(st_hosvd.compress_orthogonality(copy, quantize=True, orthogonality_reconstruction_steps=steps, orthogonality_reconstruction_margin=margin, method="systems"), renormalize=renormalize)
+				total_time += clock() - start
+				if i == 0:
+					# Calculate error
+					decompressed = st_hosvd.decompress_tucker(compressed2)
+					measurements[-1]["errors"].append(rel_error(data, decompressed))
+			measurements[-1]["times"].append(total_time/amount)
+			print(measurements)
+	
+	# Construct lines
+	lines = []
+	for i, (setting_name, _, _, _) in enumerate(settings):
+		lines.append("{} & {:.4f} & {:.4f} & {:.3f} & {:.3f} \\\\ \\hline".format(setting_name, measurements[0]["errors"][i], measurements[1]["errors"][i], measurements[0]["times"][i], measurements[1]["times"][i]))
+	
+	with open("../tekst/data/orthogonality-compression-systems-summary.tex", "w") as f:
+		f.writelines([line + "\n" for line in lines])
+
+# Sectie 4.2.3: Methode met Householder-reflecties
+
+def orthogonality_compression_householder_summary():
+	
+	amount = default_experiments_amount
+	measurements = []
+	datasets = (("Cuprite", load_cuprite), ("Pavia Centre", load_pavia))
+	settings = (("ST-HOSVD", False, False), ("Geen quantisatie", True, False), ("Quantisatie", True, True))
+	
+	# Perform experiments
+	for name, loader in datasets:
+		measurements.append({"times": [], "errors": []})
+		data = loader()
+		compressed1 = st_hosvd.compress_tucker(data, 0.025)
+		for setting_name, compress_orthogonality, quantize in settings:
+			if compress_orthogonality:
+				total_time = 0
+				for i in range(amount):
+					print("Testing", name, "with setting", setting_name, "on run", i)
+					copy = deepcopy(compressed1)
+					start = clock()
+					compressed2 = st_hosvd.decompress_orthogonality(st_hosvd.compress_orthogonality(copy, quantize=quantize, method="householder"))
+					total_time += clock() - start
+					if i == 0:
+						# Calculate error
+						decompressed = st_hosvd.decompress_tucker(compressed2)
+						measurements[-1]["errors"].append(rel_error(data, decompressed))
+				measurements[-1]["times"].append(total_time/amount)
+				print(measurements)
+			else:
+				measurements[-1]["times"].append(0)
+				measurements[-1]["errors"].append(rel_error(data, st_hosvd.decompress_tucker(compressed1)))
+	
+	# Construct lines
+	lines = []
+	for i, (setting_name, compress_orthogonality, _) in enumerate(settings):
+		if compress_orthogonality:
+			lines.append("{} & {:.11f} & {:.11f} & {:.3f} & {:.3f} \\\\ \\hline".format(setting_name, measurements[0]["errors"][i], measurements[1]["errors"][i], measurements[0]["times"][i], measurements[1]["times"][i]))
+		else:
+			lines.append("{} & {:.11f} & {:.11f} & N/A & N/A \\\\ \\hline".format(setting_name, measurements[0]["errors"][i], measurements[1]["errors"][i]))
+	
+	with open("../tekst/data/orthogonality-compression-householder-summary.tex", "w") as f:
+		f.writelines([line + "\n" for line in lines])
+
+orthogonality_compression_basic_error()

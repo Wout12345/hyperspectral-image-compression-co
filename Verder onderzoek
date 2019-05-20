@@ -1,6 +1,7 @@
 - Variabele quantizatie factormatrices
 - DCT
-- Andere heuristiek om compressierang per mode te kiezen
+- Andere heuristiek om compressierang per mode te kiezen: kan dat de trade-off tussen fout en compressierang veel beter ligt in één mode dan een andere
 - Heuristieken om steekproefgrootte te kiezen bij randomized SVD
-- Efficiëntere reconstructie factormatrices
-- Werken met iteratief SVD-algoritme om te stoppen wanneer som van kwadraten van singuliere waarden al groot genoeg is
+- Parallelizatie:
+	- paralleliseren LA: kan helpen, maar veel communicatie soms ook merkbare fouten (fout verhoogde enorm bij methode met stelsels in parallel)
+	- pipelining van ST-HOSVD, flattening van factormatrices, quantizeren en comprimeren van factormatrices en later quantizeren en comprimeren van kerntensor

@@ -15,13 +15,25 @@ def test_compression_ratio_tucker():
 	
 	data = load_cuprite()
 	start = time()
-	compressed = st_hosvd.compress_tucker(data, 0.025, print_progress=True, use_pure_gramian=True)
-	#st_hosvd.save_tucker(compressed, "../data/tucker_cuprite_0.025.npz")
-	#compressed = st_hosvd.load_tucker("../data/tucker_cuprite_0.025.npz")
+	compressed = st_hosvd.compress_tucker(data, 0.025)
 	decompressed = st_hosvd.decompress_tucker(compressed)
 	st_hosvd.print_compression_rate_tucker(data, compressed)
 	print_difference(data, decompressed)
 	#plot_comparison(data, decompressed)
+	
+	factor_matrix_index = 1
+	reference = compressed["factor_matrices"][factor_matrix_index].copy()
+	compressed2 = st_hosvd.decompress_orthogonality(st_hosvd.compress_orthogonality(compressed, quantize=True, orthogonality_reconstruction_steps=500, method="householder"))
+	decompressed = st_hosvd.decompress_tucker(compressed2)
+	st_hosvd.print_compression_rate_tucker(data, compressed)
+	print_difference(data, decompressed)
+	print("Factor matrix error:", rel_error(reference, compressed2["factor_matrices"][factor_matrix_index]))
+	
+	plt.plot(range(reference.shape[1]), np.linalg.norm(reference - compressed2["factor_matrices"][factor_matrix_index], axis=0))
+	plt.xlabel("Kolomindex")
+	plt.ylabel("Relatieve fout")
+	plt.show()
+	plt.close()
 	
 	"""compressed_quantized = st_hosvd.compress_quantize2(compressed)
 	print("Time for compression:", time() - start)
@@ -101,8 +113,6 @@ def test_compression_ratio_tensor_trains():
 	
 	data = load_pavia()
 	compressed = tensor_trains.compress_tensor_trains(data, 0.025, print_progress=True)#(501, 596, 12))
-	#st_hosvd.save_tucker(compressed, "../data/tucker_cuprite_0.025.npz")
-	#compressed = st_hosvd.load_tucker("../data/tucker_cuprite_0.025.npz")
 	decompressed = tensor_trains.decompress_tensor_trains(compressed)
 	tensor_trains.print_compression_rate_tensor_trains(data, compressed)
 	print_difference(data, decompressed)

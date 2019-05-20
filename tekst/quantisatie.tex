@@ -1,0 +1,9 @@
+\section{Quantisatie en bitstring-compressie}
+
+Tot nu toe hebben we altijd gewerkt met 32-bit floating-point getallen, wat voor onze doeleinden genoeg rekenprecisie geeft. Wanneer we deze getallen echter willen opslaan, zouden we ze liefst compacter willen voorstellen. Dit gaan we doen door te quantiseren: hierbij ronden we elke waarde af naar de dichtsbijzijnde waarde uit een beperkte verzameling die we zelf defini\"eren. Deze afronding zal de uiteindelijke fout op het eindresultaat verhogen, maar door deze verzamelingen goed te kiezen zullen we proberen een optimale afweging tussen de compressiefout en -factor te bekomen.\\
+
+Hierna zullen we, als laatste fase van ons compressie-algoritme, de bits van de gequantiseerde waarden aan elkaar hangen (natuurlijk op een manier dat we bij het decoderen de waarden terug van elkaar kunnen scheiden) en lossless bitstring-compressie toepassen. Hiervoor gebruiken we het Deflate-algoritme \cite{ref:deflate} zoals ge\"implementeerd in zlib \cite{ref:zlib}. We zullen dit meteen doen na het quantiseren en alleen kijken naar de compressiefactor hierna, omdat de quantisatiemethode eventueel effect heeft op de effectiviteit van de lossless compressie.
+
+\subsection{Kerntensor}
+
+\subsection{Factormatrices}

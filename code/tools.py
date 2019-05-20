@@ -27,12 +27,12 @@ limit_memory()
 
 def custom_norm(data):
 	
-	# Calculates Frobenius norm of data but without copying the whole matrix to float32 like numpy.linalg.norm does
+	# Calculates Frobenius norm of 3D data but without copying the whole matrix to float32 like numpy.linalg.norm does
 	sq_total = 0
 	buffer_size = 128*1047*224*4 # In bytes
 	block_size = max(1, floor((buffer_size/(data.size*data.itemsize))*data.shape[0]))
 	for i in range(0, data.shape[0], block_size):
-		sq_total += np.linalg.norm(data[i:i + block_size, :, :])**2
+		sq_total += np.linalg.norm(np.take(data, range(i, min(data.shape[0], i + block_size)), axis=0))**2
 	return sqrt(sq_total)
 
 # Loaders

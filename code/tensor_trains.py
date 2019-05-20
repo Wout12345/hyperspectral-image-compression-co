@@ -132,7 +132,7 @@ def decompress_tensor_trains(compressed):
 	factor_matrices_original, core_tensor_original, original_shape = compressed
 	
 	# Cast to higher-precision float
-	data_type = np.dtype("float64")
+	data_type = np.dtype("float32")
 	core_tensor = core_tensor_original.astype(data_type)
 	factor_matrices = []
 	for factor_matrix in factor_matrices_original:

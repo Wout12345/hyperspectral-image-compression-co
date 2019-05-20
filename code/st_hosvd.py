@@ -1,5 +1,6 @@
 import numpy as np
 import scipy.linalg
+import scipy.linalg.lapack as lapack
 from operator import itemgetter
 from time import time, clock
 from functools import reduce
@@ -7,6 +8,7 @@ import math
 import matplotlib.pyplot as plt
 import bitarray
 import zlib
+from copy import deepcopy
 
 from tools import *
 
@@ -67,9 +69,29 @@ def custom_lanczos(A, bound, truncation_rank=None, transpose=False):
 	
 	return np.sqrt(lambdas[::-1]), transformed_X[:, ::-1]
 
-# Phase 1
+# From https://stackoverflow.com/questions/38738835/generating-gray-codes
+def calculate_gray_code(n):
+	
+	def gray_code_recurse(g, n):
+		k = len(g)
+		if n <= 0 :
+			return
+		else:
+			for i in range(k - 1, -1, -1):
+				char = "1" + g[i]
+				g.append(char)
+			for i in range(k - 1, -1, -1):
+				g[i] = "0" + g[i]
 
-def compress_tucker(data, relative_target_error, extra_output=False, print_progress=False, mode_order=None, output_type="float32", compression_rank=None, randomized_svd=False, sample_ratio=0.1, samples_per_dimension=5, sort_indices=False, use_pure_gramian=False, use_qr_gramian=False, use_lanczos_gramian=False, store_rel_estimated_S_errors=False, test_all_truncation_ranks=False, calculate_explicit_errors=False, test_truncation_rank_limit=None):
+			gray_code_recurse(g, n - 1)
+
+	g = ["0", "1"]
+	gray_code_recurse(g, n - 1)
+	return g
+
+# Phase 1: ST-HOSVD
+
+def compress_tucker(data, relative_target_error, extra_output=False, print_progress=False, mode_order=None, output_type="float32", compression_rank=None, randomized_svd=False, sample_ratio=0.1, samples_per_dimension=5, sort_indices=False, use_pure_gramian=True, use_qr_gramian=False, use_lanczos_gramian=False, store_rel_estimated_S_errors=False, test_all_truncation_ranks=False, calculate_explicit_errors=False, test_truncation_rank_limit=None):
 	
 	# This function calculates the ST-HOSVD of the given 3D tensor (see https://epubs.siam.org/doi/abs/10.1137/110836067)
 	# data should be a numpy array and will not be changed by this call
@@ -123,7 +145,8 @@ def compress_tucker(data, relative_target_error, extra_output=False, print_progr
 	compressed = {
 		"method": "st-hosvd",
 		"original_shape": data.shape,
-		"mode_order": mode_order
+		"mode_order": mode_order,
+		"S": [] # Stored but not counted towards storage because this is only needed for further phases of the compression
 	}
 	
 	# Process modes
@@ -205,6 +228,7 @@ def compress_tucker(data, relative_target_error, extra_output=False, print_progr
 				U, S, Vh = np.linalg.svd(sample_matrix, full_matrices=False)
 		if use_sample:
 			S = math.sqrt(max(1, population_size/sample_size))*S
+		compressed["S"].append(S)
 		
 		output["cpu_times_svd"].append(clock() - cpu_start_svd)
 		if print_progress:
@@ -269,17 +293,18 @@ def compress_tucker(data, relative_target_error, extra_output=False, print_progr
 		
 		# Apply compression and fold back into tensor
 		# Use V or Vh if possible
-		factor_matrices.append(U[:, :truncation_rank])
+		factor_matrix = U[:, :truncation_rank]
+		factor_matrices.append(factor_matrix)
 		no_V = use_sample or use_pure_gramian or use_qr_gramian or use_lanczos_gramian
 		if mode == modes - 1:
 			if no_V:
-				core_tensor = core_tensor @ factor_matrices[-1]
+				core_tensor = core_tensor @ factor_matrix
 			else:
 				core_tensor = V[:, :truncation_rank]*S[:truncation_rank]
 			transposed_ranks[-1] = truncation_rank
 		else:
 			if no_V:
-				core_tensor = factor_matrices[-1].T.copy() @ core_tensor
+				core_tensor = factor_matrix.T.copy() @ core_tensor
 			else:
 				core_tensor = S[:truncation_rank, None]*Vh[:truncation_rank, :]
 			transposed_ranks[0] = truncation_rank
@@ -408,63 +433,209 @@ def print_compression_rate_tucker(original, compressed):
 	print("Compressed shape:", compressed["core_tensor"].shape, "\tcompressed size:", compressed_size)
 	print("Compression ratio:", compressed_size/original_size)
 
-def load_tucker(path):
-	arrays = np.load(path)["arr_0"]
-	return list(arrays[:-1]), arrays[-1]
+# Phase 2: Orthgonality compression
 
-def save_tucker(compressed, path):
-	factor_matrices, core_tensor = compressed
-	arrays = compressed["factor_matrices"] + [compressed["core_tensor"]]
-	np.savez(path, arrays)
+def compress_orthogonality(data, copy=False, method="systems", quantize=False, orthogonality_reconstruction_steps=500, orthogonality_reconstruction_margin=0):
+	
+	# Removes values from the factor matrices which can be theoretically reconstructed
+	
+	# data: output from phase 1
+	# copy: whether or not the data from phase 1 should be copied
+	# method: "systems" (custom code) or "householder" (using QR from LAPACK, assuming float32 is used)
+	# orthogonality_reconstruction_steps (only for "systems"): amount of steps used in the truncation/reconstruction process, setting to 0 disables truncation
+	# orthogonality_reconstruction_margin (only for "systems"): size of margin used in the truncation/reconstruction process
+	# quantize: quantize output to uint16, used for testing the effect of different orthogonality compression parameters. quantization is performed after orthogonality compression
+	
+	# output is dictionary with keys:
+	# - st_hosvd: dictionary containing ST-HOSVD output, apart from factor matrices
+	# - factor_matrices: the new factor matrices, stored in a dictionary stored 
+	# - orthogonality_reconstruction_steps (only for "systems"): orthogonality_reconstruction_steps
+	# - orthogonality_reconstruction_margin (only for "systems"): orthogonality_reconstruction_margin
+	
+	# a factor matrix is a distionary with keys:
+	# - data:
+	#	- "systems": a concatenation of all truncated columns into a 1D array (so column-major)
+	#	- "householder": a concatenation of the columns of the lower triangle of the H-matrix (so H[1:, 0], H[2:, 1], ...)
+	# - shape: shape of the original factor matrix
+	# - tau (only if "householder"): tau-vector from QR-call
+	# - blocks (only for "systems"): list of tuples of blocks stored in data, each tuple consists of (col2, truncation_row), the exclusive ending indices for columns and rows respectively
+	# - offset (only if quantize=True): offset applied to factor matrix values
+	# - scale (only if quantize=True): scale applied to factor matrix values after offset
+	
+	# Initialization
+	compressed = {
+		"st_hosvd": {},
+		"factor_matrices": [],
+		"method": method,
+		"quantize": quantize
+	}
+	if method == "systems":
+		compressed["orthogonality_reconstruction_steps"] = orthogonality_reconstruction_steps
+		compressed["orthogonality_reconstruction_margin"] = orthogonality_reconstruction_margin
+	for key in data:
+		if key != "factor_matrices":
+			if copy:
+				compressed["st_hosvd"][key] = deepcopy(data[key])
+			else:
+				compressed["st_hosvd"][key] = data[key]
+	
+	# Construct flattened factor matrices
+	margin = orthogonality_reconstruction_margin + 1
+	for factor_matrix in data["factor_matrices"]:
+		
+		factor_matrix_dict = {
+			"shape": factor_matrix.shape
+		}
+		rows = factor_matrix.shape[0]
+		cols = factor_matrix.shape[1]
+		
+		if method == "systems":
+			
+			# Use linear systems
+			
+			# Initialization
+			reconstruction_width = max(0, factor_matrix.shape[1] - margin)
+			blocks_amount = min(reconstruction_width, orthogonality_reconstruction_steps + 1) + 1
+			if blocks_amount > 1:
+				block_size = reconstruction_width/(blocks_amount - 1)
+			
+			# Calculate truncated matrix size
+			col2 = min(cols, margin)
+			size = rows*col2
+			for step in range(1, blocks_amount):
+				col1 = col2
+				col2 = min(cols, round(step*block_size) + margin)
+				if col2 == col1:
+					raise Exception("Empty block!")
+				truncation_row = min(rows, rows - col1 + orthogonality_reconstruction_margin)
+				size += truncation_row*(col2 - col1)
+			
+			# Construct truncated matrix
+			truncated_factor_matrix = np.empty(size, dtype="float32")
+			col2 = min(cols, margin)
+			index = 0
+			size = rows*col2
+			truncated_factor_matrix[index:index + size] = factor_matrix[:, :col2].flatten()
+			index += size
+			blocks_list = [(col2, rows)]
+			for step in range(1, blocks_amount):
+				col1 = col2
+				col2 = min(cols, round(step*block_size) + margin)
+				truncation_row = min(rows, rows - col1 + orthogonality_reconstruction_margin)
+				size = truncation_row*(col2 - col1)
+				truncated_factor_matrix[index:index + size] = factor_matrix[:truncation_row, col1:col2].flatten()
+				index += size
+				blocks_list.append((col2, truncation_row))
+			
+			factor_matrix_dict["blocks"] = blocks_list
+		
+		elif method == "householder":
+			
+			# Use Householder reflections with LAPACK
+			(h, tau), _ = scipy.linalg.qr(factor_matrix, mode="raw")
+			truncated_factor_matrix = h.T[np.triu_indices(cols, 1, rows)]
+			tau[tau < 0.5] = 0.5 # Set 0 values to 0.5 so sign will be clear
+			factor_matrix_dict["tau"] = tau*np.sign(np.diag(h))
+			
+		# Quantize matrix if necessary
+		if quantize:
+			offset = -np.amin(truncated_factor_matrix)
+			scale = (2**16 - 1)/(np.amax(truncated_factor_matrix) + offset)
+			truncated_factor_matrix = np.rint((truncated_factor_matrix + offset)*scale).astype("uint16")
+		
+		# Finish factor matrix dictionary
+		factor_matrix_dict["data"] = truncated_factor_matrix
+		if quantize:
+			factor_matrix_dict["offset"] = offset
+			factor_matrix_dict["scale"] = scale
+		compressed["factor_matrices"].append(factor_matrix_dict)
+	
+	# Return output
+	return compressed
 
-# Phase 2
+def decompress_orthogonality(data, copy=False, correct_signs=False, renormalize=False):
+	
+	# Reconstructs truncated values from the factor matrices
+	
+	# data: output from phase 2 or reverse phase 3
+	# copy: whether or not the data from phase 1 should be copied
+	# renormalize (only for "systems"): whether or not to explicitly renormalize columns
+	
+	# Initialize decompression
+	if copy:
+		decompressed = deepcopy(data["st_hosvd"])
+	else:
+		decompressed = data["st_hosvd"]
+	decompressed["factor_matrices"] = []
+	
+	# Reconstruct factor matrices
+	for factor_matrix in data["factor_matrices"]:
+		
+		rows = factor_matrix["shape"][0]
+		cols = factor_matrix["shape"][1]
+		
+		# Dequantize if necessary
+		# Needs to happen before orthogonality compression so matrix is actually (approximately) orthogonal
+		data_matrix = factor_matrix["data"] if not data["quantize"] else factor_matrix["data"]/factor_matrix["scale"] - factor_matrix["offset"]
+		
+		if data["method"] == "systems":
+			
+			# Load known matrix blocks
+			full_matrix = np.empty((rows, cols), dtype="float32")
+			index = 0
+			col1 = 0
+			for col2, truncation_row in factor_matrix["blocks"]:
+				size = (col2 - col1)*truncation_row
+				full_matrix[:truncation_row, col1:col2] = data_matrix[index:index + size].reshape((truncation_row, col2 - col1))
+				index += size
+				col1 = col2
+			
+			# Reconstruct unknown matrix blocks
+			col1 = 0
+			for col2, truncation_row in factor_matrix["blocks"]:
+				
+				if truncation_row < rows:
+					
+					# Actually reconstruct values
+					full_matrix[truncation_row:, col1:col2] = np.linalg.lstsq(full_matrix[truncation_row:, :col1].T, -full_matrix[:truncation_row, :col1].T @ full_matrix[:truncation_row, col1:col2], rcond=None)[0]
+					
+					# Optional renormalization
+					if renormalize:
+						# Renormalize all new columns entirely
+						norms = np.linalg.norm(full_matrix[:, col1:col2], axis=0)
+						np.putmask(norms, norms < epsilon, 1)
+						full_matrix[:, col1:col2] = full_matrix[:, col1:col2]/norms
+						
+				col1 = col2
+		
+		elif data["method"] == "householder":
+			
+			# Use Householder reflections with LAPACK
+			h = np.empty((cols, rows), dtype="float32")
+			h[np.triu_indices(cols, 1, rows)] = data_matrix
+			h = h.T
+			signs = np.sign(factor_matrix["tau"])
+			tau = np.abs(factor_matrix["tau"])
+			tau[tau < 0.75] = 0
+			full_matrix = lapack.sorgqr(h, tau)[0]*signs # Correct signs using signs stored in tau
+		
+		# Append factor matrix
+		decompressed["factor_matrices"].append(full_matrix)
+	
+	return decompressed
 
-target_bits_after_point = 0
-meta_quantization_step = 2**-target_bits_after_point
+# Phase 3: Quantization
+
+# Original code, real mess from down here
+
 quantization_steps = 256
 starting_layer = 10
-
-def compress_orthogonality(data, orthogonality_reconstruction_margin=10, orthogonality_reconstruction_steps=0):
-	
-
-def decompress_orthogonality(data, normalize=False):
-	
-	"""for factor_matrix in factor_matrices:
-		
-		cpu_start = clock()
-		
-		rows, cols = factor_matrix.shape
-		error = 0
-		exact = np.copy(factor_matrix)
-		for step in range(1, orthogonality_reconstruction_steps + 1):
-			
-			start_col = int(round(step/(orthogonality_reconstruction_steps + 1)*(factor_matrix.shape[1] - orthogonality_reconstruction_margin))) + orthogonality_reconstruction_margin
-			end_col = int(round((step + 1)/(orthogonality_reconstruction_steps + 1)*(factor_matrix.shape[1] - orthogonality_reconstruction_margin))) + orthogonality_reconstruction_margin
-			start_row = factor_matrix.shape[0] - start_col + orthogonality_reconstruction_margin
-			
-			if end_col == start_col or start_row >= factor_matrix.shape[0]:
-				continue
-			
-			factor_matrix[start_row:, start_col:end_col], _, _, _ = np.linalg.lstsq(factor_matrix[start_row:, :start_col].T, -factor_matrix[:start_row, :start_col].T @ factor_matrix[:start_row, start_col:end_col])
-			
-			# Orthonormalize full column
-			for col in range(start_col, end_col):
-				for _ in range(2):
-					factor_matrix[:, col] = factor_matrix[:, col] - factor_matrix[:, :col] @ factor_matrix[:, :col].T @ factor_matrix[:, col]
-					norm = np.linalg.norm(factor_matrix[:, col])
-					if norm >= epsilon:
-						factor_matrix[:, col] = factor_matrix[:, col]/norm
-			
-			# Blockwise orthonormalization
-			for _ in range(2):
-				factor_matrix[:, start_col:end_col] = factor_matrix[:, start_col:end_col] - factor_matrix[:, :start_col] @ factor_matrix[:, :start_col].T @ factor_matrix[:, start_col:end_col]
-				norms = np.linalg.norm(factor_matrix[:, start_col:end_col], axis=0)
-				np.putmask(norms, norms < epsilon, 1)
-				factor_matrix[:, start_col:end_col] = factor_matrix[:, start_col:end_col] @ np.diag(1./norms)"""
-	
-	pass
+target_bits_after_point = 0
+meta_quantization_step = 2**-target_bits_after_point
 
 def compress_quantize1(data):
+	
+	# 
 	
 	factor_matrices, core_tensor = data
 	
@@ -648,26 +819,6 @@ def decompress_quantize2(data):
 	
 	return factor_matrices, core_tensor
 
-# From https://stackoverflow.com/questions/38738835/generating-gray-codes
-def calculate_gray_code(n):
-	
-	def gray_code_recurse(g, n):
-		k = len(g)
-		if n <= 0 :
-			return
-		else:
-			for i in range(k - 1, -1, -1):
-				char = "1" + g[i]
-				g.append(char)
-			for i in range(k - 1, -1, -1):
-				g[i] = "0" + g[i]
-
-			gray_code_recurse(g, n - 1)
-
-	g = ["0", "1"]
-	gray_code_recurse(g, n - 1)
-	return g
-
 use_graycode = True
 
 def print_compression_rate_quantize2(original, compressed):
@@ -687,8 +838,8 @@ def print_compression_rate_quantize2(original, compressed):
 	print("Compressed size:", compressed_size)
 	print("Compression ratio:", compressed_size/original_size)
 
-orthogonality_reconstruction_margin = 10
 orthogonality_reconstruction_steps = 0
+orthogonality_reconstruction_margin = 10
 def get_compress_quantize2_size(compressed, full_output=False):
 	
 	factor_matrices_quantized, core_tensor_quantized = compressed
@@ -744,6 +895,8 @@ quantization_step_size = 150
 
 def compress_quantize3(data):
 	
+	# Variable amount of bits per layer, each layer uses same quantization step
+	
 	factor_matrices, core_tensor = data
 	
 	# Quantize core tensor
@@ -762,9 +915,9 @@ def compress_quantize3(data):
 			values.extend(list(core_tensor[:layer, :layer, layer].flatten()))
 		
 		# Store quantization metadata
-		min_value = int(round(min(values)/quantization_step_size))
-		max_value = int(round(max(values)/quantization_step_size))
-		bits_used = int(math.ceil(math.log2(max(abs(min_value), max_value + 1)))) + 1
+		min_value = round(min(values)/quantization_step_size)
+		max_value = round(max(values)/quantization_step_size)
+		bits_used = math.ceil(math.log2(max(abs(min_value), max_value + 1))) + 1
 		core_tensor_quantized.append(bits_used)
 		
 		# Quantize layer in core tensor

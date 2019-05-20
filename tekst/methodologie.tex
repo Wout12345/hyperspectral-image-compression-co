@@ -25,7 +25,7 @@ Om de fouten ge\"introduceerd door de lossy compressie te vergelijken, zullen we
 
 \section{Implementatie}
 
-De implementatie van de besproken algoritmen gebeurde in Python, waarbij het zware rekenwerk werd uitgevoerd via library calls, voornamelijk aan de hand van NumPy, SciPy en zlib. Hierbij zijn ook alternatieve strategie\"en getest (zoals het al dan niet minimaliseren van transposities, het gebruik van \texttt{numpy.einsum}, ...), waarbij telkens de meest performante werd gekozen. Deze keuzes zullen niet behandeld worden in deze tekst vanwege de sterke afhankelijkheid van de gekozen programmeertaal. Desalniettemin kan het dat er nog steeds merkbare ineffici\"enties in de implementatie zijn.
+De implementatie van de besproken algoritmen gebeurde in Python, waarbij het zware rekenwerk werd uitgevoerd via library calls, voornamelijk aan de hand van NumPy, SciPy en zlib. Hierbij zijn ook alternatieve strategie\"en getest (zoals het al dan niet minimaliseren van transposities, het gebruik van \texttt{numpy.einsum}, ...), waarbij telkens de meest performante werd gekozen. Deze keuzes zullen zelden behandeld worden in deze tekst vanwege de sterke afhankelijkheid van de gekozen programmeertaal. Desalniettemin kan het dat er nog steeds merkbare ineffici\"enties in de implementatie zijn.
 
 \section{Datasets}
 
@@ -33,7 +33,7 @@ Om een idee te krijgen van de effici\"entie van de verschillende compressietechn
 
 Bij de voorverwerking zullen we vaak bepaalde spectrale banden weglaten indien blijkt dat deze artefacten bevatten (onder meer banden met waarde 0, banden met veel te hoge, willekeurig verdeelde intensiteiten en naburige banden). Op spatiaal vlak zullen we soms de afmetingen naar beneden afronden tot het dichtsbijzijnde kwadraat; hierdoor kan men deze assen eventueel later nog makkelijk reshapen. Verder is het ook in sommige gevallen nodig om een geroteerde in plaats van as-gealigneerde rechthoek te selecteren. Hierbij vallen de roosterpunten in het nieuwe assenstelsel niet exact op oude roosterpunten en zal de nieuwe dataset gereconstrueerd worden door bilineair te interpoleren \cite{ref:bilinear_interpolation} over de twee spatiale assen.\\
 
-Omdat de geproduceerde bestanden te groot zijn om in bijlage toe te voegen en deze voorverwerking niet triviaal is om formeel te beschrijven, hebben we de code van de voorverwerker toegevoegd in bijlage \ref{app:voorverwerker}.
+Omdat de geproduceerde bestanden te groot zijn om in bijlage toe te voegen en deze voorverwerking niet triviaal is om formeel te beschrijven, hebben we de code van de voorverwerker toegevoegd in bijlage \ref{app:voorverwerker}. Men kan deze combineren met de originele data van de corresponderende bronnen om dezelfde datasets te reproduceren.
 
 \subsection{Cuprite}
 
@@ -48,6 +48,7 @@ Omdat de geproduceerde bestanden te groot zijn om in bijlage toe te voegen en de
 \textbf{Spectrale dimensie:} 190\\
 \textbf{Voorverwerking:} De originele spectrale dimensie was 224, maar banden 0-3, 106-113, 152-168 en 219-223 werden verwijderd.
 
+\newpage
 \subsection{Pavia Centre}
 
 \begin{figure}[H]
