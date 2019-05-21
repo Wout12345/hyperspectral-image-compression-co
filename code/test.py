@@ -13,36 +13,24 @@ def main():
 
 def test_compression_ratio_tucker():
 	
+	print("="*20 + " Phase 1 " + "="*20)
 	data = load_cuprite()
 	start = time()
-	compressed = st_hosvd.compress_tucker(data, 0.025)
-	decompressed = st_hosvd.decompress_tucker(compressed)
-	st_hosvd.print_compression_rate_tucker(data, compressed)
+	compressed1 = st_hosvd.compress_tucker(data, 0.025)
+	decompressed = st_hosvd.decompress_tucker(compressed1)
+	st_hosvd.print_compression_rate_tucker(data, compressed1)
 	print_difference(data, decompressed)
-	#plot_comparison(data, decompressed)
 	
-	factor_matrix_index = 1
-	reference = compressed["factor_matrices"][factor_matrix_index].copy()
-	compressed2 = st_hosvd.decompress_orthogonality(st_hosvd.compress_orthogonality(compressed, quantize=True, orthogonality_reconstruction_steps=500, method="householder"))
-	decompressed = st_hosvd.decompress_tucker(compressed2)
-	st_hosvd.print_compression_rate_tucker(data, compressed)
+	print("="*20 + " Phase 2 " + "="*20)
+	compressed2 = st_hosvd.compress_orthogonality(compressed1, method="householder")
+	decompressed = st_hosvd.decompress_tucker(st_hosvd.decompress_orthogonality(compressed2))
 	print_difference(data, decompressed)
-	print("Factor matrix error:", rel_error(reference, compressed2["factor_matrices"][factor_matrix_index]))
 	
-	plt.plot(range(reference.shape[1]), np.linalg.norm(reference - compressed2["factor_matrices"][factor_matrix_index], axis=0))
-	plt.xlabel("Kolomindex")
-	plt.ylabel("Relatieve fout")
-	plt.show()
-	plt.close()
-	
-	"""compressed_quantized = st_hosvd.compress_quantize2(compressed)
-	print("Time for compression:", time() - start)
-	st_hosvd.print_compression_rate_quantize2(data, compressed_quantized)
-	start = time()
-	decompressed = st_hosvd.decompress_tucker(st_hosvd.decompress_quantize2(compressed_quantized))
-	print("Time for decompression:", time() - start)
+	print("="*20 + " Phase 3 " + "="*20)
+	compressed3 = st_hosvd.compress_quantize(compressed2, core_tensor_quantization_bits=16, factor_matrix_quantization_bits=16)
+	decompressed = st_hosvd.decompress_tucker(st_hosvd.decompress_orthogonality(st_hosvd.decompress_quantize(compressed3)))
+	print("Compression ratio:", st_hosvd.get_compress_quantize_size(compressed3)/st_hosvd.memory_size(data))
 	print_difference(data, decompressed)
-	plot_comparison(data, decompressed)"""
 
 def plot_mauna_kea_range():
 	

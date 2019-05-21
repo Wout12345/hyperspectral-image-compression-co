@@ -47,8 +47,9 @@ Af:
 - Haal aan dat Givens-rotaties gebruikt kunnen worden om Q-matrix bij QR in halve ruimte op te slaan, maar moeilijk te gebruiken in Python, wordt gebruikt in LAPACK bij QR-functie (http://www.math.utah.edu/software/lapack/lapack-s/sgeqrf.html en http://www.math.utah.edu/software/lapack/lapack-s/sorgqr.html)
 
 Todo:
+- Niet bitstring compressie, maar algemene lossless compressie
 
 Vragen:
-- Referenties voor code snippets? Momenteel alleen in source code zelf. Voorlopig alleen voor limiteren van geheugen en berekenen graycodes
+- Referenties voor code snippets? Momenteel alleen in source code zelf. Voorlopig alleen voor limiteren van geheugen, berekenen graycodes, berekenen Huffman codes, comprimeren Huffman-boom
 - Deel over QR-factorizatie met Householder in hoofdstuk 4 houden of in achtergrond? Vrij theoretisch maar het nut wordt pas duidelijk in hoofdstuk 4. Ook vrij kort dus makkelijker om te houden in hofdstuk 4 in plaats van een nieuwe sectie toe te voegen bij de achtergrond.
 - Grafiek toevoegen voor evolutie fout factormatrix doorheen kolommen bij methode met Householder? Getest, zoals verwacht is de fout hoger voor latere kolommen (die het resultaat zijn van meer reflecties).

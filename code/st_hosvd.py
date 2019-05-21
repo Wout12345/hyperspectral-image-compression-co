@@ -6,19 +6,27 @@ from time import time, clock
 from functools import reduce
 import math
 import matplotlib.pyplot as plt
-import bitarray
+from bitarray import bitarray
 import zlib
 from copy import deepcopy
+from heapq import heappush, heappop, heapify
 
 from tools import *
 
 # Constants
 epsilon = 1e-9
 
-# Helper functions
+# General helper functions
 
 def product(iterable):
 	return reduce(lambda x, y: x*y, iterable, 1)
+
+def memory_size(A):
+	return A.size*A.itemsize
+
+# Phase 1: ST-HOSVD
+
+# ST-HOSVD helper functions
 
 def custom_eigh(A):
 	# Returns eigenvalue decomposition with the result sorted based on the eigenvalues and the sqrt of the eigenvalues instead of the eigenvalues
@@ -69,27 +77,7 @@ def custom_lanczos(A, bound, truncation_rank=None, transpose=False):
 	
 	return np.sqrt(lambdas[::-1]), transformed_X[:, ::-1]
 
-# From https://stackoverflow.com/questions/38738835/generating-gray-codes
-def calculate_gray_code(n):
-	
-	def gray_code_recurse(g, n):
-		k = len(g)
-		if n <= 0 :
-			return
-		else:
-			for i in range(k - 1, -1, -1):
-				char = "1" + g[i]
-				g.append(char)
-			for i in range(k - 1, -1, -1):
-				g[i] = "0" + g[i]
-
-			gray_code_recurse(g, n - 1)
-
-	g = ["0", "1"]
-	gray_code_recurse(g, n - 1)
-	return g
-
-# Phase 1: ST-HOSVD
+# End of ST-HOSVD helper functions
 
 def compress_tucker(data, relative_target_error, extra_output=False, print_progress=False, mode_order=None, output_type="float32", compression_rank=None, randomized_svd=False, sample_ratio=0.1, samples_per_dimension=5, sort_indices=False, use_pure_gramian=True, use_qr_gramian=False, use_lanczos_gramian=False, store_rel_estimated_S_errors=False, test_all_truncation_ranks=False, calculate_explicit_errors=False, test_truncation_rank_limit=None):
 	
@@ -106,6 +94,7 @@ def compress_tucker(data, relative_target_error, extra_output=False, print_progr
 	#	- original_shape: relevant for reshaping
 	#	- factor_matrices: list of factor matrices in order of mode handling (so each time a mode is processed a factor matrix is appended)
 	#	- core_tensor: core tensor in output_type
+	#	- S: list of arrays of (approximate) singular values, added in same order as factor matrices
 	
 	# extra_output fields:
 	#	- compressed
@@ -338,7 +327,7 @@ def compress_tucker(data, relative_target_error, extra_output=False, print_progr
 	if extra_output:
 		output["compressed"] = compressed
 		output["compressed_size"] = get_compress_tucker_size(compressed)
-		output["original_size"] = data.dtype.itemsize*data.size
+		output["original_size"] = memory_size(data)
 		return output
 	else:
 		return compressed
@@ -400,31 +389,18 @@ def get_compress_tucker_size(compressed):
 	# Calculate factor matrix size
 	factor_matrices_size = 0
 	for factor_matrix in compressed["factor_matrices"]:
-		
-		factor_matrix_size = factor_matrix.size
-		for step in range(1, orthogonality_reconstruction_steps + 1):
-			
-			start_col = int(round(step/(orthogonality_reconstruction_steps + 1)*(factor_matrix.shape[1] - orthogonality_reconstruction_margin))) + orthogonality_reconstruction_margin
-			end_col = int(round((step + 1)/(orthogonality_reconstruction_steps + 1)*(factor_matrix.shape[1] - orthogonality_reconstruction_margin))) + orthogonality_reconstruction_margin
-			start_row = factor_matrix.shape[0] - start_col + orthogonality_reconstruction_margin
-			
-			if end_col == start_col or start_row >= factor_matrix.shape[0]:
-				continue
-			
-			factor_matrix_size -= (end_col - start_col)*(factor_matrix.shape[0] - start_row)
-			
-		factor_matrices_size += factor_matrix_size*factor_matrix.itemsize
+		factor_matrices_size += memory_size(factor_matrix)
 	
-	compressed_size = factor_matrices_size + compressed["core_tensor"].dtype.itemsize*compressed["core_tensor"].size
+	compressed_size = factor_matrices_size + memory_size(compressed["core_tensor"])
 	
 	return compressed_size
 
 def get_compression_factor_tucker(original, compressed):
-	return (original.dtype.itemsize*original.size)/get_compress_tucker_size(compressed)
+	return memory_size(original)/get_compress_tucker_size(compressed)
 
 def print_compression_rate_tucker(original, compressed):
 	
-	original_size = original.dtype.itemsize*original.size
+	original_size = memory_size(original)
 	compressed_size = get_compress_tucker_size(compressed)
 	
 	print("Method: Tucker")
@@ -433,7 +409,7 @@ def print_compression_rate_tucker(original, compressed):
 	print("Compressed shape:", compressed["core_tensor"].shape, "\tcompressed size:", compressed_size)
 	print("Compression ratio:", compressed_size/original_size)
 
-# Phase 2: Orthgonality compression
+# Phase 2: Orthogonality compression
 
 def compress_orthogonality(data, copy=False, method="systems", quantize=False, orthogonality_reconstruction_steps=500, orthogonality_reconstruction_margin=0):
 	
@@ -448,19 +424,21 @@ def compress_orthogonality(data, copy=False, method="systems", quantize=False, o
 	
 	# output is dictionary with keys:
 	# - st_hosvd: dictionary containing ST-HOSVD output, apart from factor matrices
-	# - factor_matrices: the new factor matrices, stored in a dictionary stored 
+	# - method: method
+	# - quantize: quantize
+	# - factor_matrices: list of the new factor matrices, each a dictionary with keys:
+	#	- data:
+	#		- if "systems": a concatenation of all truncated columns into a 1D array (so column-major)
+	#		- if "householder": a concatenation of the columns of the lower triangle of the H-matrix (so H[1:, 0], H[2:, 1], ...)
+	#	- shape: shape of the original factor matrix
+	#	- tau (only if "householder"): tau-vector from QR-call
+	#	- blocks (only for "systems"): list of tuples of blocks stored in data, each tuple consists of (col2, truncation_row), the exclusive ending indices for columns and rows respectively
+	#	- offset (only if quantize=True): offset applied to factor matrix values
+	#	- scale (only if quantize=True): scale applied to factor matrix values after offset
 	# - orthogonality_reconstruction_steps (only for "systems"): orthogonality_reconstruction_steps
 	# - orthogonality_reconstruction_margin (only for "systems"): orthogonality_reconstruction_margin
 	
 	# a factor matrix is a distionary with keys:
-	# - data:
-	#	- "systems": a concatenation of all truncated columns into a 1D array (so column-major)
-	#	- "householder": a concatenation of the columns of the lower triangle of the H-matrix (so H[1:, 0], H[2:, 1], ...)
-	# - shape: shape of the original factor matrix
-	# - tau (only if "householder"): tau-vector from QR-call
-	# - blocks (only for "systems"): list of tuples of blocks stored in data, each tuple consists of (col2, truncation_row), the exclusive ending indices for columns and rows respectively
-	# - offset (only if quantize=True): offset applied to factor matrix values
-	# - scale (only if quantize=True): scale applied to factor matrix values after offset
 	
 	# Initialization
 	compressed = {
@@ -553,7 +531,7 @@ def compress_orthogonality(data, copy=False, method="systems", quantize=False, o
 	# Return output
 	return compressed
 
-def decompress_orthogonality(data, copy=False, correct_signs=False, renormalize=False):
+def decompress_orthogonality(data, copy=False, renormalize=False):
 	
 	# Reconstructs truncated values from the factor matrices
 	
@@ -626,425 +604,386 @@ def decompress_orthogonality(data, copy=False, correct_signs=False, renormalize=
 
 # Phase 3: Quantization
 
-# Original code, real mess from down here
+def get_smallest_int_type(bits):
+	sizes = (8, 16, 32, 64)
+	for size in sizes:
+		if size >= bits:
+			return "uint%s"%size
 
-quantization_steps = 256
-starting_layer = 10
-target_bits_after_point = 0
-meta_quantization_step = 2**-target_bits_after_point
-
-def compress_quantize1(data):
+def quantize_and_encode(data, data_bits, quantization_bits, encoding_method, copy=False, endian="little"):
 	
-	# 
+	# Quantize the given array and encode the resulting bits into a bitarray
 	
-	factor_matrices, core_tensor = data
+	# encoding_method: "default", "graycode", "huffman"
+	# If bitstring is None, a new bitstring is created
 	
-	# Quantize core tensor
-	core_tensor_quantized = []
-	for layer in range(starting_layer, max(core_tensor.shape)):
-		
-		# Quantize one layer
-		
-		# Collect values
-		values = []
-		if layer < core_tensor.shape[0]:
-			values.extend(list(core_tensor[layer, :layer + 1, :layer + 1].flatten()))
-		if layer < core_tensor.shape[1]:
-			values.extend(list(core_tensor[:layer, layer, :layer + 1].flatten()))
-		if layer < core_tensor.shape[2]:
-			values.extend(list(core_tensor[:layer, :layer, layer].flatten()))
-		
-		# Sort and pick quantization values
-		values.sort()
-		quantization_values = np.zeros(quantization_steps)
-		step_size = (len(values) - 1)/(quantization_steps - 1)
-		for step in range(quantization_steps):
-			quantization_values[step] = values[max(0, min(len(values), int(round(step*step_size))))]
-		
-		# Quantize layer in core tensor
-		def quantize(x):
-			index = np.searchsorted(quantization_values, x)
-			if index == quantization_steps - 1:
-				return index
-			elif abs(x - quantization_values[index]) < abs(x - quantization_values[index + 1]):
-				return index
-			else:
-				return index + 1
-		if layer < core_tensor.shape[0]:
-			core_tensor[layer, :layer + 1, :layer + 1] = [[quantize(x) for x in subarray] for subarray in core_tensor[layer, :layer + 1, :layer + 1]]
-		if layer < core_tensor.shape[1]:
-			core_tensor[:layer, layer, :layer + 1] = [[quantize(x) for x in subarray] for subarray in core_tensor[:layer, layer, :layer + 1]]
-		if layer < core_tensor.shape[2]:
-			core_tensor[:layer, :layer, layer] = [[quantize(x) for x in subarray] for subarray in core_tensor[:layer, :layer, layer]]
-		
-		# Meta-quantize quantization values
-		meta_quantization_min = min(values)
-		meta_quantization_bits = int(math.ceil(math.log2(max(values) - min(values) + 2**-target_bits_after_point))) + target_bits_after_point
-		quantization_values = np.rint((quantization_values - meta_quantization_min)/meta_quantization_step)
-		
-		# Store quantization metadata
-		core_tensor_quantized.append((meta_quantization_min, meta_quantization_bits, quantization_values))
+	# Returns bitarray, offset, scale(, tree if huffman encoding else None) with bitarray the given bitarray extended with the quantized data
 	
-	# Store quantized tensor
-	core_tensor_quantized.append(core_tensor)
-	
-	return factor_matrices, core_tensor_quantized
-
-def decompress_quantize1(data):
-	
-	factor_matrices, core_tensor_quantized = data
-	
-	# Dequantize core tensor
-	core_tensor = core_tensor_quantized[-1]
-	for layer in range(starting_layer, max(core_tensor.shape)):
-		
-		# Dequantize one layer
-		
-		# Load metadata
-		meta_quantization_min, meta_quantization_bits, quantization_values = core_tensor_quantized[layer - starting_layer]
-		
-		# Meta-dequantize quantization values
-		quantization_values = quantization_values*meta_quantization_step + meta_quantization_min
-		
-		# Dequantize
-		if layer < core_tensor.shape[0]:
-			core_tensor[layer, :layer + 1, :layer + 1] = [[quantization_values[int(x)] for x in subarray] for subarray in core_tensor[layer, :layer + 1, :layer + 1]]
-		if layer < core_tensor.shape[1]:
-			core_tensor[:layer, layer, :layer + 1] = [[quantization_values[int(x)] for x in subarray] for subarray in core_tensor[:layer, layer, :layer + 1]]
-		if layer < core_tensor.shape[2]:
-			core_tensor[:layer, :layer, layer] = [[quantization_values[int(x)] for x in subarray] for subarray in core_tensor[:layer, :layer, layer]]
-	
-	return factor_matrices, core_tensor
-
-def print_compression_rate_quantize1(original, compressed):
-	
-	original_size = reduce((lambda x, y: x * y), original.shape)*original.itemsize
-	
-	factor_matrices_quantized, core_tensor_quantized = compressed
-	core_tensor = core_tensor_quantized[-1]
-	factor_matrices_size = sum(map(lambda x : x.itemsize*x.size, factor_matrices_quantized))
-	unquantized_section = core_tensor.itemsize*min(core_tensor.shape[0], starting_layer)*min(core_tensor.shape[1], starting_layer)*min(core_tensor.shape[2], starting_layer)
-	core_tensor_size = unquantized_section + int(math.ceil((core_tensor.size - unquantized_section)*math.log2(quantization_steps)/8))
-	meta_quantization_size = 0
-	for layer in range(starting_layer, max(core_tensor.shape)):
-		meta_quantization_min, meta_quantization_bits, quantization_values = core_tensor_quantized[layer - starting_layer]
-		meta_quantization_size += 8 + 4 + quantization_steps*meta_quantization_bits/8
-	meta_quantization_size = int(math.ceil(meta_quantization_size))
-	core_tensor_size += meta_quantization_size
-	compressed_size = factor_matrices_size + core_tensor_size
-	
-	print("Method: Tucker + Quantization of core tensor with custom-picked quantization levels per layer and meta-quantization")
-	print("Original size:", original_size)
-	print("Factor matrices:", factor_matrices_size)
-	print("Meta quantization size:", meta_quantization_size)
-	print("Core tensor:", core_tensor_size)
-	print("Compressed size:", compressed_size)
-	print("Compression ratio:", compressed_size/original_size)
-
-factor_matrix_bits = 11
-factor_matrix_quantization_step = 2**-(factor_matrix_bits - 1)
-
-def compress_quantize2(data):
-	
-	# 1 byte per value, layer by layer
-	
-	factor_matrices_original, core_tensor_original = data
-	
-	# Quantize factor matrices
-	factor_matrices = []
-	for factor_matrix in factor_matrices_original:
-		factor_matrices.append(np.clip((np.rint(factor_matrix/factor_matrix_quantization_step)).astype(int), -2**(factor_matrix_bits - 1), 2**(factor_matrix_bits - 1) - 1))
-	
-	# Quantize core tensor
-	core_tensor_quantized = []
-	core_tensor = np.copy(core_tensor_original)
-	for layer in range(1, max(core_tensor.shape)):
-		
-		# Quantize one layer
-		
-		# Collect values
-		values = []
-		if layer < core_tensor.shape[0]:
-			values.extend(list(core_tensor[layer, :layer + 1, :layer + 1].flatten()))
-		if layer < core_tensor.shape[1]:
-			values.extend(list(core_tensor[:layer, layer, :layer + 1].flatten()))
-		if layer < core_tensor.shape[2]:
-			values.extend(list(core_tensor[:layer, :layer, layer].flatten()))
-		
-		# Store quantization metadata
-		min_value = min(values)
-		step_size = (max(values) - min_value)/255
-		core_tensor_quantized.append((min_value, step_size))
-		if step_size < 0.000000001:
-			step_size = 1
-		
-		# Quantize layer in core tensor
-		if layer < core_tensor.shape[0]:
-			core_tensor[layer, :layer + 1, :layer + 1] = np.rint((core_tensor[layer, :layer + 1, :layer + 1] - min_value)/step_size)
-		if layer < core_tensor.shape[1]:
-			core_tensor[:layer, layer, :layer + 1] = np.rint((core_tensor[:layer, layer, :layer + 1] - min_value)/step_size)
-		if layer < core_tensor.shape[2]:
-			core_tensor[:layer, :layer, layer] = np.rint((core_tensor[:layer, :layer, layer] - min_value)/step_size)
-	
-	# Store quantized tensor
-	core_tensor_quantized.append(core_tensor)
-	
-	return factor_matrices, core_tensor_quantized
-
-def decompress_quantize2(data):
-	
-	factor_matrices_original, core_tensor_quantized = data
-	
-	# Dequantize factor matrices
-	factor_matrices = []
-	for factor_matrix in factor_matrices_original:
-		factor_matrices.append(factor_matrix*factor_matrix_quantization_step)
-	
-	# Dequantize core tensor
-	core_tensor = np.copy(core_tensor_quantized[-1])
-	for layer in range(1, max(core_tensor.shape)):
-		
-		# Dequantize one layer
-		
-		# Load metadata
-		min_value, step_size = core_tensor_quantized[layer - 1]
-		
-		# Dequantize
-		if layer < core_tensor.shape[0]:
-			core_tensor[layer, :layer + 1, :layer + 1] = np.rint(core_tensor[layer, :layer + 1, :layer + 1]*step_size + min_value)
-		if layer < core_tensor.shape[1]:
-			core_tensor[:layer, layer, :layer + 1] = np.rint(core_tensor[:layer, layer, :layer + 1]*step_size + min_value)
-		if layer < core_tensor.shape[2]:
-			core_tensor[:layer, :layer, layer] = np.rint(core_tensor[:layer, :layer, layer]*step_size + min_value)
-	
-	return factor_matrices, core_tensor
-
-use_graycode = True
-
-def print_compression_rate_quantize2(original, compressed):
-	
-	original_size = reduce((lambda x, y: x * y), original.shape)*original.itemsize
-	factor_matrices, core_tensor_quantized = compressed
-	compressed_size, factor_matrices_size_no_zlib, factor_matrices_size, meta_quantization_size, core_tensor_size_no_zlib, core_tensor_size = get_compress_quantize2_size(compressed, full_output=True)
-	
-	print("Method: Tucker + Quantizing factor matrices with constant precision + Quantizing core tensor with 8 bits/variable quantization step per layer + zlib")
-	print("Using graycode:", use_graycode)
-	print("Original size:", original_size)
-	print("Factor matrices (no zlib):", factor_matrices_size_no_zlib)
-	print("Factor matrices:", factor_matrices_size)
-	print("Meta quantization size:", meta_quantization_size)
-	print("Core tensor (no zlib):", core_tensor_size_no_zlib)
-	print("Core tensor:", core_tensor_size)
-	print("Compressed size:", compressed_size)
-	print("Compression ratio:", compressed_size/original_size)
-
-orthogonality_reconstruction_steps = 0
-orthogonality_reconstruction_margin = 10
-def get_compress_quantize2_size(compressed, full_output=False):
-	
-	factor_matrices_quantized, core_tensor_quantized = compressed
-	core_tensor = core_tensor_quantized[-1]
-	factor_matrices_size = int(math.ceil(factor_matrix_bits*sum(map(lambda x : x.size, factor_matrices_quantized))/8))
-	
-	# Convert to bitstring and compress with zlib
-	factor_matrices_bits = bitarray.bitarray()
-	if use_graycode:
-		graycode = calculate_gray_code(factor_matrix_bits)
-		code = {x - 2**(factor_matrix_bits - 1): bitarray.bitarray(graycode[x]) for x in range(2**factor_matrix_bits)}
+	# Quantize
+	offset = -np.amin(data)
+	scale = (2**quantization_bits - 1)/(np.amax(data) + offset)
+	# Perform operations in-place if allowed to
+	if copy:
+		corrected_data = (data + offset)*scale
 	else:
-		code = {x - 2**(factor_matrix_bits - 1): bitarray.bitarray(format(x, "0%sb"%factor_matrix_bits)) for x in range(2**factor_matrix_bits)} # Storing with shifted notation
-	for factor_matrix in factor_matrices_quantized:
-		for step in range(0, orthogonality_reconstruction_steps + 1):
-			
-			start_col = int(round(step/(orthogonality_reconstruction_steps + 1)*(factor_matrix.shape[1] - orthogonality_reconstruction_margin))) + orthogonality_reconstruction_margin
-			end_col = int(round((step + 1)/(orthogonality_reconstruction_steps + 1)*(factor_matrix.shape[1] - orthogonality_reconstruction_margin))) + orthogonality_reconstruction_margin
-			end_row = factor_matrix.shape[0] - start_col + orthogonality_reconstruction_margin
-			if end_col == start_col:
-				continue
-			factor_matrices_bits.encode(code, factor_matrix[:end_row, start_col:end_col].flatten())
-			
-	factor_matrices_size = len(zlib.compress(factor_matrices_bits.tobytes()))
+		corrected_data = data.__iadd__(offset).__imul__(scale)
+	corrected_data = np.rint(corrected_data, out=np.empty(corrected_data.shape)).astype(get_smallest_int_type(quantization_bits))
+	corrected_data = np.reshape(corrected_data, (-1,))
 	
-	# Convert to bitstring and compress with zlib
-	core_tensor_size = core_tensor.itemsize
-	core_tensor_bits = bitarray.bitarray()
-	if use_graycode:
-		graycode = calculate_gray_code(8)
-		code = {x: bitarray.bitarray(graycode[x]) for x in range(256)}
+	# Encode into bitstring
+	if encoding_method == "huffman":
+		code, tree = generate_code(corrected_data, quantization_bits, encoding_method, endian=endian)
+		data_bits.encode(code, corrected_data)
+		return offset, scale, tree
 	else:
-		code = {x: bitarray.bitarray(format(x, "08b")) for x in range(256)}
-	for i in range(1, max(core_tensor.shape)):
-		if i < core_tensor.shape[0]:
-			core_tensor_bits.encode(code, core_tensor[i, :i + 1, :i + 1].astype(int).flatten())
-		if i < core_tensor.shape[1]:
-			core_tensor_bits.encode(code, core_tensor[:i, i, :i + 1].astype(int).flatten())
-		if i < core_tensor.shape[2]:
-			core_tensor_bits.encode(code, core_tensor[:i, :i, i].astype(int).flatten())
-	core_tensor_size += len(zlib.compress(core_tensor_bits.tobytes()))
+		code = generate_code(corrected_data, quantization_bits, encoding_method, endian=endian)
+		data_bits.encode(code, corrected_data)
+		return offset, scale, None
+
+def decode_and_dequantize(data_bits, start, end, quantization_bits, encoding_method, count, scale, offset, endian="little", huffman_tree=None):
 	
-	meta_quantization_size = 2*8*(max(core_tensor.shape) - 1) # 64-bit floats are used to store metadata
-	core_tensor_size += meta_quantization_size
-	compressed_size = factor_matrices_size + core_tensor_size
+	# Decode the given bitarray in the range [start:end] using the encoding_method and possibly a Huffman code stored in compressed tree format
 	
-	if full_output:
-		return compressed_size, len(factor_matrices_bits.tobytes()), factor_matrices_size, meta_quantization_size, core_tensor.itemsize + len(core_tensor_bits.tobytes()) + meta_quantization_size, core_tensor_size
+	# Decode
+	if encoding_method == "huffman":
+		code = huffman_tree_to_code(huffman_tree, quantization_bits)
 	else:
-		return compressed_size
+		code = generate_code(None, quantization_bits, encoding_method, endian=endian)
+	data = np.fromiter(data_bits[start:end].iterdecode(code), dtype="float32", count=count) # Pretty slow operation, tree is constructed even for constant bit length prefix codes, could be implemented more quickly with a look-up table in that case
+	
+	# Dequantize
+	(data.__imul__(1/scale) if abs(scale) > epsilon else data).__iadd__(-offset)
+	return data
 
-quantization_step_size = 150
-
-def compress_quantize3(data):
+# Cache codes for faster reuse later
+code_cache = {}
+graycode_cache = {}
+def generate_code(data, bits_per_symbol, encoding_method, endian="little"):
 	
-	# Variable amount of bits per layer, each layer uses same quantization step
+	# Generate code for data with the given amount of bits_per_symbol (apart from Huffman coding)
+	# data is only necessary for Huffman coding
 	
-	factor_matrices, core_tensor = data
-	
-	# Quantize core tensor
-	core_tensor_quantized = []
-	for layer in range(1, max(core_tensor.shape)):
-		
-		# Quantize one layer
-		
-		# Collect values
-		values = []
-		if layer < core_tensor.shape[0]:
-			values.extend(list(core_tensor[layer, :layer + 1, :layer + 1].flatten()))
-		if layer < core_tensor.shape[1]:
-			values.extend(list(core_tensor[:layer, layer, :layer + 1].flatten()))
-		if layer < core_tensor.shape[2]:
-			values.extend(list(core_tensor[:layer, :layer, layer].flatten()))
-		
-		# Store quantization metadata
-		min_value = round(min(values)/quantization_step_size)
-		max_value = round(max(values)/quantization_step_size)
-		bits_used = math.ceil(math.log2(max(abs(min_value), max_value + 1))) + 1
-		core_tensor_quantized.append(bits_used)
-		
-		# Quantize layer in core tensor
-		if layer < core_tensor.shape[0]:
-			core_tensor[layer, :layer + 1, :layer + 1] = np.rint(core_tensor[layer, :layer + 1, :layer + 1]/quantization_step_size)
-		if layer < core_tensor.shape[1]:
-			core_tensor[:layer, layer, :layer + 1] = np.rint(core_tensor[:layer, layer, :layer + 1]/quantization_step_size)
-		if layer < core_tensor.shape[2]:
-			core_tensor[:layer, :layer, layer] = np.rint(core_tensor[:layer, :layer, layer]/quantization_step_size)
-	
-	# Store quantized tensor
-	core_tensor_quantized.append(core_tensor)
-	
-	return factor_matrices, core_tensor_quantized
-
-def decompress_quantize3(data):
-	
-	factor_matrices, core_tensor_quantized = data
-	
-	# Dequantize core tensor
-	core_tensor = core_tensor_quantized[-1]
-	for layer in range(1, max(core_tensor.shape)):
-		
-		# Dequantize one layer
-		
-		# Load metadata
-		bits_used = core_tensor_quantized[layer - 1]
-		
-		# Dequantize
-		if layer < core_tensor.shape[0]:
-			core_tensor[layer, :layer + 1, :layer + 1] = np.rint(core_tensor[layer, :layer + 1, :layer + 1]*quantization_step_size)
-		if layer < core_tensor.shape[1]:
-			core_tensor[:layer, layer, :layer + 1] = np.rint(core_tensor[:layer, layer, :layer + 1]*quantization_step_size)
-		if layer < core_tensor.shape[2]:
-			core_tensor[:layer, :layer, layer] = np.rint(core_tensor[:layer, :layer, layer]*quantization_step_size)
-	
-	return factor_matrices, core_tensor
-
-def print_compression_rate_quantize3(original, compressed):
-	
-	original_size = reduce((lambda x, y: x * y), original.shape)*original.itemsize
-	
-	factor_matrices_quantized, core_tensor_quantized = compressed
-	core_tensor = core_tensor_quantized[-1]
-	factor_matrices_size = sum(map(lambda x : x.itemsize*x.size, factor_matrices_quantized))
-	core_tensor_size = core_tensor.itemsize
-	
-	# Convert to bitstring and compress with zlib
-	core_tensor_bits = bitarray.bitarray()
-	use_graycode = True
-	for i in range(1, max(core_tensor.shape)):
-		bits_used = core_tensor_quantized[i - 1]
-		if use_graycode:
-			graycode = calculate_gray_code(bits_used)
-			code = {x - 2**(bits_used - 1): bitarray.bitarray(graycode[x]) for x in range(2**bits_used)}
+	# Calculate encoding code
+	if encoding_method == "default":
+		if bits_per_symbol in code_cache:
+			return code_cache[bits_per_symbol]
 		else:
-			code = {x - 2**(bits_used - 1): bitarray.bitarray(format(x, "0%sb"%bits_used)) for x in range(2**bits_used)} # Storing with shifted notation
-		if i < core_tensor.shape[0]:
-			core_tensor_bits.encode(code, core_tensor[i, :i + 1, :i + 1].astype(int).flatten())
-		if i < core_tensor.shape[1]:
-			core_tensor_bits.encode(code, core_tensor[:i, i, :i + 1].astype(int).flatten())
-		if i < core_tensor.shape[2]:
-			core_tensor_bits.encode(code, core_tensor[:i, :i, i].astype(int).flatten())
-	core_tensor_size += len(zlib.compress(core_tensor_bits.tobytes()))
+			code = {x: bitarray(format(x, "0" + str(bits_per_symbol) + "b"), endian=endian) for x in range(2**bits_per_symbol)}
+			code_cache[bits_per_symbol] = code
+			return code
+	elif encoding_method == "graycode":
+		if bits_per_symbol in graycode_cache:
+			return graycode_cache[bits_per_symbol]
+		else:
+			graycode = calculate_gray_code(bits_per_symbol)
+			code = {x: bitarray(graycode[x], endian=endian) for x in range(2**bits_per_symbol)}
+			graycode_cache[bits_per_symbol] = code
+			return code
+	elif encoding_method == "huffman":
+		return huffman_code(data, bits_per_symbol, endian=endian)
 	
-	meta_quantization_size = 8*(max(core_tensor.shape) - 1) # 8 for 64-bit integer for storing bits per value per layer
-	core_tensor_size += meta_quantization_size
-	compressed_size = factor_matrices_size + core_tensor_size
+def calculate_gray_code(bits):
 	
-	print("Method: Tucker + Quantizing core tensor with variable bits/quantization step %s per layer + zlib"%quantization_step_size)
-	print("Using graycode:", use_graycode)
-	print("Original size:", original_size)
-	print("Factor matrices:", factor_matrices_size)
-	print("Meta quantization size:", meta_quantization_size)
-	print("Core tensor (no zlib):", core_tensor.itemsize + len(core_tensor_bits.tobytes()) + meta_quantization_size)
-	print("Core tensor:", core_tensor_size)
-	print("Compressed size:", compressed_size)
-	print("Compression ratio:", compressed_size/original_size)
+	# Calculate graycode for n bits
+	# From https://stackoverflow.com/questions/38738835/generating-gray-codes
+	
+	def gray_code_recurse(g, n):
+		k = len(g)
+		if n <= 0 :
+			return
+		else:
+			for i in range(k - 1, -1, -1):
+				char = "1" + g[i]
+				g.append(char)
+			for i in range(k - 1, -1, -1):
+				g[i] = "0" + g[i]
 
-def plot_core_tensor_magnitudes(compressed):
+			gray_code_recurse(g, n - 1)
+
+	g = ["0", "1"]
+	gray_code_recurse(g, bits - 1)
+	return g
+
+# Huffman code based on https://github.com/soxofaan/dahuffman/blob/master/dahuffman/huffmancodec.py
+# Code compression was based on https://stackoverflow.com/questions/759707/efficient-way-of-storing-huffman-tree
+# Probably quite inefficient in Python, so try to not use large alphabets
+
+def huffman_code(data, quantization_bits, endian="little"):
 	
-	# Plots the RMS's of the 3D slices of the core tensor
+	"""
+	Build Huffman code table from symbol sequence
+	:param data: sequence of symbols (numpy array of ints)
+	:return: code, tree (in compressed tree format, which is a dictionary {endian: endian, data: tree_bytes} with tree_bytes compressed by zlib)
+	"""
 	
-	factor_matrices, core_tensor = compressed
-	length = max(core_tensor.shape)
-	rms = np.zeros(length)
-	sos = np.zeros(length)
-	values = []
-	depths = []
-	values_per_layer = []
+	# Heap consists of tuples: (frequency, [list of tuples: (symbol, (bitsize, value))])
+	unique, counts = np.unique(data, return_counts=True)
+	heap = [(f, [(s, (0, 0))], bitarray("1" + format(s, "0%sb"%quantization_bits), endian=endian)) for s, f in zip(unique, counts)]
 	
-	for i in range(length):
+	# Use heapq approach to build the encodings of the huffman tree leaves.
+	heapify(heap)
+	while len(heap) > 1:
+		# Pop the 2 smallest items from heap
+		a = heappop(heap)
+		b = heappop(heap)
+		# Merge nodes (update codes for each symbol appropriately)
+		merged = (
+			a[0] + b[0], # Sum of frequencies
+			[(s, (n + 1, v)) for (s, (n, v)) in a[1]] # List of leaf nodes for this tree
+			+ [(s, (n + 1, (1 << n) + v)) for (s, (n, v)) in b[1]],
+			bitarray("0", endian=endian) + a[2] + b[2] # Compressed tree
+		)
+		heappush(heap, merged)
+	
+	# Code table is dictionary mapping symbol to (bitsize, value)
+	root = heappop(heap)
+	code = {}
+	for key, (depth, value) in root[1]:
+		code[key] = bitarray(format(value, "0%sb"%depth), endian=endian)
+	
+	return code, {"data": zlib.compress(root[2].tobytes()), "endian": endian} # We store some extra bits but these will be ignored by the parser
+
+# End of Huffman code
+
+def huffman_tree_to_code(tree, quantization_bits, endian="little"):
+	
+	# Reconstructs Huffman code from compressed tree format
+	# Based on https://stackoverflow.com/questions/759707/efficient-way-of-storing-huffman-tree
+	# 1 bit means leaf, 0 bit means non-leaf node
+	
+	# Reconstruct bits
+	tree_bits = bitarray(endian=tree["endian"])
+	tree_bits.frombytes(zlib.decompress(tree["data"]))
+	
+	# Reconstruct code
+	def huffman_tree_to_code_rec(tree_bits, code, current_prefix, index):
+		# Interpret node
+		# Returns new index
+		if tree_bits[index]:
+			# Leaf
+			index += 1
+			code[int(tree_bits[index:index + quantization_bits].to01(), 2)] = current_prefix.copy()
+			return index + quantization_bits
+		else:
+			# Non-leaf node
+			index += 1
+			current_prefix.append(False)
+			index = huffman_tree_to_code_rec(tree_bits, code, current_prefix, index)
+			current_prefix[-1] = True
+			index = huffman_tree_to_code_rec(tree_bits, code, current_prefix, index)
+			del current_prefix[-1]
+			return index
+	
+	code = {}
+	huffman_tree_to_code_rec(tree_bits, code, bitarray(endian=endian), 0)
+	
+	return code
+
+def compress_quantize(data, copy=False, endian="little", encoding_method="default", use_zlib=True, core_tensor_method="constant", core_tensor_quantization_bits=16, factor_matrix_method="constant", factor_matrix_quantization_bits=16):
+	
+	# Quantize core tensor and factor matrices and apply lossless bitstring compression
+	
+	# Input:
+	
+	# data: compression dictionary as returned by phase 2 (orthogonality compression) with method "householder"
+	# copy: whether or not the input data should be copied
+	# endian: endianness of encoded bits
+	# encoding_method: "default" (encode values in default binary form), "graycode" (using Gray-codes), "huffman" (using Huffman coding)
+	
+	# core_tensor_method:
+	#	- "constant": constant quantization step for full tensor, no distinguishing in between layers
+	# core_tensor_quantization_bits (only for "constant"): amount of bits that should be used per value, at most 64
+	
+	# factor_matrix_method:
+	#	- "constant": constant quantization step for full tensor, no distinguishing in between columns
+	# factor_matrix_quantization_bits (only for "constant"): amount of bits that should be used per value, at most 64
+	
+	# Output: dictionary with keys:
+	# - orthogonality_compression: contains compression as given by data, with st_hosvd->core_tensor, st_hosvd->S and factor_matrices removed
+	# - data_bytes: bitarray after conversion to bytes and compression to zlib, this bitarray contains all concatenated quantized object data, starting with the core tensor
+	# - endian: endian
+	# - encoding_method: encoding_method
+	# - use_zlib: use_zlib
+	# - core_tensor: dictionary with the following keys:
+	# 	- method: core_tensor_method
+	#	- shape: shape of core tensor
+	#	if "constant":
+	#		- tree (only if "huffman"): compressed Huffman tree
+	#		- end: ending index (exclusive) of core tensor bits in data
+	#		- quantization_bits: core_tensor_quantization_bits
+	#		- offset: offset applied to data for quantization
+	#		- scale: scale factor applied to data for quantization
+	# - factor_matrix_method: factor_matrix_method
+	# - factor_matrix_quantization_bits (only if "constant"): core_tensor_quantization_bits
+	# - factor_matrices: list of dictionaries with the following keys:
+	#	- shape: shape of factor matrix
+	#	- tau: tau-vector from orthogonality compression, stored in float32
+	#	if "constant":
+	#		- tree (only if "huffman"): compressed Huffman tree
+	#		- start: starting index (inclusive) of factor matrix bits in data
+	#		- end: ending index (exclusive) of factor matrix bits in data
+	#		- offset: offset applied to data for quantization
+	#		- scale: scale factor applied to data for quantization
+	
+	# Initalization
+	# Construct basic compression dictionary and add values from previous steps
+	compressed = {
+		"orthogonality_compression": {"st_hosvd": {}},
+		"endian": endian,
+		"encoding_method": encoding_method,
+		"use_zlib": use_zlib,
+		"factor_matrices": [],
+		"factor_matrix_method": factor_matrix_method,
+		"factor_matrix_quantization_bits": core_tensor_quantization_bits
+	}
+	# Copy orthogonality compression data apart from factor matrices and ST-HOSVD data
+	for key in data:
+		if key not in ("st_hosvd", "factor_matrices"):
+			if copy:
+				compressed["orthogonality_compression"][key] = deepcopy(data[key])
+			else:
+				compressed["orthogonality_compression"][key] = data[key]
+	# Copy ST-HOSVD data apart from core tensor
+	for key in data["st_hosvd"]:
+		if key not in ("core_tensor", "S"):
+			if copy:
+				compressed["orthogonality_compression"]["st_hosvd"][key] = deepcopy(data["st_hosvd"][key])
+			else:
+				compressed["orthogonality_compression"]["st_hosvd"][key] = data["st_hosvd"][key]
+	data_bits = bitarray(endian=endian)
+	
+	# Core tensor
+	
+	core_tensor = data["st_hosvd"]["core_tensor"]
+	core_tensor_dict = {
+		"method": core_tensor_method,
+		"shape": core_tensor.shape
+	}
+	
+	# Handle quantization method
+	if core_tensor_method == "constant":
 		
-		initial_length = len(values)
+		# Constant quantization, apply same quantization to entire core tensor
+		core_tensor_dict["quantization_bits"] = core_tensor_quantization_bits
+		core_tensor_dict["offset"], core_tensor_dict["scale"], tree = quantize_and_encode(core_tensor, data_bits, core_tensor_quantization_bits, encoding_method, copy=copy, endian=endian)
+		core_tensor_dict["end"] = data_bits.length()
+		if encoding_method == "huffman":
+			core_tensor_dict["tree"] = tree
+	
+	compressed["core_tensor"] = core_tensor_dict
+	
+	# End of core tensor
+	
+	# Factor matrices
+	
+	for factor_matrix in data["factor_matrices"]:
 		
-		if i < core_tensor.shape[0]:
-			core_tensor_slice = core_tensor[i, :i + 1, :i + 1]
-			rms[i] += np.sum(core_tensor_slice*core_tensor_slice)
-			values.extend(list(core_tensor_slice.flatten()))
-			depths.extend([i]*core_tensor_slice.size)
-		if i > 0:
-			if i < core_tensor.shape[1]:
-				core_tensor_slice = core_tensor[:i, i, :i + 1]
-				rms[i] += np.sum(core_tensor_slice*core_tensor_slice)
-				values.extend(list(core_tensor_slice.flatten()))
-				depths.extend([i]*core_tensor_slice.size)
-			if i < core_tensor.shape[2]:
-				core_tensor_slice = core_tensor[:i, :i, i]
-				rms[i] += np.sum(core_tensor_slice*core_tensor_slice)
-				values.extend(list(core_tensor_slice.flatten()))
-				depths.extend([i]*core_tensor_slice.size)
+		factor_matrix_dict = {
+			"shape": factor_matrix["shape"],
+			"tau": factor_matrix["tau"] if not copy else deepcopy(factor_matrix["tau"])
+		}
 		
-		sos[i] = rms[i]
-		rms[i] = math.sqrt(rms[i]/(len(values) - initial_length))
-		values_per_layer.append(values[initial_length:])
-	
-"""for i in range(20):
-		plt.hist(values_per_layer[i], bins=min(len(values_per_layer[i]), 25))
-		plt.title("Layer %s"%i)
-		plt.show()
-	
-	plt.plot(range(1, length + 1), sos)
-	plt.plot(range(1, length + 1), rms)
-	plt.yscale("log")
-	plt.show()
-	
-	plt.plot(depths[:1000000], values[:1000000], "bo")
-	plt.show"""
-	
+		# Handle quantization method
+		if factor_matrix_method == "constant":
+			
+			# Constant quantization, apply same quantization to entire factor matrix
+			factor_matrix_dict["start"] = data_bits.length()
+			factor_matrix_dict["offset"], factor_matrix_dict["scale"], tree = quantize_and_encode(factor_matrix["data"], data_bits, core_tensor_quantization_bits, encoding_method, copy=copy, endian=endian)
+			factor_matrix_dict["end"] = data_bits.length()
+			if encoding_method == "huffman":
+				factor_matrix_dict["tree"] = tree
 		
+		compressed["factor_matrices"].append(factor_matrix_dict)
+	
+	# End of factor matrices
+	
+	# Apply zlib to full data and return output
+	compressed["data_bytes"] = zlib.compress(data_bits.tobytes()) if use_zlib else data_bits.tobytes()
+	return compressed
+
+def decompress_quantize(data, copy=False):
+	
+	# Decompress bitstrings and dequantize core tensor and factor matrices
+	
+	# Input:
+	# data: compression dictionary as returned by phase 3
+	# copy: whether or not the input data should be copied
+	
+	# Initialization
+	if copy:
+		decompressed = deepcopy(data["orthogonality_compression"])
+	else:
+		decompressed = data["orthogonality_compression"]
+	decompressed["factor_matrices"] = []
+	endian = data["endian"]
+	data_bits = bitarray(endian=endian)
+	data_bits.frombytes(zlib.decompress(data["data_bytes"]) if data["use_zlib"] else data["data_bytes"])
+	encoding_method = data["encoding_method"]
+	
+	# Core tensor
+	
+	core_tensor_dict = data["core_tensor"]
+	if core_tensor_dict["method"] == "constant":
+		# Constant quantization, apply same quantization to entire core tensor
+		core_tensor = decode_and_dequantize(data_bits, 0, core_tensor_dict["end"], core_tensor_dict["quantization_bits"], encoding_method, product(core_tensor_dict["shape"]), core_tensor_dict["scale"], core_tensor_dict["offset"], endian=endian, huffman_tree=core_tensor_dict["tree"] if encoding_method == "huffman" else None)
+		core_tensor = np.reshape(core_tensor, core_tensor_dict["shape"])
+	decompressed["st_hosvd"]["core_tensor"] = core_tensor
+	
+	# End of core tensor
+	
+	# Factor matrices
+	
+	for factor_matrix in data["factor_matrices"]:
+		
+		factor_matrix_dict = {
+			"shape": factor_matrix["shape"],
+			"tau": factor_matrix["tau"] if not copy else deepcopy(factor_matrix["tau"])
+		}
+		
+		if data["factor_matrix_method"] == "constant":
+			
+			# Constant quantization, apply same dequantization to entire factor matrix
+			rows, cols = factor_matrix["shape"]
+			factor_matrix_size = (rows - cols - 1)*cols + cols*(cols + 1)//2 # After orthogonality compression
+			factor_matrix_dict["data"] = decode_and_dequantize(data_bits, factor_matrix["start"], factor_matrix["end"], data["factor_matrix_quantization_bits"], encoding_method, factor_matrix_size, factor_matrix["scale"], factor_matrix["offset"], endian=endian, huffman_tree=factor_matrix["tree"] if encoding_method == "huffman" else None)
+		
+		decompressed["factor_matrices"].append(factor_matrix_dict)
+	
+	# End of factor matrices
+	
+	return decompressed
+
+def get_compress_quantize_size(compressed, print_intermediate_values=False):
+	
+	# Get final compressed object size
+	# We will consider the following objects:
+	# - data_bytes: contains compressed and quantized values from core tensor and factor matrices
+	# - core_tensor: metadata for core tensor
+	#	if "constant":
+	#		- tree (only if encoding_method == "huffman"): compressed Huffman tree, should hopefully be small but still may be noticeable
+	#			- data
+	# - factor_matrices: metadata for factor matrices
+	#	- tau: tau-vector from orthogonality compression, not quantized and stored in float32 for simplicity
+	#	if "constant":
+	#		- tree (only if encoding_method == "huffman"): compressed Huffman tree, should hopefully be small but still may be noticeable
+	#			- data
+	
+	compressed_size = len(compressed["data_bytes"])
+	if print_intermediate_values:
+		print("Only data bytes:", compressed_size)
+	if compressed["core_tensor"]["method"] == "constant" and compressed["encoding_method"] == "huffman":
+		if print_intermediate_values:
+			print("Core tensor Huffman tree:", len(compressed["core_tensor"]["tree"]["data"]))
+		compressed_size += len(compressed["core_tensor"]["tree"]["data"])
+	for factor_matrix in compressed["factor_matrices"]:
+		compressed_size += memory_size(factor_matrix["tau"])
+		if compressed["factor_matrix_method"] == "constant" and compressed["encoding_method"] == "huffman":
+			if print_intermediate_values:
+				print("Factor matrix Huffman tree:", len(factor_matrix["tree"]["data"]))
+			compressed_size += len(factor_matrix["tree"]["data"])
+	if print_intermediate_values:
+		print("Total bytes:", compressed_size)
+	return compressed_size
+
+def get_compression_quantize_tucker(original, compressed):
+	return memory_size(original)/get_compress_quantize_size(compressed)
