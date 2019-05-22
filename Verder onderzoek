@@ -5,3 +5,5 @@
 - Parallelizatie:
 	- paralleliseren LA: kan helpen, maar veel communicatie soms ook merkbare fouten (fout verhoogde enorm bij methode met stelsels in parallel)
 	- pipelining van ST-HOSVD, flattening van factormatrices, quantizeren en comprimeren van factormatrices en later quantizeren en comprimeren van kerntensor
+- Performantie bitarray:
+	- Geen efficiënte manier om constant length prefix codes te decoderen

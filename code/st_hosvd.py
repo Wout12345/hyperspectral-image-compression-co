@@ -610,7 +610,7 @@ def get_smallest_int_type(bits):
 		if size >= bits:
 			return "uint%s"%size
 
-def quantize_and_encode(data, data_bits, quantization_bits, encoding_method, copy=False, endian="little"):
+def quantize_and_encode(data, data_bits, quantization_bits, encoding_method, copy=False, endian="little", min_val=None, max_val=None):
 	
 	# Quantize the given array and encode the resulting bits into a bitarray
 	
@@ -620,8 +620,8 @@ def quantize_and_encode(data, data_bits, quantization_bits, encoding_method, cop
 	# Returns bitarray, offset, scale(, tree if huffman encoding else None) with bitarray the given bitarray extended with the quantized data
 	
 	# Quantize
-	offset = -np.amin(data)
-	scale = (2**quantization_bits - 1)/(np.amax(data) + offset)
+	offset = np.float32(-(np.amin(data) if min_val is None else min_val))
+	scale = np.float32((2**quantization_bits - 1)/((np.amax(data) if max_val is None else max_val) + offset))
 	# Perform operations in-place if allowed to
 	if copy:
 		corrected_data = (data + offset)*scale
@@ -646,10 +646,11 @@ def decode_and_dequantize(data_bits, start, end, quantization_bits, encoding_met
 	
 	# Decode
 	if encoding_method == "huffman":
-		code = huffman_tree_to_code(huffman_tree, quantization_bits)
+		iterator = data_bits[start:end].iterdecodetree(huffman_tree_to_bitarray(huffman_tree), quantization_bits) # Constructing tree for variable length prefix codes is pretty slow
 	else:
-		code = generate_code(None, quantization_bits, encoding_method, endian=endian)
-	data = np.fromiter(data_bits[start:end].iterdecode(code), dtype="float32", count=count) # Pretty slow operation, tree is constructed even for constant bit length prefix codes, could be implemented more quickly with a look-up table in that case
+		code = generate_code(None, quantization_bits, encoding_method, endian=endian, as_list=True)
+		iterator = data_bits[start:end].iterdecodeconstant(code)
+	data = np.fromiter(iterator, dtype="float32", count=count)
 	
 	# Dequantize
 	(data.__imul__(1/scale) if abs(scale) > epsilon else data).__iadd__(-offset)
@@ -657,31 +658,39 @@ def decode_and_dequantize(data_bits, start, end, quantization_bits, encoding_met
 
 # Cache codes for faster reuse later
 code_cache = {}
-graycode_cache = {}
-def generate_code(data, bits_per_symbol, encoding_method, endian="little"):
+def generate_code(data, bits_per_symbol, encoding_method, as_list=False, endian="little"):
 	
 	# Generate code for data with the given amount of bits_per_symbol (apart from Huffman coding)
 	# data is only necessary for Huffman coding
+	# as_list returns code as a list instead of dict, only supported for constant-length codes ("default" and "graycode"), with symbols in list at index given by code
 	
 	# Calculate encoding code
-	if encoding_method == "default":
-		if bits_per_symbol in code_cache:
-			return code_cache[bits_per_symbol]
+	if encoding_method in ("default", "graycode"):
+		graycode = (encoding_method == "graycode")
+		key = (bits_per_symbol, as_list, graycode)
+		if key in code_cache:
+			return code_cache[key]
 		else:
-			code = {x: bitarray(format(x, "0" + str(bits_per_symbol) + "b"), endian=endian) for x in range(2**bits_per_symbol)}
-			code_cache[bits_per_symbol] = code
-			return code
-	elif encoding_method == "graycode":
-		if bits_per_symbol in graycode_cache:
-			return graycode_cache[bits_per_symbol]
-		else:
-			graycode = calculate_gray_code(bits_per_symbol)
-			code = {x: bitarray(graycode[x], endian=endian) for x in range(2**bits_per_symbol)}
-			graycode_cache[bits_per_symbol] = code
+			if graycode:
+				if as_list:
+					code = [None,]*(2**bits_per_symbol)
+					for symbol, code_value in enumerate(calculate_gray_code(bits_per_symbol)):
+						code[code_value] = symbol
+				else:
+					code = {symbol: bitarray(code_value, endian) for symbol, code_value in enumerate(calculate_gray_code(bits_per_symbol))}
+			else:
+				if as_list:
+					code = list(range(2**bits_per_symbol))
+				else:
+					code = {symbol: bitarray(format(symbol, "0" + str(bits_per_symbol) + "b"), endian=endian) for symbol in range(2**bits_per_symbol)}
+			code_cache[key] = code
 			return code
 	elif encoding_method == "huffman":
 		return huffman_code(data, bits_per_symbol, endian=endian)
-	
+
+def clear_code_cache():
+	code_cache.clear()
+
 def calculate_gray_code(bits):
 	
 	# Calculate graycode for n bits
@@ -745,6 +754,13 @@ def huffman_code(data, quantization_bits, endian="little"):
 
 # End of Huffman code
 
+def huffman_tree_to_bitarray(tree):
+	
+	# Decompresses tree format
+	tree_bits = bitarray(endian=tree["endian"])
+	tree_bits.frombytes(zlib.decompress(tree["data"]))
+	return tree_bits
+
 def huffman_tree_to_code(tree, quantization_bits, endian="little"):
 	
 	# Reconstructs Huffman code from compressed tree format
@@ -752,8 +768,7 @@ def huffman_tree_to_code(tree, quantization_bits, endian="little"):
 	# 1 bit means leaf, 0 bit means non-leaf node
 	
 	# Reconstruct bits
-	tree_bits = bitarray(endian=tree["endian"])
-	tree_bits.frombytes(zlib.decompress(tree["data"]))
+	tree_bits = huffman_tree_to_bitarray(tree)
 	
 	# Reconstruct code
 	def huffman_tree_to_code_rec(tree_bits, code, current_prefix, index):
@@ -779,7 +794,60 @@ def huffman_tree_to_code(tree, quantization_bits, endian="little"):
 	
 	return code
 
-def compress_quantize(data, copy=False, endian="little", encoding_method="default", use_zlib=True, core_tensor_method="constant", core_tensor_quantization_bits=16, factor_matrix_method="constant", factor_matrix_quantization_bits=16):
+# Tensor layer code
+
+def get_chunk_shape(tensor, current_dim, start, end):
+	return [min(tensor.shape[dim], start) if dim < current_dim else (max(0, min(tensor.shape[dim], end) - start) if dim == current_dim else min(tensor.shape[dim], end)) for dim in range(tensor.ndim)]
+
+def get_chunk_indices(tensor, current_dim, start, end):
+	return tuple([slice(start)]*current_dim + [slice(start, end)] + [slice(end)]*(tensor.ndim - current_dim - 1))
+
+def get_layers_size(tensor, start, end):
+	return product([min(tensor.shape[dim], end) for dim in range(tensor.ndim)]) - product([min(tensor.shape[dim], start) for dim in range(tensor.ndim)])
+
+def extract_layers(tensor, start, end):
+	
+	# Extract layers from range [start:end] from tensor in a consistent order
+	
+	# Initialization
+	size = get_layers_size(tensor, start, end)
+	out = np.empty(size, tensor.dtype)
+	
+	# Iterate over dimensions
+	index = 0
+	for dim in range(tensor.ndim):
+		# Iterate over all indices with:
+		# - index_i with i < dim: index_i < start
+		# - index_i with i == dim: start <= index_i < end
+		# - index_i with i > dim: index_i < end
+		chunk_size = product(get_chunk_shape(tensor, dim, start, end))
+		if chunk_size > 0:
+			values = tensor[get_chunk_indices(tensor, dim, start, end)].flat
+			out[index:index + chunk_size] = values
+			index += chunk_size
+	
+	return out
+
+def insert_layers(tensor, start, end, data):
+	
+	# Insert layers into range [start:end] in tensor in a consistent order
+	
+	# Iterate over dimensions
+	index = 0
+	for dim in range(tensor.ndim):
+		# Iterate over all indices with:
+		# - index_i with i < dim: index_i < start
+		# - index_i with i == dim: start <= index_i < end
+		# - index_i with i > dim: index_i < end
+		shape = get_chunk_shape(tensor, dim, start, end)
+		chunk_size = product(shape)
+		if chunk_size > 0:
+			tensor[get_chunk_indices(tensor, dim, start, end)] = np.reshape(data[index:index + chunk_size], shape)
+			index += chunk_size
+
+# End of tensor layer code
+
+def compress_quantize(data, copy=False, endian="little", encoding_method="default", use_zlib=True, core_tensor_method="constant", core_tensor_parameter=16, core_tensor_unquantized_rel_norm=0.995, factor_matrix_method="constant", factor_matrix_parameter=16):
 	
 	# Quantize core tensor and factor matrices and apply lossless bitstring compression
 	
@@ -792,11 +860,20 @@ def compress_quantize(data, copy=False, endian="little", encoding_method="defaul
 	
 	# core_tensor_method:
 	#	- "constant": constant quantization step for full tensor, no distinguishing in between layers
-	# core_tensor_quantization_bits (only for "constant"): amount of bits that should be used per value, at most 64
+	#	- "layered-constant-bits": distinguish in between columns, use a constant amount of bits, quantize each layer separately
+	#	- "layered-constant-step": distinguish in between columns, use a variable amount of bits per layer based on a target quantization step
+	# core_tensor_parameter: at most 64
+	#	- "constant": amount of bits that should be used per value
+	#	- "layered-constant-bits": amount of bits that should be used per value
+	#	- "layered-constant-step": (largest quantization step that may be used per layer)/(largest absolute value in core tensor), hopefully this relative definition causes the effect of this parameter to be roughly the same for different datasets, amount of bits per layer will be capped at 64
+	# core_tensor_unquantized_rel_norm: the fraction of elements of the core tensor that should remain unquantized and stored as float32, the algorithm will select i as the smallest value so that the relative norm of core_tensor[:i, :i, ..., :i] meets this bound
 	
 	# factor_matrix_method:
 	#	- "constant": constant quantization step for full tensor, no distinguishing in between columns
-	# factor_matrix_quantization_bits (only for "constant"): amount of bits that should be used per value, at most 64
+	#	- "layered": distinguish in between columns, decrease number of bits used based on column size and relevant S from ST-HOSVD phase 
+	# factor_matrix_parameter: at most 64
+	#	- "constant": amount of bits that should be used per value
+	#	- "layered": amount of bits that should be used per value in the first column, other amounts are derived from here
 	
 	# Output: dictionary with keys:
 	# - orthogonality_compression: contains compression as given by data, with st_hosvd->core_tensor, st_hosvd->S and factor_matrices removed
@@ -805,16 +882,24 @@ def compress_quantize(data, copy=False, endian="little", encoding_method="defaul
 	# - encoding_method: encoding_method
 	# - use_zlib: use_zlib
 	# - core_tensor: dictionary with the following keys:
+	#	- unquantized_data: unquantized first section of core tensor
 	# 	- method: core_tensor_method
 	#	- shape: shape of core tensor
+	#	- bits (only if "constant" or "layered-constant-bits"): core_tensor_parameter
 	#	if "constant":
-	#		- tree (only if "huffman"): compressed Huffman tree
 	#		- end: ending index (exclusive) of core tensor bits in data
-	#		- quantization_bits: core_tensor_quantization_bits
 	#		- offset: offset applied to data for quantization
 	#		- scale: scale factor applied to data for quantization
+	#		- tree (only if "huffman"): compressed Huffman tree
+	#	- layers (only if "layered-constant-bits" or "layered-constant-step"): a list of dictionaries containing the following keys:
+	#		- start: starting index (inclusive) of core tensor layer bits in data
+	#		- end: ending index (exclusive) of core tensor layer bits in data
+	#		- offset: offset applied to data for quantization
+	#		- scale: scale factor applied to data for quantization
+	#		- bits (only if "layered-constant-step"): amount of bits used per value on this layer
+	#		- tree (only if "huffman"): compressed Huffman tree
 	# - factor_matrix_method: factor_matrix_method
-	# - factor_matrix_quantization_bits (only if "constant"): core_tensor_quantization_bits
+	# - factor_matrix_parameter: core_tensor_parameter
 	# - factor_matrices: list of dictionaries with the following keys:
 	#	- shape: shape of factor matrix
 	#	- tau: tau-vector from orthogonality compression, stored in float32
@@ -826,6 +911,7 @@ def compress_quantize(data, copy=False, endian="little", encoding_method="defaul
 	#		- scale: scale factor applied to data for quantization
 	
 	# Initalization
+	clear_code_cache() # For more fair timing
 	# Construct basic compression dictionary and add values from previous steps
 	compressed = {
 		"orthogonality_compression": {"st_hosvd": {}},
@@ -834,7 +920,7 @@ def compress_quantize(data, copy=False, endian="little", encoding_method="defaul
 		"use_zlib": use_zlib,
 		"factor_matrices": [],
 		"factor_matrix_method": factor_matrix_method,
-		"factor_matrix_quantization_bits": core_tensor_quantization_bits
+		"factor_matrix_parameter": factor_matrix_parameter
 	}
 	# Copy orthogonality compression data apart from factor matrices and ST-HOSVD data
 	for key in data:
@@ -860,15 +946,60 @@ def compress_quantize(data, copy=False, endian="little", encoding_method="defaul
 		"shape": core_tensor.shape
 	}
 	
+	# Choose starting layer for quantization
+	total_norm = np.linalg.norm(core_tensor)
+	start_layer = 0
+	while start_layer < max(core_tensor.shape):
+		if np.linalg.norm(core_tensor[(slice(start_layer),)*core_tensor.ndim])/total_norm >= core_tensor_unquantized_rel_norm:
+			break
+		start_layer += 1
+	end_layer = max(core_tensor.shape)
+	core_tensor_dict["unquantized_data"] = core_tensor[(slice(start_layer),)*core_tensor.ndim]
+	
 	# Handle quantization method
 	if core_tensor_method == "constant":
 		
 		# Constant quantization, apply same quantization to entire core tensor
-		core_tensor_dict["quantization_bits"] = core_tensor_quantization_bits
-		core_tensor_dict["offset"], core_tensor_dict["scale"], tree = quantize_and_encode(core_tensor, data_bits, core_tensor_quantization_bits, encoding_method, copy=copy, endian=endian)
+		core_tensor_dict["bits"] = core_tensor_parameter
+		core_tensor_dict["offset"], core_tensor_dict["scale"], tree = quantize_and_encode(extract_layers(core_tensor, start_layer, end_layer), data_bits, core_tensor_parameter, encoding_method, copy=copy, endian=endian)
 		core_tensor_dict["end"] = data_bits.length()
 		if encoding_method == "huffman":
 			core_tensor_dict["tree"] = tree
+	
+	elif core_tensor_method in ("layered-constant-bits", "layered-constant-step"):
+		
+		# Use layers
+		core_tensor_dict["layers"] = []
+		if core_tensor_method == "layered-constant-bits":
+			core_tensor_dict["bits"] = core_tensor_parameter
+		if core_tensor_method == "layered-constant-step":
+			max_quantization_step = core_tensor_parameter*np.amax(np.abs(core_tensor))
+		for layer_index in range(start_layer, end_layer):
+			
+			layer_dict = {
+				"start": data_bits.length()
+			}
+			
+			# Extract layer
+			layer = extract_layers(core_tensor, layer_index, layer_index + 1)
+			
+			# Determine bits used
+			min_val = np.amin(layer)
+			max_val = np.amax(layer)
+			if core_tensor_method == "layered-constant-bits":
+				bits_per_symbol = core_tensor_parameter
+			elif core_tensor_method == "layered-constant-step":
+				# Number of bits is chosen so that quantization step <= max_quantization_step
+				bits_per_symbol = min(64, max(1, math.ceil(math.log2((max_val - min_val)/max_quantization_step + 1))))
+				layer_dict["bits"] = bits_per_symbol
+			
+			# Quantize and encode layer
+			layer_dict["offset"], layer_dict["scale"], tree = quantize_and_encode(layer, data_bits, bits_per_symbol, encoding_method, copy=copy, endian=endian, min_val=min_val, max_val=max_val)
+			layer_dict["end"] = data_bits.length()
+			if encoding_method == "huffman":
+				layer_dict["tree"] = tree
+			
+			core_tensor_dict["layers"].append(layer_dict)
 	
 	compressed["core_tensor"] = core_tensor_dict
 	
@@ -888,7 +1019,7 @@ def compress_quantize(data, copy=False, endian="little", encoding_method="defaul
 			
 			# Constant quantization, apply same quantization to entire factor matrix
 			factor_matrix_dict["start"] = data_bits.length()
-			factor_matrix_dict["offset"], factor_matrix_dict["scale"], tree = quantize_and_encode(factor_matrix["data"], data_bits, core_tensor_quantization_bits, encoding_method, copy=copy, endian=endian)
+			factor_matrix_dict["offset"], factor_matrix_dict["scale"], tree = quantize_and_encode(factor_matrix["data"], data_bits, factor_matrix_parameter, encoding_method, copy=copy, endian=endian)
 			factor_matrix_dict["end"] = data_bits.length()
 			if encoding_method == "huffman":
 				factor_matrix_dict["tree"] = tree
@@ -910,6 +1041,7 @@ def decompress_quantize(data, copy=False):
 	# copy: whether or not the input data should be copied
 	
 	# Initialization
+	clear_code_cache() # For more fair timing
 	if copy:
 		decompressed = deepcopy(data["orthogonality_compression"])
 	else:
@@ -923,10 +1055,36 @@ def decompress_quantize(data, copy=False):
 	# Core tensor
 	
 	core_tensor_dict = data["core_tensor"]
+	core_tensor = np.empty(core_tensor_dict["shape"], "float32")
+	
+	# Load unquantized part
+	start_layer = max(core_tensor_dict["unquantized_data"].shape)
+	core_tensor[(slice(start_layer),)*core_tensor.ndim] = core_tensor_dict["unquantized_data"]
+	end_layer = max(core_tensor.shape)
+	
+	# Load quantized part
 	if core_tensor_dict["method"] == "constant":
 		# Constant quantization, apply same quantization to entire core tensor
-		core_tensor = decode_and_dequantize(data_bits, 0, core_tensor_dict["end"], core_tensor_dict["quantization_bits"], encoding_method, product(core_tensor_dict["shape"]), core_tensor_dict["scale"], core_tensor_dict["offset"], endian=endian, huffman_tree=core_tensor_dict["tree"] if encoding_method == "huffman" else None)
-		core_tensor = np.reshape(core_tensor, core_tensor_dict["shape"])
+		insert_layers(core_tensor, start_layer, end_layer, decode_and_dequantize(data_bits, 0, core_tensor_dict["end"], core_tensor_dict["bits"], encoding_method, get_layers_size(core_tensor, start_layer, end_layer), core_tensor_dict["scale"], core_tensor_dict["offset"], endian=endian, huffman_tree=core_tensor_dict["tree"] if encoding_method == "huffman" else None))
+	elif core_tensor_dict["method"] in ("layered-constant-bits", "layered-constant-step"):
+		
+		# Use layers
+		for layer_index in range(start_layer, end_layer):
+			start_time = clock()
+			
+			layer = core_tensor_dict["layers"][layer_index - start_layer]
+			
+			# Determine bits used
+			if core_tensor_dict["method"] == "layered-constant-bits":
+				bits_per_symbol = core_tensor_dict["bits"]
+			elif core_tensor_dict["method"] == "layered-constant-step":
+				bits_per_symbol = layer["bits"]
+			
+			# Insert layer
+			insert_layers(core_tensor, layer_index, layer_index + 1, decode_and_dequantize(data_bits, layer["start"], layer["end"], bits_per_symbol, encoding_method, get_layers_size(core_tensor, layer_index, layer_index + 1), layer["scale"], layer["offset"], endian=endian, huffman_tree=layer["tree"] if encoding_method == "huffman" else None))
+			
+			print("Finished layer %s"%layer_index, clock() - start_time)
+	
 	decompressed["st_hosvd"]["core_tensor"] = core_tensor
 	
 	# End of core tensor
@@ -945,7 +1103,7 @@ def decompress_quantize(data, copy=False):
 			# Constant quantization, apply same dequantization to entire factor matrix
 			rows, cols = factor_matrix["shape"]
 			factor_matrix_size = (rows - cols - 1)*cols + cols*(cols + 1)//2 # After orthogonality compression
-			factor_matrix_dict["data"] = decode_and_dequantize(data_bits, factor_matrix["start"], factor_matrix["end"], data["factor_matrix_quantization_bits"], encoding_method, factor_matrix_size, factor_matrix["scale"], factor_matrix["offset"], endian=endian, huffman_tree=factor_matrix["tree"] if encoding_method == "huffman" else None)
+			factor_matrix_dict["data"] = decode_and_dequantize(data_bits, factor_matrix["start"], factor_matrix["end"], data["factor_matrix_parameter"], encoding_method, factor_matrix_size, factor_matrix["scale"], factor_matrix["offset"], endian=endian, huffman_tree=factor_matrix["tree"] if encoding_method == "huffman" else None)
 		
 		decompressed["factor_matrices"].append(factor_matrix_dict)
 	
@@ -962,25 +1120,58 @@ def get_compress_quantize_size(compressed, print_intermediate_values=False):
 	#	if "constant":
 	#		- tree (only if encoding_method == "huffman"): compressed Huffman tree, should hopefully be small but still may be noticeable
 	#			- data
+	#	if "layered-constant-bits" or "layered-constant-step":
+	#		- start: 64-bit integer (32-bit would be fine if data_bits doesn't exceed 4 Gbit, which should hopefully be the case after the first compression phases anyway), we ignore end because this could be encoded more efficiently by sharing bounds across objects
+	#		- offset: 32-bit float
+	#		- scale: 32-bit float
+	#		- bits (only if "layered-constant-step"): unsigned 8-bit integer
+	#		- tree (only if encoding_method == "huffman"): compressed Huffman tree, should hopefully be small but still may be noticeable
+	#			- data
 	# - factor_matrices: metadata for factor matrices
 	#	- tau: tau-vector from orthogonality compression, not quantized and stored in float32 for simplicity
 	#	if "constant":
 	#		- tree (only if encoding_method == "huffman"): compressed Huffman tree, should hopefully be small but still may be noticeable
 	#			- data
 	
+	# General data
 	compressed_size = len(compressed["data_bytes"])
 	if print_intermediate_values:
 		print("Only data bytes:", compressed_size)
+	
+	# Extra core tensor data
+	compressed_size += memory_size(compressed["core_tensor"]["unquantized_data"])
 	if compressed["core_tensor"]["method"] == "constant" and compressed["encoding_method"] == "huffman":
+		
 		if print_intermediate_values:
 			print("Core tensor Huffman tree:", len(compressed["core_tensor"]["tree"]["data"]))
 		compressed_size += len(compressed["core_tensor"]["tree"]["data"])
+	
+	elif compressed["core_tensor"]["method"] in ("layered-constant-bits", "layered-constant-step"):
+		
+		# Layers data
+		layers_data = (8 + 4 + 4 + int(compressed["core_tensor"]["method"] == "layered-constant-step"))*len(compressed["core_tensor"]["layers"])
+		if print_intermediate_values:
+			print("Core tensor layer data:", layers_data)
+		compressed_size += layers_data
+		
+		# Trees in layers
+		if compressed["encoding_method"] == "huffman":
+			for i, layer in enumerate(compressed["core_tensor"]["layers"]):
+				tree_data = len(layer["tree"]["data"])
+				if print_intermediate_values:
+					print("Core tensor Huffman tree for layer %s:"%i, tree_data)
+				compressed_size += tree_data
+	
+	# Extra factor matrix data
 	for factor_matrix in compressed["factor_matrices"]:
 		compressed_size += memory_size(factor_matrix["tau"])
 		if compressed["factor_matrix_method"] == "constant" and compressed["encoding_method"] == "huffman":
+			tree_data = len(factor_matrix["tree"]["data"])
 			if print_intermediate_values:
-				print("Factor matrix Huffman tree:", len(factor_matrix["tree"]["data"]))
-			compressed_size += len(factor_matrix["tree"]["data"])
+				print("Factor matrix Huffman tree:", tree_data)
+			compressed_size += tree_data
+	
+	# Total
 	if print_intermediate_values:
 		print("Total bytes:", compressed_size)
 	return compressed_size

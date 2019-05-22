@@ -48,6 +48,8 @@ Af:
 
 Todo:
 - Niet bitstring compressie, maar algemene lossless compressie
+- Splits quantizatie en encodering + lossless compressie op
+- Bijlage voor bitarray-aanpassingen
 
 Vragen:
 - Referenties voor code snippets? Momenteel alleen in source code zelf. Voorlopig alleen voor limiteren van geheugen, berekenen graycodes, berekenen Huffman codes, comprimeren Huffman-boom

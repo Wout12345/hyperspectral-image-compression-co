@@ -27,7 +27,9 @@ def test_compression_ratio_tucker():
 	print_difference(data, decompressed)
 	
 	print("="*20 + " Phase 3 " + "="*20)
-	compressed3 = st_hosvd.compress_quantize(compressed2, core_tensor_quantization_bits=16, factor_matrix_quantization_bits=16)
+	compressed3 = st_hosvd.compress_quantize(compressed2, encoding_method="huffman", use_zlib=False, core_tensor_method="constant", core_tensor_parameter=12, core_tensor_unquantized_rel_norm=0.995, factor_matrix_method="constant", factor_matrix_parameter=15)
+	#compressed3 = st_hosvd.compress_quantize(compressed2, encoding_method="huffman", use_zlib=False, core_tensor_method="layered-constant-bits", core_tensor_parameter=12, core_tensor_unquantized_rel_norm=0.995, factor_matrix_method="constant", factor_matrix_parameter=16)
+	#compressed3 = st_hosvd.compress_quantize(compressed2, use_zlib=False, core_tensor_method="layered-constant-step", core_tensor_parameter=1e-5, core_tensor_unquantized_rel_norm=0.995, factor_matrix_method="constant", factor_matrix_parameter=16)
 	decompressed = st_hosvd.decompress_tucker(st_hosvd.decompress_orthogonality(st_hosvd.decompress_quantize(compressed3)))
 	print("Compression ratio:", st_hosvd.get_compress_quantize_size(compressed3)/st_hosvd.memory_size(data))
 	print_difference(data, decompressed)
