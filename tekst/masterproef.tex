@@ -1,9 +1,9 @@
 \documentclass[master=cws,masteroption=ci]{kulemt}
 \setup{title={Hyperspectrale afbeeldingscompressie via tensordecomposities},
   author={Wouter Baert},
-  promotor={Dr.\ Nick Vannieuwenhoven\and Prof.\,dr.\,ir.\ Karl Meerbergen},
-  assessor={???},
-  assistant={Dr.\ Nick Vannieuwenhoven}}
+  promotor={Prof.\,dr.\,ir.\ K. Meerbergen \and Dr.\ N. Vannieuwenhoven},
+  assessor={Prof. dr. R. Vandebril \and Prof. dr. ir. Ph. Dutr\'e},
+  assistant={Dr.\ N. Vannieuwenhoven}}
 % De volgende \setup mag verwijderd worden als geen fiche gewenst is.
 \setup{filingcard,
   translatedtitle={Hyperspectral image compression via tensor decompositions},
@@ -37,6 +37,27 @@
 \usepackage{hhline}
 \usepackage{subcaption}
 \usepackage{multirow}
+\usepackage{xcolor}
+
+% Listings stuff
+\usepackage{listings}
+\lstset{
+	basicstyle=\tiny,
+	keywordstyle=\color{blue},
+	stringstyle=\color{orange},
+	commentstyle=\color{red},
+	showstringspaces=false,
+	numbers=left,
+	stepnumber=2,
+	numbersep=5pt,
+	frame=single,
+	breaklines=true,
+	tabsize=2,
+	breakatwhitespace=true,
+	morecomment=[l]{//}
+}
+\lstdefinestyle{Python}{language=Python}
+\lstdefinestyle{C}{language=C}
 
 %%%%%%%
 % Om wat tekst te genereren wordt hier het lipsum pakket gebruikt.
@@ -115,6 +136,7 @@
 \appendix
 \include{app-code-algoritmen}
 \include{app-code-voorverwerker}
+\include{app-code-bitarray}
 
 \backmatter
 % Na de bijlagen plaatst men nog de bibliografie.

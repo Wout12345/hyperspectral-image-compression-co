@@ -4,6 +4,8 @@ from scipy.io import loadmat
 from scipy.misc import imsave
 from math import floor, sqrt
 
+import st_hosvd
+
 # Limit memory usage
 # Code from https://stackoverflow.com/questions/41105733/limit-ram-usage-to-python-program
 import resource
@@ -26,14 +28,7 @@ limit_memory()
 # End of memory limit
 
 def custom_norm(data):
-	
-	# Calculates Frobenius norm of 3D data but without copying the whole matrix to float32 like numpy.linalg.norm does
-	sq_total = 0
-	buffer_size = 128*1047*224*4 # In bytes
-	block_size = max(1, floor((buffer_size/(data.size*data.itemsize))*data.shape[0]))
-	for i in range(0, data.shape[0], block_size):
-		sq_total += np.linalg.norm(np.take(data, range(i, min(data.shape[0], i + block_size)), axis=0))**2
-	return sqrt(sq_total)
+	return st_hosvd.custom_norm(data)
 
 # Loaders
 
@@ -44,7 +39,7 @@ def load_cuprite():
 	return filter_bands(loadmat("../data/Cuprite_f970619t01p02_r02_sc03.a.rfl.mat")["X"], ((4, 106), (114, 152), (169, 219)))
 
 def load_botswana():
-	return loadmat("../data/Botswana.mat")["Botswana"]
+	return loadmat("../data/Botswana.mat")["Botswana"][:, :, 2:]
 
 def load_pavia():
 	return loadmat("../data/Pavia.mat")["pavia"][:1089, :676, :] # Cut spatial dimensions to perfect squares
@@ -92,7 +87,7 @@ def plot_comparison(original, decompressed):
 	plt.show()
 
 def rel_error(original, decompressed):
-	return custom_norm(original - decompressed)/custom_norm(original)
+	return st_hosvd.rel_error(original, decompressed)
 
 def print_difference(original, decompressed):
 	print("Relative error: %s\n"%rel_error(original, decompressed))

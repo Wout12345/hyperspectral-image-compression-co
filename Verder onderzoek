@@ -1,9 +1,11 @@
-- Variabele quantizatie factormatrices
 - DCT
 - Andere heuristiek om compressierang per mode te kiezen: kan dat de trade-off tussen fout en compressierang veel beter ligt in één mode dan een andere
 - Heuristieken om steekproefgrootte te kiezen bij randomized SVD
 - Parallelizatie:
 	- paralleliseren LA: kan helpen, maar veel communicatie soms ook merkbare fouten (fout verhoogde enorm bij methode met stelsels in parallel)
 	- pipelining van ST-HOSVD, flattening van factormatrices, quantizeren en comprimeren van factormatrices en later quantizeren en comprimeren van kerntensor
-- Performantie bitarray:
-	- Geen efficiënte manier om constant length prefix codes te decoderen
+- Huffman encoding: minder bomen opslaan
+	- Meer quantizatieblokken nemen
+	- Niet alle bomen in compressie opslaan, maar (sommige) bomen hard-coden in algoritme op basis van typische datasets
+- Verschillende quantisatie voor verschillende factormatrices bij TT's
+- Parameter tuning

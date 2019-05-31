@@ -1,19 +1,27 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.misc import imsave
+import scipy.stats as stats
 from time import clock
 import gc
 from copy import deepcopy
+import json
+import os
 
 from tools import *
 import st_hosvd
 
+# Constants
 default_experiments_amount = 10
+
 # Hoofdstuk 3: Methodologie
 
 def save_image(data, path):
 	image = np.sum(data, axis=2)
 	imsave(path, np.rint((image - np.amin(image))/(np.amax(image) - np.amin(image))*255).astype(int))
+	
+def save_indian_pines_image():
+	save_image(load_indian_pines(), "../tekst/images/indian_pines_sum.png")
 
 def save_cuprite_image():
 	save_image(load_cuprite(), "../tekst/images/cuprite_sum.png")
@@ -335,8 +343,8 @@ def orthogonality_compression_basic():
 	factor_matrix_index = 1
 	reference = compressed1["factor_matrices"][factor_matrix_index].copy()
 	cols = range(reference.shape[1])
-	for name, quantize in (("Geen quantisatie", False), ("Quantisatie", True)):
-		compressed2 = st_hosvd.decompress_orthogonality(st_hosvd.compress_orthogonality(compressed1, quantize=quantize, orthogonality_reconstruction_steps=500, orthogonality_reconstruction_margin=0, method="systems"), renormalize=None)
+	for name, quantize in (("Geen quantisatie", None), ("Quantisatie", 16)):
+		compressed2 = st_hosvd.decompress_orthogonality(st_hosvd.compress_orthogonality(compressed1, quantize=quantize, orthogonality_reconstruction_steps=500, orthogonality_reconstruction_margin=0, method="systems"), renormalize=False)
 		plt.plot(cols, np.linalg.norm(reference - compressed2["factor_matrices"][factor_matrix_index], axis=0), label=name)
 		
 	plt.xlabel("Kolomindex")
@@ -353,8 +361,8 @@ def orthogonality_compression_basic_matrix():
 	factor_matrix_index = 1
 	reference = compressed1["factor_matrices"][factor_matrix_index].copy()
 	cols = range(reference.shape[1])
-	for name, quantize in (("Geen quantisatie", False), ("Quantisatie", True)):
-		compressed2 = st_hosvd.decompress_orthogonality(st_hosvd.compress_orthogonality(compressed1, quantize=quantize, orthogonality_reconstruction_steps=500, orthogonality_reconstruction_margin=0, method="systems"), renormalize=None)
+	for name, quantize in (("Geen quantisatie", None), ("Quantisatie", 16)):
+		compressed2 = st_hosvd.decompress_orthogonality(st_hosvd.compress_orthogonality(compressed1, quantize=quantize, orthogonality_reconstruction_steps=500, orthogonality_reconstruction_margin=0, method="systems"), renormalize=False)
 		plt.plot(cols, [rel_error(reference[:, :i + 1], compressed2["factor_matrices"][factor_matrix_index][:, :i + 1]) for i in cols], label=name)
 		
 	plt.xlabel("Maximale kolomindex (exclusief)")
@@ -373,8 +381,8 @@ def orthogonality_compression_basic_inverse_norm_kept_values():
 	factor_matrix_index = 1
 	reference = compressed1["factor_matrices"][factor_matrix_index].copy()
 	cols = range(reference.shape[1])
-	for name, quantize in (("Geen quantisatie", False), ("Quantisatie", True)):
-		compressed2 = st_hosvd.decompress_orthogonality(st_hosvd.compress_orthogonality(compressed1, quantize=quantize, orthogonality_reconstruction_steps=500, orthogonality_reconstruction_margin=0, method="systems"), renormalize=None)
+	for name, quantize in (("Geen quantisatie", None), ("Quantisatie", 16)):
+		compressed2 = st_hosvd.decompress_orthogonality(st_hosvd.compress_orthogonality(compressed1, quantize=quantize, orthogonality_reconstruction_steps=500, orthogonality_reconstruction_margin=0, method="systems"), renormalize=False)
 		plt.plot(cols, 1/np.flip(np.linalg.norm(np.triu(np.flip(compressed2["factor_matrices"][factor_matrix_index], axis=1)), axis=0)), label=name)
 		
 	plt.xlabel("Kolomindex")
@@ -389,8 +397,8 @@ def orthogonality_compression_basic_error():
 	compressed1 = st_hosvd.compress_tucker(data, 0.025)
 	
 	reference = data.copy()
-	for name, quantize in (("Geen quantisatie", False), ("Quantisatie", True)):
-		decompressed = st_hosvd.decompress_tucker(st_hosvd.decompress_orthogonality(st_hosvd.compress_orthogonality(compressed1, quantize=quantize, orthogonality_reconstruction_steps=500, orthogonality_reconstruction_margin=0, method="systems"), renormalize=None))
+	for name, quantize in (("Geen quantisatie", None), ("Quantisatie", 16)):
+		decompressed = st_hosvd.decompress_tucker(st_hosvd.decompress_orthogonality(st_hosvd.compress_orthogonality(compressed1, quantize=quantize, orthogonality_reconstruction_steps=500, orthogonality_reconstruction_margin=0, method="systems"), renormalize=False))
 		print(name + ":", "{:.4f}".format(rel_error(reference, decompressed)))
 
 def orthogonality_compression_basic_timing():
@@ -404,7 +412,7 @@ def orthogonality_compression_basic_timing():
 		for i in range(amount):
 			print("Testing", name, i)
 			start = clock()
-			compressed2 = st_hosvd.decompress_orthogonality(st_hosvd.compress_orthogonality(compressed1, quantize=True, orthogonality_reconstruction_steps=500, orthogonality_reconstruction_margin=0, method="systems"), renormalize=None)
+			compressed2 = st_hosvd.decompress_orthogonality(st_hosvd.compress_orthogonality(compressed1, quantize=16, orthogonality_reconstruction_steps=500, orthogonality_reconstruction_margin=0, method="systems"), renormalize=False)
 			total_time += clock() - start
 		print(name, "{:.2f}".format(total_time/amount))
 
@@ -417,7 +425,7 @@ def orthogonality_compression_norms():
 	
 	factor_matrix_index = 1
 	cols = range(compressed1["factor_matrices"][factor_matrix_index].shape[1])
-	compressed2 = st_hosvd.decompress_orthogonality(st_hosvd.compress_orthogonality(compressed1, quantize=True, orthogonality_reconstruction_steps=500, orthogonality_reconstruction_margin=0, method="systems"), renormalize=None)
+	compressed2 = st_hosvd.decompress_orthogonality(st_hosvd.compress_orthogonality(compressed1, quantize=16, orthogonality_reconstruction_steps=500, orthogonality_reconstruction_margin=0, method="systems"), renormalize=False)
 	plt.plot(cols, np.linalg.norm(compressed2["factor_matrices"][factor_matrix_index], axis=0))
 		
 	plt.xlabel("Kolomindex")
@@ -435,7 +443,7 @@ def orthogonality_compression_renormalization():
 	factor_matrix_index = 1
 	reference = compressed1["factor_matrices"][factor_matrix_index].copy()
 	cols = range(reference.shape[1])
-	compressed2 = st_hosvd.decompress_orthogonality(st_hosvd.compress_orthogonality(deepcopy(compressed1), quantize=True, orthogonality_reconstruction_steps=500, orthogonality_reconstruction_margin=0, method="systems"), renormalize=True)
+	compressed2 = st_hosvd.decompress_orthogonality(st_hosvd.compress_orthogonality(deepcopy(compressed1), quantize=16, orthogonality_reconstruction_steps=500, orthogonality_reconstruction_margin=0, method="systems"), renormalize=True)
 	plt.plot(cols, np.linalg.norm(reference - compressed2["factor_matrices"][factor_matrix_index], axis=0))
 	print("Relative error:", "{:.4f}".format(rel_error(data, st_hosvd.decompress_tucker(compressed2))))
 		
@@ -454,7 +462,7 @@ def orthogonality_compression_blocks():
 	factor_matrix_index = 1
 	reference = compressed1["factor_matrices"][factor_matrix_index].copy()
 	cols = range(reference.shape[1])
-	compressed2 = st_hosvd.decompress_orthogonality(st_hosvd.compress_orthogonality(deepcopy(compressed1), quantize=True, orthogonality_reconstruction_steps=10, orthogonality_reconstruction_margin=0, method="systems"), renormalize=True)
+	compressed2 = st_hosvd.decompress_orthogonality(st_hosvd.compress_orthogonality(deepcopy(compressed1), quantize=16, orthogonality_reconstruction_steps=10, orthogonality_reconstruction_margin=0, method="systems"), renormalize=True)
 	plt.plot(cols, np.linalg.norm(reference - compressed2["factor_matrices"][factor_matrix_index], axis=0))
 	print("Relative error:", "{:.4f}".format(rel_error(data, st_hosvd.decompress_tucker(compressed2))))
 		
@@ -474,7 +482,7 @@ def orthogonality_compression_blocks_timing():
 		for i in range(amount):
 			print("Testing", name, i)
 			start = clock()
-			compressed2 = st_hosvd.decompress_orthogonality(st_hosvd.compress_orthogonality(compressed1, quantize=True, orthogonality_reconstruction_steps=10, orthogonality_reconstruction_margin=0, method="systems"), renormalize=True)
+			compressed2 = st_hosvd.decompress_orthogonality(st_hosvd.compress_orthogonality(compressed1, quantize=16, orthogonality_reconstruction_steps=10, orthogonality_reconstruction_margin=0, method="systems"), renormalize=True)
 			total_time += clock() - start
 		print(name, "{:.2f}".format(total_time/amount))
 
@@ -488,7 +496,7 @@ def orthogonality_compression_margin():
 	factor_matrix_index = 1
 	reference = compressed1["factor_matrices"][factor_matrix_index].copy()
 	cols = range(reference.shape[1])
-	compressed2 = st_hosvd.decompress_orthogonality(st_hosvd.compress_orthogonality(deepcopy(compressed1), quantize=True, orthogonality_reconstruction_steps=500, orthogonality_reconstruction_margin=3, method="systems"), renormalize=True)
+	compressed2 = st_hosvd.decompress_orthogonality(st_hosvd.compress_orthogonality(deepcopy(compressed1), quantize=16, orthogonality_reconstruction_steps=500, orthogonality_reconstruction_margin=3, method="systems"), renormalize=True)
 	plt.plot(cols, np.linalg.norm(reference - compressed2["factor_matrices"][factor_matrix_index], axis=0))
 	print("Relative error:", "{:.4f}".format(rel_error(data, st_hosvd.decompress_tucker(compressed2))))
 		
@@ -517,7 +525,7 @@ def orthogonality_compression_systems_summary():
 				print("Testing", name, "with setting", setting_name, "on run", i)
 				copy = deepcopy(compressed1)
 				start = clock()
-				compressed2 = st_hosvd.decompress_orthogonality(st_hosvd.compress_orthogonality(copy, quantize=True, orthogonality_reconstruction_steps=steps, orthogonality_reconstruction_margin=margin, method="systems"), renormalize=renormalize)
+				compressed2 = st_hosvd.decompress_orthogonality(st_hosvd.compress_orthogonality(copy, quantize=16, orthogonality_reconstruction_steps=steps, orthogonality_reconstruction_margin=margin, method="systems"), renormalize=renormalize)
 				total_time += clock() - start
 				if i == 0:
 					# Calculate error
@@ -541,7 +549,7 @@ def orthogonality_compression_householder_summary():
 	amount = default_experiments_amount
 	measurements = []
 	datasets = (("Cuprite", load_cuprite), ("Pavia Centre", load_pavia))
-	settings = (("ST-HOSVD", False, False), ("Geen quantisatie", True, False), ("Quantisatie", True, True))
+	settings = (("Referentie", False, None), ("Reflectoren", True, None), ("Reflectoren + 16-bit quantisatie", True, 16))
 	
 	# Perform experiments
 	for name, loader in datasets:
@@ -555,7 +563,7 @@ def orthogonality_compression_householder_summary():
 					print("Testing", name, "with setting", setting_name, "on run", i)
 					copy = deepcopy(compressed1)
 					start = clock()
-					compressed2 = st_hosvd.decompress_orthogonality(st_hosvd.compress_orthogonality(copy, quantize=quantize, method="householder"))
+					compressed2 = st_hosvd.decompress_orthogonality(st_hosvd.compress_orthogonality(copy, quantize=quantize, method="householder"), renormalize=False)
 					total_time += clock() - start
 					if i == 0:
 						# Calculate error
@@ -571,11 +579,518 @@ def orthogonality_compression_householder_summary():
 	lines = []
 	for i, (setting_name, compress_orthogonality, _) in enumerate(settings):
 		if compress_orthogonality:
-			lines.append("{} & {:.11f} & {:.11f} & {:.3f} & {:.3f} \\\\ \\hline".format(setting_name, measurements[0]["errors"][i], measurements[1]["errors"][i], measurements[0]["times"][i], measurements[1]["times"][i]))
+			lines.append("{} & {:.8f} & {:.10f} & {:.3f} & {:.3f} \\\\ \\hline".format(setting_name, measurements[0]["errors"][i], measurements[1]["errors"][i], measurements[0]["times"][i], measurements[1]["times"][i]))
 		else:
-			lines.append("{} & {:.11f} & {:.11f} & N/A & N/A \\\\ \\hline".format(setting_name, measurements[0]["errors"][i], measurements[1]["errors"][i]))
+			lines.append("{} & {:.8f} & {:.10f} & - & - \\\\ \\hline".format(setting_name, measurements[0]["errors"][i], measurements[1]["errors"][i]))
 	
 	with open("../tekst/data/orthogonality-compression-householder-summary.tex", "w") as f:
 		f.writelines([line + "\n" for line in lines])
 
-orthogonality_compression_basic_error()
+def orthogonality_compression_householder_quantisation_bits():
+	
+	data = load_cuprite()
+	reference = deepcopy(data)
+	compressed1 = st_hosvd.compress_tucker(data, 0.025)
+	quantization_bits_amounts = range(5, 9)
+	
+	for name, renormalize in (("Geen hernormalisatie", False), ("Hernormalisatie", True)):
+		rel_errors = []
+		for quantization_bits in quantization_bits_amounts:
+			compressed2 = st_hosvd.decompress_orthogonality(st_hosvd.compress_orthogonality(deepcopy(compressed1), quantize=quantization_bits, method="householder"), renormalize=renormalize)
+			rel_errors.append(rel_error(reference, st_hosvd.decompress_tucker(compressed2)))
+		plt.plot(quantization_bits_amounts, rel_errors, label=name)
+		
+	plt.xlabel("Quantisatiebits")
+	plt.ylabel("Relatieve fout")
+	plt.legend()
+	plt.savefig("../tekst/images/orthogonality_compression_householder_quantisation_bits.png")
+	plt.close()
+
+# Sectie 4.3.1: Quantisatie kerntensor
+
+def core_tensor_values_distribution():
+	
+	data = load_cuprite()
+	compressed = st_hosvd.compress_tucker(data, 0.025)
+	core_tensor = compressed["core_tensor"]
+	mins = []
+	means = []
+	maxs = []
+	layers = range(max(core_tensor.shape))
+	
+	for layer in layers:
+		abs_values = np.abs(st_hosvd.extract_layers(core_tensor, layer, layer + 1))
+		mins.append(np.amin(abs_values))
+		means.append(np.mean(abs_values))
+		maxs.append(np.amax(abs_values))
+	
+	plt.plot(layers, maxs, label="Maximum")
+	plt.plot(layers, means, label="Gemiddeld")
+	plt.plot(layers, mins, label="Minimum")
+	plt.xlabel("Laag")
+	plt.ylabel("Absolute waarde")
+	plt.yscale("log")
+	plt.legend()
+	plt.savefig("../tekst/images/core_tensor_values_distribution.png")
+	plt.close()
+
+def core_tensor_unquantized_portion():
+	
+	data = load_cuprite()
+	compressed1 = st_hosvd.compress_orthogonality(st_hosvd.compress_tucker(data, 0.025))
+	quantization_bits_amounts = range(10, 17)
+	
+	for unquantized_layers in range(4):
+		core_tensor = compressed1["st_hosvd"]["core_tensor"]
+		core_tensor_unquantized_rel_norm = (np.linalg.norm(core_tensor[(slice(max(0, unquantized_layers - 1)),)*core_tensor.ndim]) + np.linalg.norm(core_tensor[(slice(unquantized_layers),)*core_tensor.ndim]))/(2*np.linalg.norm(core_tensor))
+		rel_errors = []
+		compression_factors = []
+		for quantization_bits in quantization_bits_amounts:
+			print("Testing %s bits with %s unquantized layers"%(quantization_bits, unquantized_layers))
+			compressed2 = st_hosvd.compress_quantize(deepcopy(compressed1), endian="little", encoding_method="default", use_zlib=False, core_tensor_method="constant", core_tensor_parameter=quantization_bits, core_tensor_unquantized_rel_norm=core_tensor_unquantized_rel_norm, factor_matrix_method="constant", factor_matrix_parameter=16)
+			rel_errors.append(rel_error(data, st_hosvd.decompress_tucker(st_hosvd.decompress_orthogonality(st_hosvd.decompress_quantize(compressed2)))))
+			compression_factors.append(st_hosvd.get_compression_factor_quantize(data, compressed2))
+			if unquantized_layers < 2 and (unquantized_layers == 0 or quantization_bits < 14):
+				plt.annotate(str(quantization_bits), (rel_errors[-1], compression_factors[-1]))
+		plt.plot(rel_errors, compression_factors, label="%s ongequantiseerde lagen"%unquantized_layers)
+		
+	plt.xlabel("Relatieve fout")
+	plt.ylabel("Compressiefactor")
+	plt.legend()
+	plt.savefig("../tekst/images/core_tensor_unquantized_portion.png")
+	plt.close()
+
+def core_tensor_quantization_comparison():
+	
+	data = load_cuprite()
+	compressed1 = st_hosvd.compress_orthogonality(st_hosvd.compress_tucker(data, 0.025))
+	
+	for name, method, quantization_bits_amounts, label_offset_x, label_offset_y in (("Globaal", "constant", range(8, 13), 0, 0), ("Gelaagd (constant)", "layered-constant-bits", range(4, 13), 0, -3), ("Gelaagd (variabel)", "layered-constant-step", range(7, 17), -0.0003, 0)):
+		
+		rel_errors = []
+		compression_factors = []
+		for quantization_bits in quantization_bits_amounts:
+			print("Testing method %s with %s bits"%(name, quantization_bits))
+			compressed2 = st_hosvd.compress_quantize(deepcopy(compressed1), endian="little", encoding_method="default", use_zlib=False, core_tensor_method=method, core_tensor_parameter=quantization_bits, core_tensor_unquantized_rel_norm=0.995, factor_matrix_method="constant", factor_matrix_parameter=16)
+			rel_errors.append(rel_error(data, st_hosvd.decompress_tucker(st_hosvd.decompress_orthogonality(st_hosvd.decompress_quantize(compressed2)))))
+			compression_factors.append(st_hosvd.get_compression_factor_quantize(data, compressed2))
+			plt.annotate(str(quantization_bits), (rel_errors[-1] + label_offset_x, compression_factors[-1] + label_offset_y))
+		plt.plot(rel_errors, compression_factors, label=name)
+		
+	plt.xlabel("Relatieve fout")
+	plt.ylabel("Compressiefactor")
+	plt.legend()
+	plt.savefig("../tekst/images/core_tensor_quantization_comparison.png")
+	plt.close()
+
+# Sectie 4.3.2: Quantisatie factormatrices
+
+def factor_matrix_quantization_block_cols():
+	
+	data = load_cuprite()
+	compressed1 = st_hosvd.compress_orthogonality(st_hosvd.compress_tucker(data, 0.025))
+	quantization_bits_amounts = range(7, 11)
+	
+	for block_cols in (1, 2, 3, 4):
+		rel_errors = []
+		compression_factors = []
+		for quantization_bits in quantization_bits_amounts:
+			print("Testing block cols %s with %s bits"%(block_cols, quantization_bits))
+			compressed2 = st_hosvd.compress_quantize(deepcopy(compressed1), endian="little", encoding_method="default", use_zlib=False, core_tensor_method="layered-constant-step", core_tensor_parameter=12, core_tensor_unquantized_rel_norm=0.995, factor_matrix_method="layered", factor_matrix_parameter=quantization_bits, factor_matrix_columns_per_block=block_cols, bits_amount_selection="norm-based")
+			rel_errors.append(rel_error(data, st_hosvd.decompress_tucker(st_hosvd.decompress_orthogonality(st_hosvd.decompress_quantize(compressed2)))))
+			compression_factors.append(st_hosvd.get_compression_factor_quantize(data, compressed2))
+			if quantization_bits < 9 or (quantization_bits == 9 and block_cols < 4) or (quantization_bits == 10 and block_cols < 2):
+				plt.annotate(str(quantization_bits), (rel_errors[-1], compression_factors[-1]))
+		plt.plot(rel_errors, compression_factors, label="%s reflectoren/blok"%block_cols if block_cols != 1 else "1 reflector/blok")
+		
+	plt.xlabel("Relatieve fout")
+	plt.ylabel("Compressiefactor")
+	plt.legend()
+	plt.savefig("../tekst/images/factor_matrix_quantization_block_cols.png")
+	plt.close()
+
+def factor_matrix_quantization_comparison():
+	
+	data = load_cuprite()
+	compressed1 = st_hosvd.compress_orthogonality(st_hosvd.compress_tucker(data, 0.025))
+	
+	for name, method, bits_amount_selection, quantization_bits_amounts, annotate_bound, label_x_offset, label_y_offset in (("Globaal", "constant", None, range(8, 12), 12, 0, 0), ("Gelaagd (constant)", "layered", "constant", range(4, 9), 12, 0.0002, 0), ("Gelaagd (norm)", "layered", "norm-based", range(5, 16), 16, -0.0004, 0), ("Gelaagd (norm + dimensie)", "layered", "norm-height-based", range(5, 12), 12, 0, 0)):
+		
+		rel_errors = []
+		compression_factors = []
+		for quantization_bits in quantization_bits_amounts:
+			print("Testing method %s with %s bits"%(name, quantization_bits))
+			compressed2 = st_hosvd.compress_quantize(deepcopy(compressed1), endian="little", encoding_method="default", use_zlib=False, core_tensor_method="layered-constant-step", core_tensor_parameter=12, core_tensor_unquantized_rel_norm=0.995, factor_matrix_method=method, factor_matrix_parameter=quantization_bits, factor_matrix_columns_per_block=1, bits_amount_selection=bits_amount_selection)
+			rel_errors.append(rel_error(data, st_hosvd.decompress_tucker(st_hosvd.decompress_orthogonality(st_hosvd.decompress_quantize(compressed2)))))
+			compression_factors.append(st_hosvd.get_compression_factor_quantize(data, compressed2))
+			if quantization_bits < annotate_bound:
+				plt.annotate(str(quantization_bits), (rel_errors[-1] + label_x_offset, compression_factors[-1] + label_y_offset))
+		plt.plot(rel_errors, compression_factors, label=name)
+		
+	plt.xlabel("Relatieve fout")
+	plt.ylabel("Compressiefactor")
+	plt.legend()
+	plt.savefig("../tekst/images/factor_matrix_quantization_comparison.png")
+	plt.close()
+
+# Sectie 4.4: Encodering en lossless compressie
+
+def distribution_quantized_values():
+	
+	data = load_cuprite()
+	compressed1 = st_hosvd.compress_tucker(data, 0.025)
+	compressed2 = st_hosvd.compress_orthogonality(compressed1, method="householder")
+	
+	st_hosvd.plot_save_path = "../tekst/images/distribution_quantized_values_layer_"
+	st_hosvd.plot_counter = 30
+	compressed3 = st_hosvd.compress_quantize(compressed2, endian="little", encoding_method="huffman", use_zlib=True, core_tensor_method="layered-constant-step", core_tensor_parameter=12, core_tensor_unquantized_rel_norm=0.995, factor_matrix_method="layered", factor_matrix_parameter=10, factor_matrix_columns_per_block=1, bits_amount_selection="norm-based", plot_frequencies=range(30, 34))
+
+def encoding_comparison1():
+	
+	data = load_cuprite()
+	compressed1 = st_hosvd.compress_orthogonality(st_hosvd.compress_tucker(data, 0.025))
+	
+	lines = []
+	for encoding_method_name, encoding_method in (("Standaard", "default"), ("Gray-code", "graycode"), ("Huffman", "huffman"), ("Adaptief", "adaptive")):
+		compression_sizes = []
+		for use_zlib in (False, True):
+			for endian in ("little", "big"):
+				print("Testing encoding method %s, use_zlib %s, endian %s"%(encoding_method_name, use_zlib, endian))
+				compressed2 = st_hosvd.compress_quantize(deepcopy(compressed1), endian=endian, encoding_method=encoding_method, allow_approximate_huffman=True, use_zlib=use_zlib, core_tensor_method="layered-constant-step", core_tensor_parameter=12, core_tensor_unquantized_rel_norm=0.995, factor_matrix_method="layered", factor_matrix_parameter=10, factor_matrix_columns_per_block=1, bits_amount_selection="norm-based")
+				compression_sizes.append(st_hosvd.get_compress_quantize_size(compressed2))
+	
+		# Construct line
+		lines.append("%s & "%encoding_method_name + " & ".join([str(size) for size in compression_sizes]) + " \\\\ \\hline")
+	
+	with open("../tekst/data/encoding-comparison1.tex", "w") as f:
+		f.writelines([line + "\n" for line in lines])
+
+def encoding_comparison2():
+	
+	data = load_cuprite()
+	compressed1 = st_hosvd.compress_orthogonality(st_hosvd.compress_tucker(data, 0.025))
+	
+	lines = []
+	for encoding_method_name, encoding_method in (("Standaard", "default"), ("Gray-code", "graycode"), ("Huffman", "huffman"), ("Adaptief", "adaptive")):
+		compression_sizes = []
+		print("Testing encoding method %s"%encoding_method_name)
+		compressed2 = st_hosvd.compress_quantize(deepcopy(compressed1), endian="big", encoding_method=encoding_method, allow_approximate_huffman=True, use_zlib=True, core_tensor_method="layered-constant-step", core_tensor_parameter=12, core_tensor_unquantized_rel_norm=0.995, factor_matrix_method="layered", factor_matrix_parameter=10, factor_matrix_columns_per_block=1, bits_amount_selection="norm-based")
+		data_size = st_hosvd.get_compress_quantize_size(compressed2, count_trees=False)
+		total_size = st_hosvd.get_compress_quantize_size(compressed2, count_trees=True)
+		trees_size = total_size - data_size
+		
+		# Construct line
+		lines.append("{} & {} & {} & {} \\\\ \\hline".format(encoding_method_name, data_size, trees_size, total_size))
+	
+	with open("../tekst/data/encoding-comparison2.tex", "w") as f:
+		f.writelines([line + "\n" for line in lines])
+
+def encoding_timing():
+	
+	amount = default_experiments_amount
+	data = load_cuprite()
+	compressed1 = st_hosvd.compress_orthogonality(st_hosvd.compress_tucker(data, 0.025))
+	settings = (("Standaard", "default", False), ("Gray-code", "graycode", False), ("Huffman", "huffman", False), ("Adaptief (met BHC)", "adaptive", True), ("Adaptief (zonder BHC)", "adaptive", False))
+	
+	compression_sizes = []
+	times = []
+	for encoding_method_name, encoding_method, allow_approximate_huffman in settings:
+		total_time = 0
+		for i in range(amount):
+			print("Testing encoding method %s %s"%(encoding_method_name, i))
+			copy = deepcopy(compressed1)
+			start_time = clock()
+			compressed2 = st_hosvd.compress_quantize(copy, endian="big", encoding_method=encoding_method, allow_approximate_huffman=allow_approximate_huffman, use_zlib=True, core_tensor_method="layered-constant-step", core_tensor_parameter=12, core_tensor_unquantized_rel_norm=0.995, factor_matrix_method="layered", factor_matrix_parameter=10, factor_matrix_columns_per_block=1, bits_amount_selection="norm-based")
+			total_time += clock() - start_time
+		compression_sizes.append(st_hosvd.get_compress_quantize_size(compressed2))
+		times.append(total_time/amount)
+	
+	# Construct lines
+	lines = []
+	for i, (encoding_method_name, _, _) in enumerate(settings):
+		lines.append("{} & {:.4f} & {:.2f} \\\\ \\hline".format(encoding_method_name, compression_sizes[i]/min(compression_sizes), times[i]))
+	
+	with open("../tekst/data/encoding-timing.tex", "w") as f:
+		f.writelines([line + "\n" for line in lines])
+
+# Sectie 4.5: Afstellen van de parameters
+# Own experiments
+
+def test_parameter_functions(dataset_name, adaptive):
+	
+	# Initialization
+	if dataset_name == "Cuprite":
+		data = load_cuprite()
+	elif dataset_name == "Pavia_Centre":
+		data = load_pavia_centre()
+	elif dataset_name == "Indian_Pines":
+		data = load_indian_pines()
+	else:
+		raise Exception("Invalid dataset name!")
+	measurements_path = "../measurements/test_parameter_functions_%s_%s.json"%(dataset_name, adaptive)
+	measurements_temp_path = measurements_path + ".tmp"
+	measurements = []
+	
+	# Test quality values
+	for quality_index in range(5, 51):
+		quality = 0.001*quality_index
+		print("Testing quality", quality)
+		compressed = st_hosvd.compress(data, quality=quality, adaptive=adaptive)
+		measurements.append((rel_error(data, st_hosvd.decompress(compressed)), st_hosvd.get_compression_factor_quantize(data, compressed)))
+		with open(measurements_temp_path, "w") as f:
+			json.dump(measurements, f)
+		os.rename(measurements_temp_path, measurements_path)
+
+def plot_sweep_results(dataset_name="Cuprite", annotate=False, plot_test_functions=False):
+	
+	# Load measurements
+	measurements_path = "../measurements/parameters_measurements_%s.json"%dataset_name
+	with open(measurements_path, "r") as f:
+		measurements = json.load(f)
+	measurements = {key: value for key, value in measurements.items() if not type(value) is str}
+	
+	# Plot all measurements
+	points = measurements.values()
+	errors = [point[0] for point in points]
+	factors = [point[1] for point in points]
+	plt.scatter(errors, factors, c="C0")
+	
+	# Plot best curve
+	# Filter all points covered by another one
+	mask = {key: True for key in measurements}
+	for key1 in measurements:
+		if mask[key1]:
+			error1, factor1 = measurements[key1]
+			for key2 in measurements:
+				if key2 != key1 and mask[key2]:
+					# Point is different and still marked as in
+					error2, factor2 = measurements[key2]
+					if error2 > error1 and factor2 < factor1:
+						# Point isn't useful, filter out
+						mask[key2] = False
+	
+	# Plot filtered points with annotations
+	filtered_errors = []
+	filtered_factors = []
+	filtered_keys = []
+	for key in measurements:
+		if mask[key]:
+			error, factor = measurements[key]
+			filtered_errors.append(error)
+			filtered_factors.append(factor)
+			filtered_keys.append(key)
+	filtered_errors, filtered_factors_and_keys = zip(*sorted(zip(filtered_errors, zip(filtered_factors, filtered_keys))))
+	filtered_factors, filtered_keys = zip(*filtered_factors_and_keys)
+	plt.plot(filtered_errors, filtered_factors, "C0")
+	
+	if annotate:
+		last_st_hosvd_relative_error = None
+		last_core_tensor_parameter = None
+		for i, key in enumerate(filtered_keys):
+			words = key[1:-1].split(", ")
+			st_hosvd_relative_error = float(words[0])
+			core_tensor_parameter = int(words[1])
+			if st_hosvd_relative_error != last_st_hosvd_relative_error or core_tensor_parameter != last_core_tensor_parameter:
+				last_st_hosvd_relative_error = st_hosvd_relative_error
+				last_core_tensor_parameter = core_tensor_parameter
+				plt.annotate(key, (filtered_errors[i], filtered_factors[i]))
+	
+	# Plot test functions measurements
+	if plot_test_functions:
+		test_functions_measurements_path = "../measurements/test_parameter_functions_%s.json"%dataset_name
+		with open(test_functions_measurements_path, "r") as f:
+			test_functions_measurements = json.load(f)
+		plt.plot([point[0] for point in test_functions_measurements], [point[1] for point in test_functions_measurements], color="C1")
+	
+	# Finish plot
+	plt.xlabel("Relatieve fout")
+	plt.ylabel("Compressiefactor")
+	plt.show()
+	plt.close()
+	
+	# Apply linear regression to first parameter and logarithms of second/third parameter
+	
+	# Plot parameter values per error and try to approximate
+	names = ["1000*(relatieve doelfout ST-HOSVD)", "Bits-parameter kerntensor", "Bits-parameter factormatrices"]
+	for i in range(3):
+		values = [float(key[1:-1].split(", ")[i])*(1000 if i == 0 else 1) for key in filtered_keys]
+		plt.plot(filtered_errors, values, label=names[i], color="C%s"%i, linestyle="-")
+		# Approximation
+		if i == 0:
+			indices = np.array(range(len(filtered_errors)))
+		elif i == 1:
+			indices = np.array(filtered_errors) < 0.016
+		elif i == 2:
+			indices = np.array(range(len(filtered_errors)))
+		errors_for_regression = np.array(filtered_errors)[indices]
+		values_for_regression = np.array(values)[indices]
+		if i == 0:
+			slope, intercept, _, _, _ = stats.linregress(errors_for_regression, values_for_regression)
+			approx = slope*np.array(filtered_errors) + intercept
+			print(slope, intercept)
+		elif i == 1:
+			slope, intercept, _, _, _ = stats.linregress(errors_for_regression, values_for_regression)
+			print(slope, intercept)
+			approx = [round(slope*error + intercept) if error < 0.016 else 10 for error in filtered_errors]
+		elif i == 2:
+			slope, intercept, _, _, _ = stats.linregress(errors_for_regression, values_for_regression)
+			slope = -228.571428571
+			intercept = 13 - slope*0.005
+			print(slope, intercept)
+			approx = [round(slope*error + intercept) if error < 0.04 else 5 for error in filtered_errors]
+		plt.plot(filtered_errors, approx, color="C%s"%i, linestyle=":")
+		
+	plt.xlabel("Relatieve fout")
+	plt.ylabel("Parameterwaarde")
+	plt.legend()
+	plt.show()
+	plt.close()
+
+# Helper functions
+
+def filter_points(dataset_name):
+	
+	# Load measurements
+	measurements_path = "../measurements/parameters_measurements_%s.json"%dataset_name
+	with open(measurements_path, "r") as f:
+		measurements = json.load(f)
+	measurements = {key: value for key, value in measurements.items() if not type(value) is str}
+	
+	# Calculate filter
+	mask = {key: True for key in measurements}
+	for key1 in measurements:
+		if mask[key1]:
+			error1, factor1 = measurements[key1]
+			for key2 in measurements:
+				if key2 != key1 and mask[key2]:
+					# Point is different and still marked as in
+					error2, factor2 = measurements[key2]
+					if error2 > error1 and factor2 < factor1:
+						# Point isn't useful, filter out
+						mask[key2] = False
+	
+	# Extract points to lists
+	filtered_errors = []
+	filtered_factors = []
+	filtered_keys = []
+	for key in measurements:
+		if mask[key]:
+			error, factor = measurements[key]
+			filtered_errors.append(error)
+			filtered_factors.append(factor)
+			filtered_keys.append(key)
+	
+	# Sort based on errors
+	filtered_errors, filtered_factors_and_keys = zip(*sorted(zip(filtered_errors, zip(filtered_factors, filtered_keys))))
+	filtered_factors, filtered_keys = zip(*filtered_factors_and_keys)
+	
+	return filtered_errors, filtered_factors, filtered_keys
+
+# Experiments for text
+
+def plot_all_sweep_points_cuprite():
+	
+	# Load measurements
+	dataset_name = "Cuprite"
+	measurements_path = "../measurements/parameters_measurements_%s.json"%dataset_name
+	with open(measurements_path, "r") as f:
+		measurements = json.load(f)
+	measurements = {key: value for key, value in measurements.items() if not type(value) is str}
+	
+	# Plot all measurements
+	points = measurements.values()
+	errors = [point[0] for point in points]
+	factors = [point[1] for point in points]
+	plt.scatter(errors, factors)
+		
+	plt.xlabel("Relatieve fout")
+	plt.ylabel("Compressiefactor")
+	plt.savefig("../tekst/images/all_sweep_points_cuprite.png")
+	plt.close()
+
+def plot_filtered_sweep_points_cuprite():
+	
+	errors, factors, _ = filter_points("Cuprite")
+	plt.plot(errors, factors)
+		
+	plt.xlabel("Relatieve fout")
+	plt.ylabel("Compressiefactor")
+	plt.savefig("../tekst/images/filtered_sweep_points_cuprite.png")
+	plt.close()
+
+def plot_filtered_sweep_points_parameters():
+	
+	cuprite_errors, _, cuprite_keys = filter_points("Cuprite")
+	indian_pines_errors, _, indian_pines_keys = filter_points("Indian_Pines")
+	
+	for i, parameter_name in enumerate(("RDS", "BPK", "BPF")):
+		
+		# Plot values
+		for name, errors, keys in (("Cuprite", cuprite_errors, cuprite_keys), ("Indian Pines", indian_pines_errors, indian_pines_keys)):
+			values = [float(key[1:-1].split(", ")[i]) for key in keys]
+			plt.plot(errors, values, label=name)
+		
+		# Plot selection function
+		qualities = np.linspace(0.005, 0.05, num=46)
+		plt.plot(qualities, [st_hosvd.calculate_parameters(quality)[i] for quality in qualities], label="Selectiefunctie")
+			
+		plt.xlabel("Relatieve fout")
+		plt.ylabel(parameter_name)
+		plt.legend()
+		plt.savefig("../tekst/images/filtered_sweep_points_%s.png"%parameter_name)
+		plt.close()
+
+def plot_parameter_functions_results(include_adaptive=True):
+	
+	for dataset_name in ("Cuprite", "Indian_Pines"):
+		
+		# Sample optima
+		errors, factors, _ = filter_points(dataset_name)
+		plt.plot(errors, factors, label="Steekproefoptima")
+		
+		# Selection function results
+		settings = (("Niet-adaptief", False), ("Adaptief", True)) if include_adaptive else (("Met selectiefuncties", False),)
+		for label, adaptive in settings:
+			
+			test_functions_measurements_path = "../measurements/test_parameter_functions_%s_%s.json"%(dataset_name, adaptive)
+			with open(test_functions_measurements_path, "r") as f:
+				test_functions_measurements = json.load(f)
+			plt.plot([point[0] for point in test_functions_measurements], [point[1] for point in test_functions_measurements], label=label)
+			
+		plt.xlabel("Relatieve fout")
+		plt.ylabel("Compressiefactor")
+		plt.legend()
+		plt.savefig("../tekst/images/parameter_functions_results%s_%s.png"%("_including_adaptive" if include_adaptive else "", dataset_name))
+		plt.close()
+
+def plot_adaptive_timings():
+	
+	amount = default_experiments_amount
+	qualities = np.linspace(0.01, 0.05, num=5)
+	
+	for dataset_name, loader in (("Cuprite", load_cuprite), ("Indian_Pines", load_indian_pines)):
+		
+		# Load dataset
+		data = loader()
+		
+		# Test both non-adaptive and adaptive
+		settings = (("Niet-adaptief", False), ("Adaptief", True))
+		for label, adaptive in settings:
+			times = []
+			for quality in qualities:
+				total_time = 0
+				for i in range(amount):
+					print("Testing dataset %s adaptive %s quality %s"%(dataset_name, adaptive, quality))
+					start_time = clock()
+					compressed = st_hosvd.compress(data, quality=quality, adaptive=adaptive)
+					total_time += clock() - start_time
+				times.append(total_time/amount)
+			plt.plot(qualities, times, label=label)
+			
+		plt.xlabel("Kwaliteitsparameter")
+		plt.ylabel("Compressietijd (s)")
+		plt.legend()
+		plt.savefig("../tekst/images/adaptive_timings_%s.png"%dataset_name)
+		plt.close()
+
+plot_adaptive_timings()

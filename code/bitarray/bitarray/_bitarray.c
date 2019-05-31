@@ -2323,7 +2323,9 @@ static binode * parse_bitarray_tree(bitarrayobject *bitarray_tree, idx_t quantiz
 	
 	// Bound check
 	if (*index >= bitarray_tree->nbits) {
-		PyErr_SetString(PyExc_ValueError, "not enough bits in bitarray tree");
+		char s[100];
+		snprintf(s, 100, "not enough bits in bitarray tree to read case bit (index: %lld)", *index);
+		PyErr_SetString(PyExc_ValueError, s);
 		return NULL;
 	}
 	
@@ -2335,8 +2337,10 @@ static binode * parse_bitarray_tree(bitarrayobject *bitarray_tree, idx_t quantiz
 		
 		// Bound check
 		idx_t max_index = (*index) + quantization_bits;
-		if (max_index >= bitarray_tree->nbits) {
-			PyErr_SetString(PyExc_ValueError, "not enough bits in bitarray tree");
+		if (max_index > bitarray_tree->nbits) {
+			char s[100];
+			snprintf(s, 100, "not enough bits in bitarray tree to read symbol value (index: %lld)", *index);
+			PyErr_SetString(PyExc_ValueError, s);
 			return NULL;
 		}
 		
@@ -2503,7 +2507,6 @@ bitarray_iterdecodetree(bitarrayobject *self, PyObject *args)
 	idx_t index = 0;
 	tree = parse_bitarray_tree((bitarrayobject *) bitarray_tree, PyLong_AsLongLong(quantization_bits), &index);
 	if (tree == NULL || PyErr_Occurred()) {
-        PyErr_SetString(PyExc_TypeError, "error occurred during tree construction");
 		return NULL;
 	}
 	

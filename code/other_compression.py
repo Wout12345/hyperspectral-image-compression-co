@@ -58,7 +58,7 @@ def get_compress_jpeg_size(compressed):
 	
 	return size
 
-def compress_video(data, crf=23):
+def compress_video(data, crf=23, preset="veryfast"):
 	
 	# Compresses using video compression
 	# crf is the quality parameter. The range of the CRF scale is 0–51, where 0 is lossless, 23 is the default, and 51 is worst quality possible.
@@ -85,7 +85,7 @@ def compress_video(data, crf=23):
 		"-i", "-", # Input from stdin
 		"-crf", str(crf),
 		"-c:v", "libx264",
-		"-preset", "veryslow",
+		"-preset", preset,
 		"-f", "matroska",
 		"-" # Output to stdout
 	]

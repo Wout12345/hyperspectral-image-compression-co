@@ -7,6 +7,7 @@ In de praktijk werken we echter met een beperkt aantal modes en vaak lage compre
 We weten dat de factormatrices orthogonaal zijn en dit kunnen we benutten. Een factormatrix $U \in \mathbb{R}^{n \times r}$ met $r \leq n$ heeft namelijk $nr$ elementen maar deze zijn onderhevig aan $r(r - 1)/2$ impliciete orthogonaliteitsconstraints (daarnaast zijn er ook $r$ normalisatieconstraints maar deze zijn niet-lineair en zullen we niet behandelen). Het zou dus erg nuttig zijn om per factormatrix $r(r - 1)/2$ elementen minder op te slaan. Om terug te komen op de eerdere voorbeelden: dit zou bij Cuprite en Mauna Kea neerkomen op 9.4\% en 7.5\% van alle waarden (inclusief kerntensor) respectievelijk. In deze sectie bespreken we twee technieken om de factormatrices op te slaan met een beperkt aantal waarden.
 
 \subsection{Methode met stelsels}
+\label{subsec:methode-met-stelsels}
 
 Stel, we hebben een factormatrix $U \in \mathbb{R}^{n \times r}$ en verdelen deze op de volgende wijze:
 \[
@@ -34,7 +35,7 @@ Bijgevolg kunnen we $x$ berekenen als de oplossing van een lineair stelsel met $
 \begin{figure}[]
   \centering
   \includegraphics[scale=0.7]{images/orthogonality_compression_basic.png}
-  \caption{Relatieve fout van de gereconstrueerde kolommen van de tweede factormatrix van Cuprite met relatieve doelfout 0.025.}
+  \caption{Relatieve fout van de gereconstrueerde kolommen van de tweede factormatrix van Cuprite met relatieve doelfout 0.025. De relatieve fout van een gereconstrueerde kolom $q_i'$ ten opzichte van de originele kolom $q_i$ is gedefinieerd als $\frac{||q_i' - q_i||}{||q_i||} = ||q_i' - q_i||$ (want $||q_i|| = 1$).}
 \label{fig:orthogonality-compression-basic}
 \end{figure}
 
@@ -162,7 +163,9 @@ H = I - 2vv^T
 \]
 Elke reflectie wordt dus gedefinieerd door een vector $v$. Men kan voor een arbitraire vector $x$ een $v$ berekenen zodat $Hx = (\alpha, 0, \dots, 0)^T$, met $\alpha$ een scalar. In de eerste iteratie van het algoritme kiest men dan $v_1$ zodat de eerste kolom van $U$ gereflecteerd wordt op \'e\'en as. Daarna past men een reflectie toe op de matrix $H_1 U$ zonder de eerste rij en kolom (dus de eerste rij en kolom van $H_2$ zijn gelijk aan die van de eenheidsmatrix en de rest van de matrix is een Householder-reflectiematrix gebaseerd op een vector $v_2$ van \'e\'en dimensie lager). Dit proces blijft men toepassen voor elke kolom, totdat men de bovendriehoeksmatrix $R = H_r H_{r-1} \dots H_1 U$ bekomt. De orthogonale matrix $Q$ is dan gelijk aan $H_1^{-1} H_2^{-1} \dots H_r^{-1}$.\\
 
-Als $U$ al orthogonaal is, dan zal $R$ gelijk zijn aan de eenheidsmatrix op de tekens na (deze worden door het algoritme gekozen), dus alleen de tekens moeten opgeslagen worden. $Q$ daarentegen kan voorgesteld worden door vectoren $v_1, \dots, v_r$ van dimensie $n, \dots, n - r + 1$. Deze reflectoren passen exact in de onderdriehoek van de originele matrix dus met deze methode zouden we exact de compressie moeten kunnen bereiken die we zoeken. Zoals bij de methode met stelsels zouden we de kolomvolgorde kunnen aanpassen, maar de originele volgorde lijkt ons opnieuw goed; de eerste kolom wordt namelijk alleen bepaald door de eerste reflectie, terwijl de laatste kolom bepaald wordt door alle reflecties. De eerste kolommen zullen dus waarschijnlijk met hogere precisie herberekend worden.\\
+We zien dus dat men de $Q$ van een QR-factorizatie compacter kan opslaan aan de hand van de reflectoren. Onze orthogonale matrices $U_i$ zijn echter afkomstig uit een SVD dus we kennen deze reflectoren niet. We lossen dit op door simpelweg een QR-factorizatie uit te voeren op onze matrices. Namelijk, als $U$ al orthogonaal is, dan zal $R$ gelijk zijn aan de eenheidsmatrix op de tekens na (deze worden door het algoritme gekozen), dus alleen de tekens moeten opgeslagen worden. $Q$ daarentegen kan voorgesteld worden door vectoren $v_1, \dots, v_r$ van dimensie $n, \dots, n - r + 1$. Deze reflectoren passen juist in de onderdriehoek van de originele matrix dus met deze methode zouden we exact de compressie moeten kunnen bereiken die we zoeken.\\
+
+Zoals bij de methode met stelsels zouden we de kolomvolgorde kunnen aanpassen, maar de originele volgorde lijkt ons opnieuw goed; de eerste kolom wordt namelijk alleen bepaald door de eerste reflectie, terwijl de laatste kolom bepaald wordt door alle reflecties. De eerste kolommen zullen dus met hogere precisie herberekend worden, wat ons goed uitkomt (zie ook subsectie \ref{sec:quantisatie-factor-matrices}).\\
 
 Verder zijn de verwijderde elementen niet willekeurig gekozen, maar bijna gelijk aan -1, 0 of 1 op afrondingsfouten na (de elementen van $R$). Tijdens de procedure wordt de norm per kolom ook bewaard door de reflecties waardoor men geen last heeft van \textit{catastrophic cancellation} zoals bij de Gram-Schmidt-procedure. Deze methode zou dus numeriek stabieler moeten zijn dan de methode met stelsels.\\
 
@@ -178,19 +181,33 @@ Zoals eerder gezegd hebben we nog de tekens van $R$ nodig om $U$ te reconstruere
 
 \begin{table}[H]
 \centering
+\footnotesize
 \begin{tabular}{|l|c|c|c|c|}
 \hline
 \multirow{2}{*}{} & \multicolumn{2}{c|}{Relatieve fout} & \multicolumn{2}{c|}{Totale tijd (s)} \\ \cline{2-5} 
  & Cuprite & Pavia Centre & Cuprite & Pavia Centre \\ \hline
 \input{data/orthogonality-compression-householder-summary.tex}                             
 \end{tabular}
-\caption{Experimentele resultaten van de methode met Householder-reflecties. De eerste rij is een referentie zonder orthogonaliteitscompressie en de derde rij quantiseert zoals beschreven in subsectie 4.2.1 (10 experimenten). Totale tijd wijst hier op zowel compressie- als decompressietijd voor deze fase (geen ST-HOSVD).}
+\normalsize
+\caption{Experimentele resultaten van de methode met Householder-reflecties. De eerste rij is een referentie zonder orthogonaliteitscompressie (dus een pure ST-HOSVD) en de derde rij quantiseert zoals beschreven in subsectie \ref{subsec:methode-met-stelsels} (10 experimenten). Totale tijd wijst hier op zowel compressie- als decompressietijd voor deze fase (orthogonaliteitscompressie en eventuele quantisatie, geen ST-HOSVD).}
 \label{table:orthogonality-compression-householder-summary}
 \end{table}
 
-In tabel \ref{table:orthogonality-compression-householder-summary} staan de experimentele resultaten van deze methode. We zien dat de rekentijd enorm verbeterd is vergeleken met de methode met stelsels. Dit algoritme vraagt dan ook maar $O(n^3)$ rekenwerk en wordt bijna volledig ge\"implementeerd in LAPACK. Daarnaast is de ge\"introduceerde fout verwaarloosbaar voor onze toepassing.
+In tabel \ref{table:orthogonality-compression-householder-summary} staan de experimentele resultaten van de methode met Householder-reflecties. We zien dat de rekentijd enorm verbeterd is vergeleken met de methode met stelsels. Dit algoritme vraagt dan ook maar $O(n^3)$ rekenwerk en wordt bijna volledig ge\"implementeerd in LAPACK. Daarnaast is de ge\"introduceerde fout verwaarloosbaar voor onze toepassing.\\
+
+Aangezien deze methode zo precies is kijken we best ook eens naar het effect van grovere quantisatie dan 16-bit. Figuur \ref{fig:orthogonality-compression-householder-quantisation-bits} toont de evolutie van de fout in functie van het aantal quantisatiebits bij Cuprite. Men ziet dat voor een laag aantal bits er zeker een significante fout is. Een manier om deze methode nog een beetje te verbeteren is hernormalisatie: we schalen elke vector $v_i$ (op het eerste element na, dat sowieso 1 is maar niet wordt opgeslagen) met een factor zodat $\sqrt{\frac{\tau_i}{2}} v_i$ genormaliseerd is.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.7]{images/orthogonality_compression_householder_quantisation_bits.png}
+  \caption{Relatieve fout van het eindresultaat bij Cuprite met relatieve doelfout 0.025 (met en zonder hernormalisatie van de reflectoren).}
+\label{fig:orthogonality-compression-householder-quantisation-bits}
+\end{figure}
+
+We zien in figuur \ref{fig:orthogonality-compression-householder-quantisation-bits} dat hernormalisatie een merkbare verbetering geeft voor een laag aantal quantisatiebits en zullen deze techniek dus vanaf nu gebruiken, al maakt het weinig uit voor een groter aantal bits, vanwege de kleine hoeveelheid toegevoegd rekenwerk. In onze experimenten hier is $\tau$ weliswaar niet gequantiseerd, maar zoals besproken wordt in sectie \ref{sec:quantisatie} is dit sowieso geen slecht idee aangezien men slechts \'e\'en waarde per kolom per factormatrix moet opslaan en dat deze waarde effect heeft op de volledige reflector.\\
+
+Ten slotte zou men kunnen denken dat het ook nuttig is om de gereconstrueerde factormatrix terug te orthogonaliseren en normaliseren. Echter, eens dat de reflectoren genormaliseerd zijn, zijn de Householder-transformatiematrices orthogonaal en zal het product van deze met de eenheidsmatrix ook orthogonaal zijn. Weliswaar zullen er bij deze transformaties kleine numerieke fouten gemaakt worden, maar deze zijn verwaarloosbaar voor onze toepassing.
 
 \subsection{Besluit}
 
 Aangezien de methode met Householder-reflecties quasi geen fout toevoegt, erg snel werkt en exact $nr - r(r - 1)/2$ waarden moet bijhouden (het theoretische minimum als men alleen kijkt naar de orthogonaliteitsconstraints), verslaat deze duidelijk de methode van de stelsels en zal deze vanaf nu gebruikt worden om de factormatrices compacter op te slaan. Deze methode is ook makkelijker om mee te werken, aangezien er geen parameters afgesteld moeten worden.
-\newpage

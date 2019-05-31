@@ -1,4 +1,6 @@
 Cuprite
+Spatial dimensions: 512, 614
+Spectral dimension: 190
 Artifacts in bands 0-2, 106-113 and 154-169
 
 Spatial dimensions: (lines, samples)
@@ -13,3 +15,12 @@ Rotate by -4.07 degrees (counterclockwise)
 Yellowstone
 Spatial dimensions: 11491, 777
 Spectral dimension: 224
+
+Botswana
+Spatial dimensions: 1444, 256
+Spectral dimension: 143
+Before filtering: 1476 (:1444), 256, 145 (2:)
+
+Indian Pines
+
+Before filtering: (145, 145, 220 (5:39, 40:56, 62:76, 81:100, 118:146, 167:))

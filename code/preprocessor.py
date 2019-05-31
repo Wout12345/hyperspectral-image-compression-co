@@ -53,5 +53,3 @@ def preprocess(input_data, output_filename, angle, start_x, start_y, width, heig
 
 def preprocess_mauna_kea():
 	preprocess(load_mauna_kea_raw(), "../data/mauna_kea_preprocessed", 4.07, 40, 240, 2704, 729, ((2, 103), (104, 107), (114, 153), (168, 224)))
-
-preprocess_mauna_kea()

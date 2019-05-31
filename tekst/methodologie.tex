@@ -1,5 +1,5 @@
 \chapter{Methodologie}
-\label{hoofdstuk:3}
+\label{hoofdstuk:methodologie}
 
 We zullen zowel bij het vergelijken van de uiteindelijke algoritmes in hoofdstuk \ref{hoofdstuk:resultaten} als bij het vergelijken van verschillende technieken en parameterwaarden in hoofdstuk \ref{hoofdstuk:tucker} en hoofdstuk \ref{hoofdstuk:tensor_trains} experimenten uitvoeren om onze conclusies te staven. Om deze reden zullen we eerst alle nodige context voor deze experimenten beschrijven in dit hoofdstuk.
 
@@ -13,7 +13,7 @@ Tenzij anders vermeld werden de tijdsmetingen in deze tekst uitgevoerd op \'e\'e
 
 De compressiefactor is een belangrijke variabele die we zullen gebruiken in deze tekst. Hiermee hebben we het over de verhouding tussen de grootte van de originele, ongecomprimeerde 3D-tensor (dus bijvoorbeeld voor een $100 \times 100 \times 10$ tensor bestaande uit 16-bit integers is dit 200000 bytes) en de grootte van de gecomprimeerde versie (met als datatype voor niet-gehele getallen 32-bit floats, tenzij anders vermeld). Dit is echter een erg simpel formaat en niet altijd de beste manier om deze data op te slaan. Men moet er dus rekening mee houden dat men alleen al door de rauwe data op te slaan in een Zip-archief een compressiefactor van bijvoorbeeld 1.35 kan bekomen. Bijgevolg dient deze factor vooral relatief bekeken te worden, om verschillende compressietechnieken met elkaar te kunnen vergelijken.\\
 
-Verder zal het geheugengebruik van metadata (onder meer afmetingen van tensoren, compressieparameters en modevolgorde) verwaarloosd worden, aangezien dit veel kleiner is dan de benodigde opslagruimte voor tensoren en matrices.
+Verder zal het geheugengebruik van metadata (onder meer afmetingen van tensoren, compressieparameters en modevolgorde) verwaarloosd worden, aangezien dit veel kleiner is dan de benodigde opslagruimte voor tensoren en matrices. Concreet betekent dit dat we alleen geheugenruimte zullen meetellen van objecten die in een zekere zin groeien met de grootte van de invoer, behalve als deze groeien met het aantal dimensies van de tensoren waarmee we werken (aangezien dit in de praktijk toch heel beperkt is).
 
 \section{Compressiefout}
 
@@ -25,7 +25,11 @@ Om de fouten ge\"introduceerd door de lossy compressie te vergelijken, zullen we
 
 \section{Implementatie}
 
-De implementatie van de besproken algoritmen gebeurde in Python, waarbij het zware rekenwerk werd uitgevoerd via library calls, voornamelijk aan de hand van NumPy, SciPy en zlib. Hierbij zijn ook alternatieve strategie\"en getest (zoals het al dan niet minimaliseren van transposities, het gebruik van \texttt{numpy.einsum}, ...), waarbij telkens de meest performante werd gekozen. Deze keuzes zullen zelden behandeld worden in deze tekst vanwege de sterke afhankelijkheid van de gekozen programmeertaal. Desalniettemin kan het dat er nog steeds merkbare ineffici\"enties in de implementatie zijn.
+De implementatie van de besproken algoritmen gebeurde in Python, waarbij het zware rekenwerk werd uitgevoerd via library calls, voornamelijk aan de hand van NumPy, SciPy en zlib. Hierbij zijn ook alternatieve strategie\"en getest (zoals het al dan niet minimaliseren van transposities, het gebruik van \texttt{numpy.einsum}, ...), waarbij telkens de meest performante werd gekozen. Deze keuzes zullen weinig behandeld worden in deze tekst vanwege de sterke afhankelijkheid van de gekozen programmeertaal. Desalniettemin kan het dat er nog steeds merkbare ineffici\"enties in de implementatie zijn.\\
+
+Om enkele verschillende encoderingen effici\"ent te kunnen uitvoeren, hebben we niet alleen de Python-module \texttt{bitarray} \cite{ref:bitarray} gebruikt, maar deze ook uitgebreid met enkele methodes (zie sectie \ref{sec:encodering} voor meer informatie). Deze code werd, zoals de rest van de module, in C geschreven voor performantie.\\
+
+Zoals eerder vermeld, zullen de belangrijkste stukken broncode toegevoegd worden als bijlage. Om het aantal pagina's van deze tekst te beperken, zal niet de volledige code aanwezig zijn in deze bijlagen, maar deze is beschikbaar via de \textit{repository}: \url{https://github.com/Wout12345/hyperspectral-image-compression-co}
 
 \section{Datasets}
 
@@ -35,12 +39,26 @@ Bij de voorverwerking zullen we vaak bepaalde spectrale banden weglaten indien b
 
 Omdat de geproduceerde bestanden te groot zijn om in bijlage toe te voegen en deze voorverwerking niet triviaal is om formeel te beschrijven, hebben we de code van de voorverwerker toegevoegd in bijlage \ref{app:voorverwerker}. Men kan deze combineren met de originele data van de corresponderende bronnen om dezelfde datasets te reproduceren.
 
+\subsection{Indian Pines}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=1]{images/indian_pines_sum.png}
+  \caption{Indian Pines, VS. Bron: AVIRIS \cite{ref:ehu_aviris}}
+  \label{fig:indian_pines_sum}
+\end{figure}
+
+\textbf{Spatiale dimensies:} $145 \times 145$\\
+\textbf{Spectrale dimensie:} 220\\
+\textbf{Voorverwerking:} Geen.
+
+\newpage
 \subsection{Cuprite}
 
 \begin{figure}[H]
   \centering
   \includegraphics[scale=0.5]{images/cuprite_sum.png}
-  \caption{Cuprite, VS. Bron: AVIRIS \cite{ref:cuprite}}
+  \caption{Cuprite, VS. Bron: AVIRIS \cite{ref:ehu_aviris}}
   \label{fig:cuprite_sum}
 \end{figure}
 
@@ -54,13 +72,13 @@ Omdat de geproduceerde bestanden te groot zijn om in bijlage toe te voegen en de
 \begin{figure}[H]
   \centering
   \includegraphics[scale=0.4]{images/pavia_sum.png}
-  \caption{Pavia Centre, Itali\"e. Bron: ROSIS \cite{ref:pavia}}
+  \caption{Pavia Centre, Itali\"e. Bron: ROSIS \cite{ref:ehu_rosis}}
   \label{fig:pavia_sum}
 \end{figure}
 
 \textbf{Spatiale dimensies:} $1089 \times 676$\\
 \textbf{Spectrale dimensie:} 102\\
-\textbf{Voorverwerking:} De download van de EHU \cite{ref:pavia} heeft al een reeks spatiale banden zonder informatie weggelaten en heeft spatiale dimensies $1096 \times 715$. Hiervan selecteerden we de pixels met de laagste indices. De weggelaten rijen en kolommen zouden zich dus onder en rechts van de afbeelding hierboven bevinden.
+\textbf{Voorverwerking:} De download van de EHU \cite{ref:ehu_rosis} heeft al een reeks spatiale banden zonder informatie weggelaten en heeft spatiale dimensies $1096 \times 715$. Hiervan selecteerden we de pixels met de laagste indices. De weggelaten rijen en kolommen zouden zich dus onder en rechts van de afbeelding hierboven bevinden.
 
 \newpage
 \subsection{Mauna Kea}

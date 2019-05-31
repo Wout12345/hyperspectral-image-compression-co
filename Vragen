@@ -45,13 +45,38 @@ Af:
 - Bespreek aantal vrijheidsgraden orthogonale matrix aan begin na belang factormatrices bespreking
 - Orthogonaliseer volledige kolommen expliciet na partiele of volledige hernormalizatie: eventueel testen, geen prioriteit
 - Haal aan dat Givens-rotaties gebruikt kunnen worden om Q-matrix bij QR in halve ruimte op te slaan, maar moeilijk te gebruiken in Python, wordt gebruikt in LAPACK bij QR-functie (http://www.math.utah.edu/software/lapack/lapack-s/sgeqrf.html en http://www.math.utah.edu/software/lapack/lapack-s/sorgqr.html)
-
-Todo:
+- Bitarray vermelden bij Methodologie->Implementatie
 - Niet bitstring compressie, maar algemene lossless compressie
 - Splits quantizatie en encodering + lossless compressie op
 - Bijlage voor bitarray-aanpassingen
 
+Todo:
+
 Vragen:
+- Referentie naar Stack overflow?
 - Referenties voor code snippets? Momenteel alleen in source code zelf. Voorlopig alleen voor limiteren van geheugen, berekenen graycodes, berekenen Huffman codes, comprimeren Huffman-boom
-- Deel over QR-factorizatie met Householder in hoofdstuk 4 houden of in achtergrond? Vrij theoretisch maar het nut wordt pas duidelijk in hoofdstuk 4. Ook vrij kort dus makkelijker om te houden in hofdstuk 4 in plaats van een nieuwe sectie toe te voegen bij de achtergrond.
-- Grafiek toevoegen voor evolutie fout factormatrix doorheen kolommen bij methode met Householder? Getest, zoals verwacht is de fout hoger voor latere kolommen (die het resultaat zijn van meer reflecties).
+
+24/05/2019
+
+Af:
+- Paginalimiet bij CW?
+- Foute definitie lagen, corrigeer
+- Verduidelijk definitie lagen, bijvoorbeeld algoritmische definitie: "tensor[i:, :i, :i] zonder tensor[:i - 1, :i - 1, :i - 1]", bijvoorbeeld met tekening voor kubus-tensor
+- Vermeld dat code snippets gebruikt werden voor Gray-codes, Huffman-codes, ... van online op het einde van sectie 4.4.1: Implementatie
+- Verwisselen Implementatie met Encoderingsmethoden
+- Label grafieken met aantal quantizatiebits (bij ongequantiseerde lagen: één van de lijnen die op elkaar liggen)
+- Verduidelijking bij sectie 4.2.2:
+	- Orthogonale matrices kunnen compacter opgeslagen worden met reflectoren, maar we hebben Householder-reflectoren niet, dus we draaien opnieuw een QR-factorizatie
+	- Tabel onduidelijk: ST-HOSVD naar "Referentie", N/A naar -, benadruk betekenis van "Quantizatie" en "Geen quantizatie"
+- Sectie 4.2.1: Relatieve fout kolommen onduidelijk, vermeld formule
+- Adaptief: overhead -> van de bomen
+- BHC klein beetje verder uitwerken, niet zo duidelijk besproken
+- Verduidelijken tabel 4.4.4, Huffman-code zonder bomen lijkt het beste
+- Splits tabel op: kijk niet naar zonder bomen in één tabel, maak nieuwe tabel met Huffman-code, adaptief (met BHC) adaptief (zonder BHC) met kolommen: geheugen voor data zelf, geheugen voor bomen, geheugen totaal
+- tabel 4.11: voeg kolom toe voor relatieve grootte t.o.v. beste, absolute grootte niet even belangrijk
+- verduidelijk kolommen/reflectoren bij quantisatie - factormatrices
+
+Todo:
+
+Vragen:
+- Hoeveel bijlagen? Momenteel 35 pagina's.

@@ -15,7 +15,6 @@ def test_compression_ratio_tucker():
 	
 	print("="*20 + " Phase 1 " + "="*20)
 	data = load_cuprite()
-	start = time()
 	compressed1 = st_hosvd.compress_tucker(data, 0.025)
 	decompressed = st_hosvd.decompress_tucker(compressed1)
 	st_hosvd.print_compression_rate_tucker(data, compressed1)
@@ -23,15 +22,18 @@ def test_compression_ratio_tucker():
 	
 	print("="*20 + " Phase 2 " + "="*20)
 	compressed2 = st_hosvd.compress_orthogonality(compressed1, method="householder")
-	decompressed = st_hosvd.decompress_tucker(st_hosvd.decompress_orthogonality(compressed2))
+	decompressed = st_hosvd.decompress_tucker(st_hosvd.decompress_orthogonality(compressed2, renormalize=True))
 	print_difference(data, decompressed)
 	
 	print("="*20 + " Phase 3 " + "="*20)
-	compressed3 = st_hosvd.compress_quantize(compressed2, encoding_method="huffman", use_zlib=False, core_tensor_method="constant", core_tensor_parameter=12, core_tensor_unquantized_rel_norm=0.995, factor_matrix_method="constant", factor_matrix_parameter=15)
-	#compressed3 = st_hosvd.compress_quantize(compressed2, encoding_method="huffman", use_zlib=False, core_tensor_method="layered-constant-bits", core_tensor_parameter=12, core_tensor_unquantized_rel_norm=0.995, factor_matrix_method="constant", factor_matrix_parameter=16)
-	#compressed3 = st_hosvd.compress_quantize(compressed2, use_zlib=False, core_tensor_method="layered-constant-step", core_tensor_parameter=1e-5, core_tensor_unquantized_rel_norm=0.995, factor_matrix_method="constant", factor_matrix_parameter=16)
-	decompressed = st_hosvd.decompress_tucker(st_hosvd.decompress_orthogonality(st_hosvd.decompress_quantize(compressed3)))
-	print("Compression ratio:", st_hosvd.get_compress_quantize_size(compressed3)/st_hosvd.memory_size(data))
+	start_time = clock()
+	compressed3 = st_hosvd.compress_quantize(compressed2, endian="little", encoding_method="adaptive", allow_approximate_huffman=False, use_zlib=True, core_tensor_method="layered-constant-step", core_tensor_parameter=12, core_tensor_unquantized_rel_norm=0.995, factor_matrix_method="layered", factor_matrix_parameter=10, factor_matrix_columns_per_block=1, bits_amount_selection="norm-based")
+	print("Finished quantizing and encoding in:", clock() - start_time)
+	start_time = clock()
+	decompressed1 = st_hosvd.decompress_quantize(compressed3)
+	print("Finished decoding and dequantizing in:", clock() - start_time)
+	decompressed = st_hosvd.decompress_tucker(st_hosvd.decompress_orthogonality(decompressed1))
+	print("Compression ratio:", st_hosvd.get_compress_quantize_size(compressed3, print_intermediate_values=False)/st_hosvd.memory_size(data))
 	print_difference(data, decompressed)
 
 def plot_mauna_kea_range():
@@ -55,6 +57,15 @@ def compress_zip_cuprite():
 	
 	data = load_cuprite()
 	data.tofile("../data/cuprite_raw")
+
+def plot_intensities_pavia():
+	
+	data = load_pavia()
+	samples = np.mean(data, axis=(0, 1))
+	channels = range(samples.size)
+	plt.plot(channels, samples)
+	plt.scatter(channels, samples)
+	plt.show()
 
 def plot_intensities_mauna_kea():
 	
@@ -135,21 +146,23 @@ def test_compress_video():
 	data = load_cuprite()
 	original_size = data.dtype.itemsize*data.size
 	rel_errors = []
-	compression_ratios = []
+	compression_factors = []
 	
 	for quality in range(0, 55, 5):
 		print(quality)
-		compressed = other_compression.compress_video(data, quality)
+		start = time()
+		compressed = other_compression.compress_video(data, crf=quality, preset="superfast")
 		decompressed = other_compression.decompress_video(compressed)
+		print("Time elapsed:", time() - start)
 		rel_errors.append(np.linalg.norm(data - decompressed)/np.linalg.norm(data))
-		compression_ratios.append(other_compression.get_compress_video_size(compressed)/original_size)
+		compression_factors.append(original_size/other_compression.get_compress_video_size(compressed))
 		print(rel_errors[-1])
-		print(compression_ratios[-1])
+		print(compression_factors[-1])
 	
 	print("rel_errors =", rel_errors)
-	print("compression_ratios =", compression_ratios)
-	plt.plot(rel_errors, compression_ratios, "bo")
-	plt.plot(rel_errors, compression_ratios, "b")
+	print("compression_factors =", compression_factors)
+	plt.plot(rel_errors, compression_factors, "bo")
+	plt.plot(rel_errors, compression_factors, "b")
 	plt.show()
 
 def test_compress_variable_tucker():
@@ -228,6 +241,7 @@ def plot_compression_comparison(case):
 		# Video
 		rel_errors = [0.002097713132559369, 0.0045815692796644727, 0.0066331424987280153, 0.0097938837928269254, 0.014852849349730041, 0.021659202931874257, 0.030225506603691398, 0.040570163008044717, 0.05211904497792906, 0.064799973736880748, 0.082406679060748014]
 		compression_ratios = [0.03375462624091912, 0.017664591296958042, 0.008621292729004157, 0.0033488911419938283, 0.0011946441582376137, 0.0005533700698075604, 0.0002901246979738128, 	0.00015207202688367907, 7.965229151487228e-05, 4.2355238379693125e-05, 2.49895697164838e-05]
+		compression_factors = [7.185725446452739, 15.733518669321322, 33.197323979749214, 81.01949326464369, 216.61642014865427, 494.3813603161794, 1130.3172575624249, 2737.0796196586093, 6836.04234620887, 13157.819143077431, 16449.991737813274] # Veryfast
 		plt.plot(rel_errors, compression_ratios, "co", label="libx264")
 		plt.plot(rel_errors, compression_ratios, "c")
 	
