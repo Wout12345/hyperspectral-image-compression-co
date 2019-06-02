@@ -1,0 +1,45 @@
+\chapter{Compressie na hervorming}
+\label{hoofdstuk:hervorming}
+
+Zoals we eerder aan het begin van sectie \ref{sec:orthogonaliteitscompressie} bespraken, nemen de factormatrices van de Tucker-decomposities van onze datasets een groot deel van de totale opslagruimte in. Voor hoog-dimensionale tensoren is dit effect echter kleiner en bestaat de compressie bijna volledig uit de kerntensor. Onze originele data is 3D, maar in dit hoofdstuk zullen we deze hervormen naar 5D en onderzoeken of we hiervoor effici\"entere compressie-algoritmes kunnen ontwikkelen.
+
+\section{Hervormen van de datasets}
+
+In dit hoofdstuk zullen we de originele datasets telkens omzetten van drie naar vijf modes. Dit gebeurt aan de hand van hervorming, wat simpelweg neerkomt op een herinterpretatie van het geheugen. Bijvoorbeeld, stel dat we een 1D-tensor hebben met 200 elementen. Men kan deze interpreteren als een tensor met vorm (200), maar ook als een 2D-tensor met vorm (10, 20). Als men het dan heeft over het element op positie $(i, j)$, komt dit neer op het element met index $20i + j$ (in het geval van de \textit{row-major}-conventie). Merk op dat de interne opslag van de tensor hiervoor niet aangepast moet worden, alleen de metadata.\\
+
+Men kan deze operatie uitvoeren op een willekeurige verzameling modes van een tensor. Zo zullen we vanaf nu onze datasets hervormen door elke spatiale mode op te splitsen in twee nieuwe modes. Op deze manier zijn de afmetingen van alle modes redelijk klein, op de spectrale mode na, die sowieso al erg goed comprimeert. Ter illustratie, bij Mauna Kea komt dit neer op een hervorming van (2704, 729, 199) naar (52, 52, 27, 27, 199).\\
+
+We zullen in dit hoofdstuk werken met datasets waarvan de spatiale modes afmetingen hebben die exact kwadraten zijn, zodat de initi\"ele mode van grootte $n^2$ kan opgesplitst worden in twee modes met grootte $n$. Op zich zijn andere factorizaties ook mogelijk, maar om praktische redenen beperken we ons in ons onderzoek tot kwadratische afmetingen. Mauna Kea en Pavia Centre voldoen al aan deze beperking. Indian Pines en Cuprite niet, dus we zullen deze datasets voor de komende hoofdstukken vervangen door versies waarbij alleen de pixels met de laagste indices uitgeknipt worden. Hierbij ronden we de afmeting van elke spatiale mode af naar het dichtsbijzijnde kleinere kwadraat.
+
+\section{Tucker-decompositie met hervorming}
+
+Als eerste compressiemethode kunnen we simpelweg de ST-HOSVD berekenen van de hervormde tensor. In figuur \ref{fig:reshaped_tucker_st_hosvd_results} kan men de afweging zien tussen compressiefout en -factor voor verschillende datasets, zonder (blauw) en met (oranje) het hervormen van de data. Alleen de ST-HOSVD werd uitgevoerd, zonder orthogonaliteitscompressie (dit helpt sowieso al minder in het geval met hervorming, aangezien de factormatrices kleiner zijn), quantisatie of encodering. We zien dat na deze eerste compressiefase de Tucker-decompositie even goed tot significant slechter scoort afhankelijk van de dataset en gewenste fout. Om deze reden zullen we de Tucker-decompositie met hervorming niet verder onderzoeken.
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}{0.48\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{images/reshaped_tucker_st_hosvd_results_Indian_Pines.png}
+  \caption{Indian Pines}
+\end{subfigure}
+\begin{subfigure}{0.48\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{images/reshaped_tucker_st_hosvd_results_Cuprite.png}
+  \caption{Cuprite}
+\end{subfigure}
+\\
+\begin{subfigure}{0.48\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{images/reshaped_tucker_st_hosvd_results_Pavia_Centre.png}
+  \caption{Pavia Centre}
+\end{subfigure}
+\begin{subfigure}{0.48\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{images/reshaped_tucker_st_hosvd_results_Mauna_Kea.png}
+  \caption{Mauna Kea}
+\end{subfigure}
+\caption{Resultaten van de Tucker-decompositie zonder (blauw) en met (oranje) hervorming voor verschillende datasets, na alleen het uitvoeren van de ST-HOSVD (dus zonder orthogonaliteitscompressie, quantisatie of encodering).}
+\label{fig:reshaped_tucker_st_hosvd_results}
+\end{figure}
+
+\input{tensor-trains}

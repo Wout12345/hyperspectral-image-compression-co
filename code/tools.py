@@ -35,8 +35,14 @@ def custom_norm(data):
 def load_indian_pines():
 	return loadmat("../data/Indian_pines.mat")["indian_pines"]
 
+def load_indian_pines_cropped():
+	return load_indian_pines()[:144, :144, :]
+
 def load_cuprite():
 	return filter_bands(loadmat("../data/Cuprite_f970619t01p02_r02_sc03.a.rfl.mat")["X"], ((4, 106), (114, 152), (169, 219)))
+
+def load_cuprite_cropped():
+	return load_cuprite()[:484, :576, :] # 22**2, 24**2
 
 def load_botswana():
 	return loadmat("../data/Botswana.mat")["Botswana"][:, :, 2:]
@@ -52,8 +58,8 @@ def load_mauna_kea_raw():
 	return data
 
 def load_mauna_kea():
-	lines = 2704
-	samples = 729
+	lines = 2704 # 52**2
+	samples = 729 # 33**2
 	data = np.fromfile("../data/mauna_kea_preprocessed", dtype="uint16")
 	return data.reshape(lines, samples, data.size//(lines*samples))
 
@@ -86,8 +92,8 @@ def plot_comparison(original, decompressed):
 	axes[2].imshow(np.sqrt(np.sqrt(np.sum((original - decompressed)**2, axis=2))), cmap="gray")
 	plt.show()
 
-def rel_error(original, decompressed):
-	return st_hosvd.rel_error(original, decompressed)
+def rel_error(original, decompressed, preserve_decompressed=True):
+	return st_hosvd.rel_error(original, decompressed, preserve_decompressed=preserve_decompressed)
 
 def print_difference(original, decompressed):
 	print("Relative error: %s\n"%rel_error(original, decompressed))

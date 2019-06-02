@@ -1,7 +1,7 @@
 \section{Encodering en lossless compressie}
 \label{sec:encodering}
 
-Nadat we de waarden van de kerntensor en factormatrices gequantiseerd hebben, encoderen we deze naar bits, voegen we deze samen in \'e\'en lange bitstring en comprimeren deze met Deflate om de finale compressie te bekomen. We bespreken in deze sectie enkele keuzes die nog gemaakt moeten worden bij de encodering, na een kort deel over de effici\"entie van de implementatie.
+Nadat we de waarden van de kerntensor en factormatrices gequantiseerd hebben, encoderen we deze naar bits, voegen we deze samen in \'e\'en lange bitstring en comprimeren deze met Deflate om de finale compressie te bekomen. We bespreken in deze sectie enkele keuzes die nog gemaakt moeten worden bij de encodering, gevolgd door een kort deel over de effici\"entie van de implementatie.
 
 \subsection{Encoderingsmethoden}
 
@@ -10,9 +10,9 @@ Er zijn verschillende manieren om gehele getallen uit $\{0, \dots, 2^b - 1\}$ om
 
 \item \textbf{Standaard:} We schrijven het getal in binair, met de meest significante bit eerst.
 
-\item \textbf{Gray-code \cite{ref:graycode}:} Zoals de standaard-encodering, encoderen Gray-codes waarden uit $\{0, \dots, 2^b - 1\}$ elk naar een code van constante lengte ($b$ bits), maar met de eigenschap dat de encodering van twee opeenvolgende getallen altijd verschilt in juist \'e\'en bit. Dit betekent dat, als de meeste waarden geconcentreerd zijn rond een bepaald punt, dat een groot deel van de bits in de encodering van elke waarde nog gelijk zullen zijn. Dit zou eventueel beter gecomprimeerd kunnen worden.
+\item \textbf{Gray-code \cite{ref:graycode}:} Zoals de standaard-encodering, encoderen Gray-codes waarden uit $\{0, \dots, 2^b - 1\}$ elk naar een codewoord van constante lengte ($b$ bits), maar met de eigenschap dat de encodering van twee opeenvolgende getallen altijd verschilt in juist \'e\'en bit. Dit betekent dat, als de meeste waarden geconcentreerd zijn rond een bepaald punt, dat een groot deel van de bits in de encodering van elke waarde nog gelijk zullen zijn. Dit zou eventueel beter gecomprimeerd kunnen worden door Deflate.
 
-\item \textbf{Huffman-code \cite{ref:huffman_coding}:} Bij Huffman-encodering worden de verschillende symbolen voorgesteld door codewoorden van variabele lengte, zodat veel voorkomende symbolen ge\"encodeerd worden als korte codewoorden. Dit is erg effici\"ent als men de prefix-boom al kent. In ons geval zullen we echter voor elke quantisatieblok de optimale code berekenen en de bijhorende boom opslaan in een simpel binair formaat (gebaseerd op een post van Stack Overflow \cite{ref:huffman_tree}). In dit formaat neemt de boom $(b + 1)*n + n - 1$ bits in, voor een verzameling van $n$ unieke symbolen, elk initieel voorgesteld door $b$ bits (we zullen de bomen ook nog comprimeren met Deflate om de opslag te minimaliseren). Voor grote quantisatieblokken met veel herhalende symbolen is dit dus niet zo groot meer.
+\item \textbf{Huffman-code \cite{ref:huffman_coding}:} Bij Huffman-encodering worden de verschillende symbolen voorgesteld door codewoorden van variabele lengte, zodat veel voorkomende symbolen ge\"encodeerd worden als korte codewoorden. Dit is erg effici\"ent als men de prefix-boom al kent. In ons geval zullen we echter voor elke quantisatieblok de optimale code berekenen en de bijhorende boom opslaan in een simpel binair formaat (gebaseerd op een post van Stack Overflow \cite{ref:huffman_tree}). In dit formaat neemt de boom $(b + 2)*n - 1$ bits in, voor een verzameling van $n$ unieke symbolen, elk initieel voorgesteld door $b$ bits (we zullen de bomen ook nog comprimeren met Deflate om de opslag te minimaliseren). Voor grote quantisatieblokken met veel herhalende symbolen is dit dus niet zo groot meer.
 
 \item \textbf{Adaptief:} Voor kleine blokken kan deze \textit{overhead} veroorzaakt door de opslag van de bomen echter een probleem vormen. Om deze reden ontwikkelden we ook een adaptieve methode: voor elke quantisatieblok wordt gekozen uit een Gray-code, benaderende Huffman-code (zie verder) of exacte Huffman-code, op basis van het kleinste geheugengebruik (inclusief de opslag van de boom). Het opstellen en vergelijken van deze verschillende codes voor elke blok kost echter een significante hoeveelheid tijd (zelfs met een optimalisatie waarbij de exacte Huffman-code niet berekend wordt als men op voorhand al ziet dat de boom te groot gaan zijn).\\
 
@@ -57,11 +57,11 @@ Uiteindelijk zullen we de bitstring terug moeten omzetten naar een reeks bytes. 
 
 \subsection{Implementatie}
 
-We kozen ervoor om de encodering te implementeren met de Python-module \texttt{bitarray} \cite{ref:bitarray}. Aangezien deze in C is geschreven is dit veel sneller dan enige Python-routines dat we zelf zouden kunnen maken. Toch ontbrak er effici\"ente ondersteuning voor twee zaken:
+We kozen ervoor om de encodering te implementeren met de Python-module \texttt{bitarray} \cite{ref:bitarray}. Aangezien deze in C is geschreven is dit veel sneller dan enige Python-routines die we zelf zouden maken. Toch ontbrak er effici\"ente ondersteuning voor twee zaken:
 
 \begin{itemize}
 
-\item De module ondersteunt prefix codes van variabele lengte \cite{ref:variable_length_code} door bij het encoderen/decoderen te vragen naar een \textit{map} van elk symbool naar diens binaire voorstelling. Elke keer wanneer we een quantizatieblok decoderen zal de module echter een boom moeten construeren om snel de bitstring te \textit{parsen}. Deze constructie duurt erg lang en is niet nodig voor codes van constante lengte (zoals de standaard-encodering of Gray-codes). We hebben een nieuwe iterator toegevoegd om te decoderen op basis van zo'n code, waardoor dit proces enorm versneld is.
+\item De module ondersteunt prefix codes van variabele lengte \cite{ref:variable_length_code} door bij het encoderen/decoderen te vragen naar een \textit{map} van elk symbool naar diens binaire voorstelling. Elke keer wanneer we een quantisatieblok decoderen zal de module echter een boom moeten construeren om snel de bitstring te \textit{parsen}. Deze constructie duurt erg lang en is niet nodig voor codes van constante lengte (zoals de standaard-encodering of Gray-codes). We hebben een nieuwe iterator toegevoegd om te decoderen op basis van zo'n code, waardoor dit proces enorm versneld is.
 
 \item Voor Huffman-codes \cite{ref:huffman_coding} kunnen we deze iterator dus niet gebruiken, want deze codes hebben een variabele lengte. Om dit op te lossen hebben we ook een functie toegevoegd om de prefix-boom door te geven als een bitstring in het formaat dat in de volgende subsectie besproken zal worden. Dit omzeilt de trage omzetting van \textit{map} naar boom en geeft ook een grote versnelling.
 

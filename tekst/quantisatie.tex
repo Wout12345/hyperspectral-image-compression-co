@@ -34,7 +34,7 @@ Aangezien de meeste informatie in de eerste lagen zit, zullen we deze ongequanti
 \begin{figure}[H]
   \centering
   \includegraphics[scale=0.7]{images/core_tensor_unquantized_portion.png}
-  \caption{Relatieve fout versus compressiefactor bij Cuprite met relatieve doelfout 0.025. De labels geven het aantal quantizatiebits aan.}
+  \caption{Relatieve fout versus compressiefactor bij Cuprite met relatieve doelfout 0.025. De labels geven het aantal quantisatiebits aan.}
 \label{fig:core-tensor-unquantized-portion}
 \end{figure}
 
@@ -69,25 +69,25 @@ Na de orthogonaliteitscompressie zal elke factormatrix voorgesteld worden als de
 \begin{figure}[H]
   \centering
   \includegraphics[scale=0.7]{images/factor_matrix_quantization_block_cols.png}
-  \caption{Relatieve fout versus compressiefactor bij Cuprite met relatieve doelfout 0.025 en verschillende blokgroottes voor de quantizatie van de factormatrices. Quantisatie gebeurde gelaagd met norm-gebaseerde bit-aantal-selectie (zie vervolg subsectie). De labels geven de bits-parameterwaarden aan.}
+  \caption{Relatieve fout versus compressiefactor bij Cuprite met relatieve doelfout 0.025 en verschillende blokgroottes voor de quantisatie van de factormatrices. Quantisatie gebeurde gelaagd met norm-gebaseerde bit-aantal-selectie (zie vervolg subsectie). De labels geven de bits-parameterwaarden aan.}
 \label{fig:factor-matrix-quantization-block-cols}
 \end{figure}
 
-Een eerste manier om dit te doen is weer met globale quantisatie per factormatrix (dus we berekenen \'e\'en specifiek bereik per matrix, niet voor alle matrices samen). We zagen echter al in de vorige subsectie dat het nuttig is om de waarden onder te verdelen in blokken, waardoor een specifieker bereik kan worden vastgelegd. Een gemiddelde reflector uit een factormatrix bevat echter veel minder waarden dan een gemiddelde laag uit de kerntensor, dus men zou kunnen proberen om meerdere reflectoren te groeperen per blok om zo de \textit{overhead} van de metadata (12 bytes per blok, eventueel 1 byte extra bij een variabel aantal bits) te beperken. Desalniettemin toont figuur \ref{fig:factor-matrix-quantization-block-cols} aan dat het beter is om dit niet te doen. We hebben ook ge\"experimenteerd met technieken om het aantal reflectoren per blok dynamisch te kiezen in functie van de dimensie van de reflector en het aantal quantizatiebits, maar dit gaf hetzelfde resultaat.\\
+Een eerste manier om dit te doen is weer met globale quantisatie per factormatrix (dus we berekenen \'e\'en specifiek bereik per matrix, niet voor alle matrices samen). We zagen echter al in de vorige subsectie dat het nuttig is om de waarden onder te verdelen in blokken, waardoor een specifieker bereik kan worden vastgelegd. Een gemiddelde reflector uit een factormatrix bevat echter veel minder waarden dan een gemiddelde laag uit de kerntensor, dus men zou kunnen proberen om meerdere reflectoren te groeperen per blok om zo de \textit{overhead} van de metadata (12 bytes per blok, eventueel 1 byte extra bij een variabel aantal bits) te beperken. Desalniettemin toont figuur \ref{fig:factor-matrix-quantization-block-cols} aan dat het beter is om dit niet te doen. We hebben ook ge\"experimenteerd met technieken om het aantal reflectoren per blok dynamisch te kiezen in functie van de dimensie van de reflector en het aantal quantisatiebits, maar dit gaf hetzelfde resultaat.\\
 
-Om het aantal quantizatiebits te selecteren, kunnen we ook verschillende methoden gebruiken. De simpelste optie is om de bits-parameter te gebruiken als het constante aantal quantizatiebits voor elke reflector, maar hierbij houdt men geen rekening met enkele aspecten:
+Om het aantal quantisatiebits te selecteren, kunnen we ook verschillende methoden gebruiken. De simpelste optie is om de bits-parameter te gebruiken als het constante aantal quantisatiebits voor elke reflector, maar hierbij houdt men geen rekening met enkele aspecten:
 
 \begin{enumerate}
 
 \item De eerste reflector be\"invloedt de reconstructie van alle kolommen van de factormatrix, de tweede reflector be\"invloedt alle kolommen buiten de eerste, ... Bijgevolg zijn de eerste reflectoren belangrijker en zou men deze met meer precisie kunnen bijhouden. Aangezien dit effect moeilijk te quantiseren valt houden we hier geen rekening mee.
 
-\item De eerste singuliere vectoren zijn belangrijker dan de laatste, waardoor we beter meer precisie gebruiken voor deze. Bij ``norm-gebaseerde'' selectie zullen we het aantal bits per waarde binnen een reflector ongeveer proportioneel kiezen met het logaritme van de norm van de corresponderende snede uit de kerntensor (de waarden die later vermenigvuldigd zullen worden met corresponderende singuliere vector). De bits-parameter legt vast hoeveel quantizatiebits er voor de eerste reflector gekozen moeten worden.
+\item De eerste singuliere vectoren zijn belangrijker dan de laatste, waardoor we beter meer precisie gebruiken voor deze. Bij ``norm-gebaseerde'' selectie zullen we het aantal bits per waarde binnen een reflector ongeveer proportioneel kiezen met het logaritme van de norm van de corresponderende snede uit de kerntensor (de waarden die later vermenigvuldigd zullen worden met corresponderende singuliere vector). De bits-parameter legt vast hoeveel quantisatiebits er voor de eerste reflector gekozen moeten worden.
 
-\item De eerste reflectoren hebben een hogere dimensie en worden dus voorgesteld door meer waarden, waardoor het aantal bits per waarde hier misschien verlaagd moet worden. Bij ``norm- en dimensie-gebaseerde'' selectie zal het totaal aantal gebruikte bits per reflector ongeveer proportioneel zijn met de norm van de corresponderende snede uit de kerntensor. Zoals eerder wordt het aantal quantizatiebits per waarde voor de eerste reflector vastgelegd door de bits-parameter.
+\item De eerste reflectoren hebben een hogere dimensie en worden dus voorgesteld door meer waarden, waardoor het aantal bits per waarde hier misschien verlaagd moet worden. Bij ``norm- en dimensie-gebaseerde'' selectie zal het totaal aantal gebruikte bits per reflector ongeveer proportioneel zijn met de norm van de corresponderende snede uit de kerntensor. Zoals eerder wordt het aantal quantisatiebits per waarde voor de eerste reflector vastgelegd door de bits-parameter.
 
 \end{enumerate}
 
-In figuur \ref{fig:factor-matrix-quantization-comparison} vindt men een vergelijking van de besproken methoden. Zoals verwacht is gelaagde quantizatie opnieuw veel beter. Voor de bitselectie is de norm-gebaseerde techniek het beste, gevolgd door de norm- en dimensie-gebaseerde techniek en uiteindelijk constante selectie. Men zou dit kunnen verklaren door het effect van het eerste aspect dat we eerder bespraken (omzetting van reflectoren naar singuliere vectoren). Dit hebben we namelijk niet in rekening gebracht maar zou de norm-gebaseerde selectie moeten helpen. In ieder geval is dit de beste techniek en zal deze vanaf nu gebruikt worden. Voor de volgende sectie zullen we werken met een bits-parameter van 10, waardoor er geen merkbare fout toegevoegd zal worden.
+In figuur \ref{fig:factor-matrix-quantization-comparison} vindt men een vergelijking van de besproken methoden. Zoals verwacht is gelaagde quantisatie opnieuw veel beter. Voor de bitselectie is de norm-gebaseerde techniek het beste, gevolgd door de norm- en dimensie-gebaseerde techniek en uiteindelijk constante selectie. Men zou dit kunnen verklaren door het effect van het eerste aspect dat we eerder bespraken (omzetting van reflectoren naar singuliere vectoren). Dit hebben we namelijk niet in rekening gebracht maar zou de norm-gebaseerde selectie moeten helpen. In ieder geval is dit de beste techniek en zal deze vanaf nu gebruikt worden. Voor de volgende sectie zullen we werken met een bits-parameter van 10, waardoor er geen merkbare fout toegevoegd zal worden.
 
 \begin{figure}[H]
   \centering

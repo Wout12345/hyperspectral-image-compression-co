@@ -1,6 +1,7 @@
 \section{Afstellen van de parameters}
+\label{sec:parameters}
 
-Na de beslissingen die gemaakt werden in de eerdere secties, blijven er drie parameters over die de compressiefactor en -fout van de uitvoer bepalen: de relatieve doelfout tijdens de ST-HOSVD (RDS), de bits-parameter voor de quantisatie van de kerntensor (BPK) en de bits-parameter voor de quantisatie van de factormatrices (BPF). Het is echter niet triviaal om deze drie optimaal te kiezen om bijvoorbeeld de compressiefactor te maximaliseren met bij een bepaalde compressiefout. In deze sectie zullen we proberen een algoritme te ontwerpen dat in beperkte rekentijd goede parameterwaarden kan bepalen.\\
+Na de beslissingen die gemaakt werden in de eerdere secties, blijven er drie parameters over die de compressiefactor en -fout van de uitvoer bepalen: de relatieve doelfout tijdens de ST-HOSVD (RDS), de bits-parameter voor de quantisatie van de kerntensor (BPK) en de bits-parameter voor de quantisatie van de factormatrices (BPF). Het is echter niet triviaal om deze drie optimaal te kiezen om bijvoorbeeld de compressiefactor te maximaliseren bij een bepaalde compressiefout. In deze sectie zullen we proberen een algoritme te ontwerpen dat in beperkte rekentijd goede parameterwaarden kan bepalen.\\
 
 Helaas duurt de compressie en decompressie van grote datasets te lang om met een groot aantal parameterwaarden te experimenteren, dus we zullen ons in onze analyse beperken tot twee kleinere gevallen: Cuprite en Indian Pines.
 
@@ -14,7 +15,7 @@ Om een idee te krijgen van de optimale parameterwaarden voor een bepaalde relati
 \item $BPF \in \{16, 15, 14, \dots, 1\}$
 \end{itemize}
 
-We kunnen aannemen dat (bijna altijd) het verhogen van de RDS, verlagen van de BPK of verlagen van de BPF de uiteindelijke compressiefout zal vergroten. Daarnaast zijn we vooral ge\"interesseerd in relatieve doelfouten kleiner dan 0.05. Bijgevolg zullen we, eens dat er een experiment een fout voorbij deze grens gaf, geen experimenten meer proberen met grotere (of gelijke) RDS en lagere (of gelijke) BPK en BPF, want deze geven sowieso een grotere fout. Op deze manier kunnen we de parameterruimte sneller doorzoeken.
+We kunnen aannemen dat (bijna altijd) het verhogen van de RDS, verlagen van de BPK of verlagen van de BPF de uiteindelijke compressiefout zal vergroten. Daarnaast zijn we vooral ge\"interesseerd in relatieve fouten kleiner dan 0.05. Bijgevolg zullen we, eens dat er een experiment een fout voorbij deze grens gaf, geen experimenten meer proberen met grotere (of gelijke) RDS en lagere (of gelijke) BPK en BPF, want deze geven sowieso een grotere fout. Op deze manier kunnen we de parameterruimte sneller doorzoeken.
 
 \begin{figure}[H]
   \centering
@@ -23,7 +24,7 @@ We kunnen aannemen dat (bijna altijd) het verhogen van de RDS, verlagen van de B
   \label{fig:all_sweep_points_cuprite}
 \end{figure}
 
-In figuur \ref{fig:all_sweep_points_cuprite} zien we de volledige verzameling uitgevoerde experimenten op \'e\'en grafiek (voor Cuprite). De meeste punten zijn echter niet interessant. Stel namelijk, elk experiment $E_i$ geeft een relatieve fout $RF_i$ en compressiefactor $CF_i$. Als men dan twee experimenten $E_i$ en $E_j$ beschouwt, met $RF_i < RF_j$ en $CF_i > CF_j$, dan is het resultaat van $E_i$ op beide vlakken beter en is $E_j$ zeker een suboptimaal resultaat. Na het wegfilteren van dergelijke suboptimale punten bekomen we de curve uit figuur \ref{fig:filtered_sweep_points_cuprite}. Vanaf nu zullen we dit de steekproefoptima noemen, aangezien deze nog steeds gelimiteerd zijn door de eerder gekozen domeinen voor de parameterwaarden. Vooral voor grote fouten begint deze beperking merkbaar te worden en wordt de curve minder continu.
+In figuur \ref{fig:all_sweep_points_cuprite} zien we de volledige verzameling uitgevoerde experimenten in \'e\'en grafiek (voor Cuprite). De meeste punten zijn echter Pareto-ineffici\"ent. Dit betekent dat er een alternatief punt is met zowel een betere compressiefactor als -fout. Als we alleen kijken naar de Pareto-effici\"ente punten bekomen we de curve uit figuur \ref{fig:filtered_sweep_points_cuprite} (ook wel de Pareto-curve genoemd). Vanaf nu zullen we dit de steekproefoptima noemen, aangezien deze nog steeds gelimiteerd zijn door het eerder gekozen discrete domein voor de RDS-waarden. Vooral voor grote fouten begint deze beperking merkbaar te worden en wordt de curve minder continu.
 
 \begin{figure}[H]
   \centering
@@ -32,11 +33,11 @@ In figuur \ref{fig:all_sweep_points_cuprite} zien we de volledige verzameling ui
   \label{fig:filtered_sweep_points_cuprite}
 \end{figure}
 
-In figuren \ref{fig:filtered_sweep_points_RDS}, \ref{fig:filtered_sweep_points_BPK} en \ref{fig:filtered_sweep_points_BPF} zien we welke parameterwaarden corresponderen met deze steekproefoptima. We voerden ook hetzelfde proces uit op Indian Pines. Voor elke parameter leggen we nu een selectiefunctie vast op basis van deze experimentele resultaten. Het kiezen van deze functies kan geavanceerder en is zeker een piste voor verder onderzoek.
+In figuren \ref{fig:filtered_sweep_points_RDS}, \ref{fig:filtered_sweep_points_BPK} en \ref{fig:filtered_sweep_points_BPF} zien we welke parameterwaarden corresponderen met deze steekproefoptima. We voerden ook hetzelfde proces uit voor Indian Pines. Voor elke parameter leggen we nu een selectiefunctie vast op basis van deze experimentele resultaten. Het kiezen van deze functies kan geavanceerder en is zeker een piste voor verder onderzoek.
 
 \begin{itemize}
 \item $RDS = max(0.001, 0.962601*\text{kwaliteit} - 0.000414)$, simpelweg op basis van lineaire regressie. De resultaten voor Cuprite en Indian Pines liggen hier vrij dichtbij elkaar.
-\item $BPK = max(10, round(-445.117*\text{kwaliteit} + 16.795))$. Deze functie werd bepaald aan de hand van lineaire regressie op de eerste waarden van Cuprite, gevolgd door een harde ondergrens van 10. Dit is weliswaar te groot voor Indian Pines, maar zoals we eerder zagen kan de fout erg snel escaleren wanneer het aantal quantizatiebits te laag gekozen wordt, dus we zullen gaan voor eerder conservatieve waarden.
+\item $BPK = max(10, round(-445.117*\text{kwaliteit} + 16.795))$. Deze functie werd bepaald aan de hand van lineaire regressie op de eerste waarden van Cuprite, gevolgd door een harde ondergrens van 10. Dit is weliswaar te groot voor Indian Pines, maar zoals we eerder zagen kan de fout erg snel escaleren wanneer het aantal quantisatiebits te laag gekozen wordt, dus we zullen gaan voor eerder conservatieve waarden.
 \newpage
 
 \begin{figure}[H]
@@ -87,7 +88,7 @@ Met deze selectiefuncties hebben we compressies uitgevoerd waarbij de RDS, BPK e
 
 Als we meer rekentijd mogen investeren, kunnen we echter betere parameters kiezen door gedurende de compressie simpelweg verschillende waarden uit te proberen en het beste resultaat te kiezen. Bij adaptieve selectie zullen we dit in beperkte mate proberen te doen.\\
 
-Concreet maken we van de compressie een iteratief algoritme, waarbij we starten met dezelfde parameters als bij niet-adaptieve selectie. We zagen eerder dat de RDS-functie vrij onafhankelijk is van de dataset, waardoor we deze parameterwaarde niet meer zullen aanpassen. In elke iteratie testen we de uiteindelijke compressiefout en -factor zowel als men de BPK-waarde of de BPF-waarde met \'e\'en zou verlagen. Het algoritme kiest dan op basis van het huidige resultaat en de alternatieve resultaten welke parameter verlaagd wordt voor de volgende stap (de exacte beslissingsprocedure laten we hier buiten beschouwing). Als geen van beide verlaagd kan worden zonder dat de compressiefout de kwaliteitsparameter overschrijdt, stopt het algoritme.\\
+Concreet maken we van de compressie een iteratief algoritme, waarbij we starten met dezelfde parameters als bij niet-adaptieve selectie. We zagen eerder dat de optimale-RDS-functie vrij onafhankelijk is van de dataset, waardoor we deze parameterwaarde niet meer zullen aanpassen. In elke iteratie testen we de uiteindelijke compressiefout en -factor zowel als men de BPK-waarde of de BPF-waarde met \'e\'en zou verlagen. Het algoritme kiest dan op basis van het huidige resultaat en de alternatieve resultaten welke parameter effectief verlaagd wordt voor de volgende stap (de exacte beslissingsprocedure laten we hier buiten beschouwing). Als geen van beide verlaagd kan worden zonder dat de compressiefout de kwaliteitsparameter overschrijdt, stopt het algoritme.\\
 
 Bij de implementatie werd weliswaar rekening gehouden met enkele optimisaties:
 \begin{itemize}
@@ -98,7 +99,7 @@ Bij de implementatie werd weliswaar rekening gehouden met enkele optimisaties:
 
 In figuren \ref{fig:parameter_functions_results_including_adaptive_Cuprite} en \ref{fig:parameter_functions_results_including_adaptive_Indian_Pines} vindt men de experimentele resultaten van adaptieve parameterselectie. Men ziet dat men met deze techniek grote vooruitgang kan boeken op vlak van compressiefout en -factor. Door het beperkte domein van de RDS-waarden in de initi\"ele steekproef (waarmee we de optimale parameterwaarden probeerden te analyseren) verslaat adaptieve selectie zelfs de steekproefoptima.\\
 
-In figuren \ref{fig:adaptive_timings_Cuprite} en \ref{fig:adaptive_timings_Indian_Pines} zien we echter dat adaptieve parameterselectie een significante kost heeft op vlak van compressietijd. Verder wordt er ook meer geheugen gebruikt voor het bijhouden van alternatieve compressies. Om deze redenen zullen we deze techniek in het algemeen proberen te gebruiken, tenzij de uitvoeringstijd naar ons oordeel onacceptabel is.
+In figuren \ref{fig:adaptive_timings_Cuprite} en \ref{fig:adaptive_timings_Indian_Pines} zien we echter dat adaptieve parameterselectie een significante kost heeft op vlak van compressietijd. Verder wordt er ook meer geheugen gebruikt voor het bijhouden van alternatieve compressies. Om deze redenen zullen we deze techniek alleen gebruiken voor kleine datasets.
 
 \newpage
 \begin{figure}[H]

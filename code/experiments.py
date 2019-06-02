@@ -10,6 +10,7 @@ import os
 
 from tools import *
 import st_hosvd
+import tensor_trains
 
 # Constants
 default_experiments_amount = 10
@@ -816,26 +817,27 @@ def encoding_timing():
 # Sectie 4.5: Afstellen van de parameters
 # Own experiments
 
-def test_parameter_functions(dataset_name, adaptive):
+def test_parameter_functions(dataset_name, adaptive, method="tucker"):
 	
 	# Initialization
 	if dataset_name == "Cuprite":
-		data = load_cuprite()
-	elif dataset_name == "Pavia_Centre":
-		data = load_pavia_centre()
+		data = load_cuprite_cropped() if method == "tensor_trains" else load_cuprite()
 	elif dataset_name == "Indian_Pines":
-		data = load_indian_pines()
+		data = load_indian_pines_cropped() if method == "tensor_trains" else load_indian_pines()
 	else:
 		raise Exception("Invalid dataset name!")
-	measurements_path = "../measurements/test_parameter_functions_%s_%s.json"%(dataset_name, adaptive)
+	measurements_path = "../measurements/test_parameter_functions_%s_%s_%s.json"%(dataset_name, adaptive, method)
 	measurements_temp_path = measurements_path + ".tmp"
 	measurements = []
 	
 	# Test quality values
 	for quality_index in range(5, 51):
-		quality = 0.001*quality_index
+		quality = quality_index/1000
 		print("Testing quality", quality)
-		compressed = st_hosvd.compress(data, quality=quality, adaptive=adaptive)
+		if method == "tucker":
+			compressed = st_hosvd.compress(data, quality=quality, adaptive=adaptive)
+		elif method == "tensor_trains":
+			compressed = tensor_trains.compress(data, quality=quality, adaptive=adaptive)
 		measurements.append((rel_error(data, st_hosvd.decompress(compressed)), st_hosvd.get_compression_factor_quantize(data, compressed)))
 		with open(measurements_temp_path, "w") as f:
 			json.dump(measurements, f)
@@ -948,10 +950,11 @@ def plot_sweep_results(dataset_name="Cuprite", annotate=False, plot_test_functio
 
 # Helper functions
 
-def filter_points(dataset_name):
+def filter_points(dataset_name, tensor_trains=False):
 	
 	# Load measurements
-	measurements_path = "../measurements/parameters_measurements_%s.json"%dataset_name
+	method = "tensor_trains" if tensor_trains else "tucker"
+	measurements_path = "../measurements/parameters_measurements_%s_%s.json"%(method, dataset_name)
 	with open(measurements_path, "r") as f:
 		measurements = json.load(f)
 	measurements = {key: value for key, value in measurements.items() if not type(value) is str}
@@ -992,7 +995,7 @@ def plot_all_sweep_points_cuprite():
 	
 	# Load measurements
 	dataset_name = "Cuprite"
-	measurements_path = "../measurements/parameters_measurements_%s.json"%dataset_name
+	measurements_path = "../measurements/parameters_measurements_tucker_%s.json"%dataset_name
 	with open(measurements_path, "r") as f:
 		measurements = json.load(f)
 	measurements = {key: value for key, value in measurements.items() if not type(value) is str}
@@ -1040,19 +1043,19 @@ def plot_filtered_sweep_points_parameters():
 		plt.savefig("../tekst/images/filtered_sweep_points_%s.png"%parameter_name)
 		plt.close()
 
-def plot_parameter_functions_results(include_adaptive=True):
+def plot_parameter_functions_results(include_adaptive=True, method="tucker"):
 	
-	for dataset_name in ("Cuprite", "Indian_Pines"):
+	for dataset_name in ("Indian_Pines", "Cuprite"):
 		
 		# Sample optima
-		errors, factors, _ = filter_points(dataset_name)
+		errors, factors, _ = filter_points(dataset_name, tensor_trains=(method=="tensor_trains"))
 		plt.plot(errors, factors, label="Steekproefoptima")
 		
 		# Selection function results
 		settings = (("Niet-adaptief", False), ("Adaptief", True)) if include_adaptive else (("Met selectiefuncties", False),)
 		for label, adaptive in settings:
 			
-			test_functions_measurements_path = "../measurements/test_parameter_functions_%s_%s.json"%(dataset_name, adaptive)
+			test_functions_measurements_path = "../measurements/test_parameter_functions_%s_%s_%s.json"%(dataset_name, adaptive, method)
 			with open(test_functions_measurements_path, "r") as f:
 				test_functions_measurements = json.load(f)
 			plt.plot([point[0] for point in test_functions_measurements], [point[1] for point in test_functions_measurements], label=label)
@@ -1060,7 +1063,30 @@ def plot_parameter_functions_results(include_adaptive=True):
 		plt.xlabel("Relatieve fout")
 		plt.ylabel("Compressiefactor")
 		plt.legend()
-		plt.savefig("../tekst/images/parameter_functions_results%s_%s.png"%("_including_adaptive" if include_adaptive else "", dataset_name))
+		plt.savefig("../tekst/images/parameter_functions_results%s_%s_%s.png"%("_including_adaptive" if include_adaptive else "", dataset_name, method))
+		plt.close()
+
+def parameter_selection_results_big_datasets():
+	
+	rel_target_errors = np.linspace(0.01, 0.05, num=9)
+	
+	for dataset_name, loader in (("Mauna_Kea", load_mauna_kea), ("Pavia_Centre", load_pavia), ):
+		
+		data = loader()
+		for name, adaptive in (("Adaptief", True), ("Niet-adaptief", False), ):
+			rel_errors = []
+			compression_factors = []
+			for rel_target_error in rel_target_errors:
+				print("Testing dataset %s with method %s with target error %s"%(dataset_name, name, rel_target_error))
+				compressed = st_hosvd.compress(data, rel_target_error, adaptive=adaptive)
+				rel_errors.append(rel_error(data, st_hosvd.decompress(compressed)))
+				compression_factors.append(st_hosvd.get_compression_factor_quantize(data, compressed))
+			plt.plot(rel_errors, compression_factors, label=name)
+			
+		plt.xlabel("Relatieve fout")
+		plt.ylabel("Compressiefactor")
+		plt.legend()
+		plt.savefig("../tekst/images/parameter_selection_results_%s.png"%dataset_name)
 		plt.close()
 
 def plot_adaptive_timings():
@@ -1093,4 +1119,222 @@ def plot_adaptive_timings():
 		plt.savefig("../tekst/images/adaptive_timings_%s.png"%dataset_name)
 		plt.close()
 
-plot_adaptive_timings()
+# Hoofdstuk 5: Compressie na hervorming
+
+# Sectie 5.2: Tucker na hervorming
+
+def reshaped_tucker_st_hosvd_results():
+	
+	rel_target_errors = np.linspace(0.01, 0.05, num=5)
+	
+	for dataset_name, loader in (("Indian_Pines", load_indian_pines_cropped), ("Cuprite", load_cuprite_cropped), ("Pavia_Centre", load_pavia), ("Mauna_Kea", load_mauna_kea)):
+		
+		data = loader()
+		for name, reshape in (("Tucker (zonder hervorming)", False), ("Tucker (met hervorming)", True)):
+			rel_errors = []
+			compression_factors = []
+			for rel_target_error in rel_target_errors:
+				print("Testing dataset %s with method %s with target error %s"%(dataset_name, name, rel_target_error))
+				compressed = st_hosvd.compress_tucker(data, rel_target_error, reshape=reshape)
+				rel_errors.append(st_hosvd.rel_error(data, st_hosvd.decompress_tucker(compressed)))
+				compression_factors.append(st_hosvd.get_compression_factor_tucker(data, compressed))
+			plt.plot(rel_errors, compression_factors, label=name)
+			
+		plt.xlabel("Relatieve fout")
+		plt.ylabel("Compressiefactor")
+		plt.legend()
+		plt.savefig("../tekst/images/reshaped_tucker_st_hosvd_results_%s.png"%dataset_name)
+		plt.close()
+
+# Sectie 5.3: Tensor trains
+
+def tensor_trains_st_hosvd_results():
+	
+	rel_target_errors = np.linspace(0.01, 0.05, num=5)
+	
+	for dataset_name, loader in (("Indian_Pines", load_indian_pines_cropped), ("Cuprite", load_cuprite_cropped), ("Pavia_Centre", load_pavia), ("Mauna_Kea", load_mauna_kea),):
+		
+		data = loader()
+		for name, method, reshape in (("Tucker", "tucker", False), ("Tensor trains", "tensor_trains", True)):
+			rel_errors = []
+			compression_factors = []
+			for rel_target_error in rel_target_errors:
+				print("Testing dataset %s with method %s with target error %s"%(dataset_name, name, rel_target_error))
+				compressed = st_hosvd.compress_tucker(data, rel_target_error, method=method, reshape=reshape)
+				rel_errors.append(st_hosvd.rel_error(data, st_hosvd.decompress_tucker(compressed)))
+				compression_factors.append(st_hosvd.get_compression_factor_tucker(data, compressed))
+			plt.plot(rel_errors, compression_factors, label=name)
+			
+		plt.xlabel("Relatieve fout")
+		plt.ylabel("Compressiefactor")
+		plt.legend()
+		plt.savefig("../tekst/images/tensor_trains_st_hosvd_results_%s.png"%dataset_name)
+		plt.close()
+
+def tensor_trains_core_tensor_size():
+	
+	rel_target_errors = np.linspace(0.01, 0.05, num=5)
+	
+	for dataset_name, loader in (("Indian_Pines", load_indian_pines_cropped), ("Cuprite", load_cuprite_cropped), ("Pavia_Centre", load_pavia), ("Mauna_Kea", load_mauna_kea),):
+		
+		data = loader()
+		rel_errors = []
+		size_ratios_core_tensor = []
+		for rel_target_error in rel_target_errors:
+			print("Testing dataset %s with target error %s"%(dataset_name, rel_target_error))
+			compressed = st_hosvd.compress_tucker(data, rel_target_error, method="tensor_trains", reshape=True)
+			rel_errors.append(st_hosvd.rel_error(data, st_hosvd.decompress_tucker(compressed)))
+			size_ratios_core_tensor.append(st_hosvd.memory_size(compressed["core_tensor"])/(st_hosvd.memory_size(compressed["core_tensor"]) + sum(map(st_hosvd.memory_size, compressed["factor_matrices"]))))
+		plt.plot(rel_errors, size_ratios_core_tensor, label=dataset_name.replace("_", " "))
+	
+	plt.xlabel("Relatieve fout")
+	plt.ylabel("(Grootte kerntensor)/(Totale grootte compressie)")
+	plt.legend()
+	plt.savefig("../tekst/images/tensor_trains_core_tensor_size.png")
+	plt.close()
+
+def factor_matrix_quantization_comparison_tensor_trains():
+	
+	data = load_cuprite_cropped()
+	compressed1 = st_hosvd.compress_orthogonality(st_hosvd.compress_tucker(data, 0.025, reshape=True, method="tensor_trains"))
+	
+	for name, bits_amount_selection, quantization_bits_amounts, annotate_bound, label_x_offset, label_y_offset in (("Gelaagd (norm)", "norm-based", range(5, 16), 16, -0.0004, 0), ("Gelaagd (norm + rang)", "norm-rank-based", range(8, 16), 32, 0, 0)):
+		
+		rel_errors = []
+		compression_factors = []
+		for quantization_bits in quantization_bits_amounts:
+			print("Testing method %s with %s bits"%(name, quantization_bits))
+			compressed2 = st_hosvd.compress_quantize(deepcopy(compressed1), endian="little", encoding_method="default", use_zlib=False, factor_matrix_method="layered", factor_matrix_parameter=quantization_bits, factor_matrix_columns_per_block=1, bits_amount_selection=bits_amount_selection)
+			rel_errors.append(rel_error(data, st_hosvd.decompress_tucker(st_hosvd.decompress_orthogonality(st_hosvd.decompress_quantize(compressed2)))))
+			compression_factors.append(st_hosvd.get_compression_factor_quantize(data, compressed2))
+			if quantization_bits < annotate_bound:
+				plt.annotate(str(quantization_bits), (rel_errors[-1] + label_x_offset, compression_factors[-1] + label_y_offset))
+		plt.plot(rel_errors, compression_factors, label=name)
+		
+	plt.xlabel("Relatieve fout")
+	plt.ylabel("Compressiefactor")
+	plt.legend()
+	plt.savefig("../tekst/images/factor_matrix_quantization_comparison_tensor_trains.png")
+	plt.close()
+
+def plot_filtered_sweep_points_tensor_trains():
+	
+	for dataset_name in ("Cuprite", "Indian_Pines"):
+		
+		errors, factors, _ = filter_points(dataset_name, tensor_trains=True)
+		plt.plot(errors, factors)
+			
+		plt.xlabel("Relatieve fout")
+		plt.ylabel("Compressiefactor")
+		plt.show()
+		plt.close()
+
+def plot_filtered_sweep_points_parameters_tensor_trains():
+	
+	cuprite_errors, _, cuprite_keys = filter_points("Cuprite", tensor_trains=True)
+	indian_pines_errors, _, indian_pines_keys = filter_points("Indian_Pines", tensor_trains=True)
+	
+	for i, parameter_name in enumerate(("RDS", "BPK", "BPF")):
+		
+		if i == 1:
+			continue
+		
+		# Plot values
+		for name, errors, keys in (("Cuprite", cuprite_errors, cuprite_keys), ("Indian Pines", indian_pines_errors, indian_pines_keys)):
+			values = [float(key[1:-1].split(", ")[i]) for key in keys]
+			plt.plot(errors, values, label=name)
+			if (parameter_name == "RDS" and name == "Cuprite") or (parameter_name == "BPF" and name == "Indian Pines"):
+				# Print regression parameters
+				bound = 0.06 if parameter_name == "RDS" else 0.035
+				errors_for_regression = np.array(errors)[np.array(errors) < bound]
+				values_for_regression = np.array(values)[np.array(errors) < bound]
+				slope, intercept, _, _, _ = stats.linregress(errors_for_regression, values_for_regression)
+				print(slope, intercept)
+		
+		# Plot selection function
+		qualities = np.linspace(0.005, 0.05, num=46)
+		plt.plot(qualities, [tensor_trains.calculate_parameters(quality)[int(i == 2)] for quality in qualities], label="Selectiefunctie")
+			
+		plt.xlabel("Relatieve fout")
+		plt.ylabel(parameter_name)
+		plt.legend()
+		plt.savefig("../tekst/images/filtered_sweep_points_tensor_trains_%s.png"%parameter_name)
+		plt.close()
+
+def plot_all_sweep_points_indian_pines_tensor_trains():
+	
+	# Load measurements
+	dataset_name = "Indian_Pines"
+	measurements_path = "../measurements/parameters_measurements_tensor_trains_%s.json"%dataset_name
+	with open(measurements_path, "r") as f:
+		measurements = json.load(f)
+	measurements = {key: value for key, value in measurements.items() if not type(value) is str}
+	
+	# Plot all measurements
+	points = measurements.values()
+	errors = [point[0] for point in points]
+	factors = [point[1] for point in points]
+	plt.scatter(errors, factors)
+	for key in measurements.keys():
+		plt.annotate(key, (measurements[key][0], measurements[key][1]))
+		
+	plt.xlabel("Relatieve fout")
+	plt.ylabel("Compressiefactor")
+	plt.show()
+	plt.close()
+
+def tensor_trains_parameter_selection_results_big_datasets():
+	
+	rel_target_errors = np.linspace(0.01, 0.05, num=9)
+	
+	for dataset_name, loader in (("Mauna_Kea", load_mauna_kea), ("Pavia_Centre", load_pavia), ):
+		
+		data = loader()
+		for name, adaptive in (("Adaptief", True), ("Niet-adaptief", False), ):
+			rel_errors = []
+			compression_factors = []
+			for rel_target_error in rel_target_errors:
+				print("Testing dataset %s with method %s with target error %s"%(dataset_name, name, rel_target_error))
+				compressed = tensor_trains.compress(data, rel_target_error, adaptive=adaptive)
+				rel_errors.append(rel_error(data, tensor_trains.decompress(compressed)))
+				compression_factors.append(st_hosvd.get_compression_factor_quantize(data, compressed))
+				print(rel_errors[-1], compression_factors[-1])
+			plt.plot(rel_errors, compression_factors, label=name)
+			
+		plt.xlabel("Relatieve fout")
+		plt.ylabel("Compressiefactor")
+		plt.legend()
+		plt.savefig("../tekst/images/tensor_trains_parameter_selection_results_%s.png"%dataset_name)
+		plt.close()
+
+# Hoofdstuk 6: Resultaten
+
+# Sectie 6.1: Tucker versus tensor trains
+
+def tensor_trains_parameter_selection_results_big_datasets():
+	
+	rel_target_errors = np.linspace(0.01, 0.05, num=9)
+	
+	#for dataset_name, loader, include_adaptive_tucker in (("Indian_Pines", load_indian_pines_cropped, True), ("Cuprite", load_cuprite_cropped, True), ("Pavia_Centre", load_pavia, False), ("Mauna_Kea", load_mauna_kea, False), ):
+	for dataset_name, loader, include_adaptive_tucker in (("Mauna_Kea", load_mauna_kea, False), ):
+		
+		data = loader()
+		for method, module in (("Tucker", st_hosvd), ("Tensor trains", tensor_trains), ):
+			settings = (("niet-adaptief", False), ("adaptief", True), ) if include_adaptive_tucker and method == "Tucker" else (("niet-adaptief", False), )
+			for name, adaptive in settings:
+				rel_errors = []
+				compression_factors = []
+				for rel_target_error in rel_target_errors:
+					print("Testing dataset %s with method %s with adaptive %s with target error %s"%(dataset_name, method, adaptive, rel_target_error))
+					compressed = module.compress(data, rel_target_error, adaptive=adaptive)
+					rel_errors.append(rel_error(data, module.decompress(compressed), preserve_decompressed=False))
+					compression_factors.append(st_hosvd.get_compression_factor_quantize(data, compressed))
+				plt.plot(rel_errors, compression_factors, label=method + (" (" + name + ")" if include_adaptive_tucker and method == "Tucker" else ""))
+			
+		plt.xlabel("Relatieve fout")
+		plt.ylabel("Compressiefactor")
+		plt.legend()
+		plt.savefig("../tekst/images/tucker_vs_tensor_trains_%s.png"%dataset_name)
+		plt.close()
+
+tensor_trains_parameter_selection_results_big_datasets()

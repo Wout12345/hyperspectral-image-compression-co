@@ -14,8 +14,8 @@ def main():
 def test_compression_ratio_tucker():
 	
 	print("="*20 + " Phase 1 " + "="*20)
-	data = load_cuprite()
-	compressed1 = st_hosvd.compress_tucker(data, 0.025)
+	data = load_mauna_kea()
+	compressed1 = st_hosvd.compress_tucker(data, 0.025, reshape=False, method="tucker")
 	decompressed = st_hosvd.decompress_tucker(compressed1)
 	st_hosvd.print_compression_rate_tucker(data, compressed1)
 	print_difference(data, decompressed)
@@ -27,7 +27,7 @@ def test_compression_ratio_tucker():
 	
 	print("="*20 + " Phase 3 " + "="*20)
 	start_time = clock()
-	compressed3 = st_hosvd.compress_quantize(compressed2, endian="little", encoding_method="adaptive", allow_approximate_huffman=False, use_zlib=True, core_tensor_method="layered-constant-step", core_tensor_parameter=12, core_tensor_unquantized_rel_norm=0.995, factor_matrix_method="layered", factor_matrix_parameter=10, factor_matrix_columns_per_block=1, bits_amount_selection="norm-based")
+	compressed3 = st_hosvd.compress_quantize(compressed2, endian="little", encoding_method="adaptive", allow_approximate_huffman=False, use_zlib=True, core_tensor_method="layered-constant-step", core_tensor_parameter=12, core_tensor_unquantized_rel_norm=0.995, factor_matrix_method="layered", quantize_factor_matrices=True, factor_matrix_parameter=10, factor_matrix_columns_per_block=1, bits_amount_selection="norm-based")
 	print("Finished quantizing and encoding in:", clock() - start_time)
 	start_time = clock()
 	decompressed1 = st_hosvd.decompress_quantize(compressed3)

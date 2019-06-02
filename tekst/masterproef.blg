@@ -5,7 +5,7 @@ A level-1 auxiliary file: inleiding.aux
 A level-1 auxiliary file: achtergrond.aux
 A level-1 auxiliary file: methodologie.aux
 A level-1 auxiliary file: tucker.aux
-A level-1 auxiliary file: tensor_trains.aux
+A level-1 auxiliary file: hervorming.aux
 A level-1 auxiliary file: resultaten.aux
 A level-1 auxiliary file: besluit.aux
 A level-1 auxiliary file: app-code-algoritmen.aux
@@ -16,7 +16,7 @@ Database file #1: referenties.bib
 Warning--empty journal in ref:saad
 You've used 18 entries,
             2118 wiz_defined-function locations,
-            572 strings with 6051 characters,
+            572 strings with 6048 characters,
 and the built_in function-call counts, 3834 in all, are:
 = -- 355
 > -- 149

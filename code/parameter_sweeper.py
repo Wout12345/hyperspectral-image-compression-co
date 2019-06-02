@@ -8,22 +8,19 @@ import os
 from tools import *
 import st_hosvd
 
-def sweep_parameters(dataset_name = "Pavia_Centre"):
+def sweep_parameters(dataset_name="Indian_Pines", tensor_trains=False):
 	
 	# Sweeps parameter space by brute-forcing combinations of parameters from sets of legal values
 	
 	# Constants
 	reset = False
-	measurements_path = "../measurements/parameters_measurements_%s.json"%dataset_name
+	method = "tensor_trains" if tensor_trains else "tucker"
+	measurements_path = "../measurements/parameters_measurements_%s_%s.json"%(method, dataset_name)
 	measurements_temp_path = measurements_path + ".tmp"
 	if dataset_name == "Cuprite":
-		data = load_cuprite()
-	elif dataset_name == "Pavia_Centre":
-		data = load_pavia()
-	elif dataset_name == "Botswana":
-		data = load_botswana()
+		data = load_cuprite_cropped() if tensor_trains else load_cuprite()
 	elif dataset_name == "Indian_Pines":
-		data = load_indian_pines()
+		data = load_indian_pines_cropped() if tensor_trains else load_indian_pines()
 	else:
 		raise Exception("Invalid dataset name!")
 	
@@ -40,15 +37,15 @@ def sweep_parameters(dataset_name = "Pavia_Centre"):
 	# Parameter iterables are defined in order of increasing error (decreasing compression factor)
 	
 	# Cuprite
-	st_hosvd_relative_errors = [val/400 for val in range(2, 21)]
-	core_tensor_parameters = list(range(16, 0, -1))
+	st_hosvd_relative_errors = [val/10000 for val in range(50, 501, 25)] if method == "tucker" else [val/10000 for val in range(50, 501, 2)]
+	core_tensor_parameters = list(range(16, 0, -1)) if method == "tucker" else [16,]
 	factor_matrix_parameters = list(range(16, 0, -1))
 	
 	max_relative_error = 0.05 # Don't bother performing experiments that will surely give us a relative error beyond this bound
 	for i, st_hosvd_relative_error in enumerate(st_hosvd_relative_errors):
 		
 		# Perform first compression step already
-		compressed1 = st_hosvd.compress_orthogonality(st_hosvd.compress_tucker(data, st_hosvd_relative_error))
+		compressed1 = st_hosvd.compress_orthogonality(st_hosvd.compress_tucker(data, st_hosvd_relative_error, reshape=tensor_trains, method=method))
 		
 		for j, core_tensor_parameter in enumerate(core_tensor_parameters):
 			
@@ -86,5 +83,5 @@ def sweep_parameters(dataset_name = "Pavia_Centre"):
 						json.dump(measurements, f)
 					os.rename(measurements_temp_path, measurements_path)
 
-#sweep_parameters("Indian_Pines")
-sweep_parameters("Cuprite")
+sweep_parameters(dataset_name="Indian_Pines", tensor_trains=True)
+sweep_parameters(dataset_name="Cuprite", tensor_trains=True)

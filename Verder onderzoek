@@ -9,3 +9,4 @@
 	- Niet alle bomen in compressie opslaan, maar (sommige) bomen hard-coden in algoritme op basis van typische datasets
 - Verschillende quantisatie voor verschillende factormatrices bij TT's
 - Parameter tuning
+- Geblokte compressie: om rekentijd lineair te houden, door fout op te splitsen kunnen parameters ook beter gekozen worden, maar niet optimaal om fout gelijk te verdelen
