@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.misc import imsave
 import scipy.stats as stats
-from time import clock
+from time import time, clock
 import gc
 from copy import deepcopy
 import json
@@ -11,6 +11,7 @@ import os
 from tools import *
 import st_hosvd
 import tensor_trains
+import other_compression
 
 # Constants
 default_experiments_amount = 10
@@ -23,9 +24,15 @@ def save_image(data, path):
 	
 def save_indian_pines_image():
 	save_image(load_indian_pines(), "../tekst/images/indian_pines_sum.png")
+	
+def save_indian_pines_cropped_image():
+	save_image(load_indian_pines_cropped(), "../tekst/images/indian_pines_cropped_sum.png")
 
 def save_cuprite_image():
 	save_image(load_cuprite(), "../tekst/images/cuprite_sum.png")
+
+def save_cuprite_cropped_image():
+	save_image(load_cuprite_cropped(), "../tekst/images/cuprite_cropped_sum.png")
 
 def save_pavia_image():
 	save_image(load_pavia(), "../tekst/images/pavia_sum.png")
@@ -1311,12 +1318,11 @@ def tensor_trains_parameter_selection_results_big_datasets():
 
 # Sectie 6.1: Tucker versus tensor trains
 
-def tensor_trains_parameter_selection_results_big_datasets():
+def tucker_vs_tensor_trains_results():
 	
 	rel_target_errors = np.linspace(0.01, 0.05, num=9)
 	
-	#for dataset_name, loader, include_adaptive_tucker in (("Indian_Pines", load_indian_pines_cropped, True), ("Cuprite", load_cuprite_cropped, True), ("Pavia_Centre", load_pavia, False), ("Mauna_Kea", load_mauna_kea, False), ):
-	for dataset_name, loader, include_adaptive_tucker in (("Mauna_Kea", load_mauna_kea, False), ):
+	for dataset_name, loader, include_adaptive_tucker in (("Indian_Pines", load_indian_pines_cropped, True), ("Cuprite", load_cuprite_cropped, True), ("Pavia_Centre", load_pavia, False), ("Mauna_Kea", load_mauna_kea, False), ):
 		
 		data = loader()
 		for method, module in (("Tucker", st_hosvd), ("Tensor trains", tensor_trains), ):
@@ -1337,4 +1343,277 @@ def tensor_trains_parameter_selection_results_big_datasets():
 		plt.savefig("../tekst/images/tucker_vs_tensor_trains_%s.png"%dataset_name)
 		plt.close()
 
-tensor_trains_parameter_selection_results_big_datasets()
+def tucker_vs_tensor_trains_timings():
+	
+	amount = 3
+	
+	for dataset_name, loader, include_adaptive_tucker in (("Indian_Pines", load_indian_pines_cropped, True), ("Cuprite", load_cuprite_cropped, True), ("Pavia_Centre", load_pavia, False), ("Mauna_Kea", load_mauna_kea, False), ):
+		
+		data = loader()
+		rel_target_errors = np.linspace(0.01, 0.05, num=3)
+		for method, module in (("Tucker", st_hosvd), ("Tensor trains", tensor_trains), ):
+			settings = (("niet-adaptief", False), ("adaptief", True), ) if include_adaptive_tucker and method == "Tucker" else (("niet-adaptief", False), )
+			for name, adaptive in settings:
+				rel_errors = []
+				times = []
+				for rel_target_error in rel_target_errors:
+					print("Testing dataset %s with method %s with adaptive %s with target error %s"%(dataset_name, method, adaptive, rel_target_error))
+					total_time = 0
+					for i in range(amount):
+						print("Running experiment", i)
+						start = clock()
+						compressed = module.compress(data, rel_target_error, adaptive=adaptive)
+						total_time += clock() - start
+						print(total_time/(i + 1))
+					rel_errors.append(rel_error(data, module.decompress(compressed), preserve_decompressed=False))
+					times.append(total_time/amount)
+				plt.plot(rel_errors, times, label=method + (" (" + name + ")" if include_adaptive_tucker and method == "Tucker" else ""))
+			
+		plt.xlabel("Relatieve fout")
+		plt.ylabel("Compressietijd (s)")
+		plt.legend()
+		plt.savefig("../tekst/images/tucker_vs_tensor_trains_times_%s.png"%dataset_name)
+		plt.close()
+
+# Sectie 6.2: Vergelijking met algemene lossy compressie
+
+def general_comparison():
+	
+	for dataset_name, loader, qualities, crfs_medium, crfs_ultrafast in (("Indian_Pines", load_indian_pines_cropped, range(95, 20, -10), range(10, 31, 5), range(10, 31, 5)), ("Cuprite", load_cuprite_cropped, range(95, 10, -10), range(15, 41, 5), range(15, 36, 5)), ("Pavia_Centre", load_pavia, range(95, 75, -10), range(0, 21, 5), range(0, 26, 5)), ("Mauna_Kea", load_mauna_kea, range(95, 65, -10), range(0, 31, 5), range(0, 31, 5)), ):
+		
+		data = loader()
+		
+		# Tensor trains
+		rel_target_errors = np.linspace(0.01, 0.05, num=9)
+		rel_errors = []
+		compression_factors = []
+		for rel_target_error in rel_target_errors:
+			print("Testing dataset %s with tensor_trains with target error %s"%(dataset_name, rel_target_error))
+			compressed = tensor_trains.compress(data, rel_target_error)
+			rel_errors.append(rel_error(data, tensor_trains.decompress(compressed), preserve_decompressed=False))
+			compression_factors.append(st_hosvd.get_compression_factor_quantize(data, compressed))
+		plt.plot(rel_errors, compression_factors, label="Tensor trains")
+		
+		# JPEG
+		rel_errors = []
+		compression_factors = []
+		for quality in qualities:
+			print("Testing dataset %s with JPEG with quality %s"%(dataset_name, quality))
+			compressed = other_compression.compress_jpeg(data, quality)
+			rel_errors.append(rel_error(data, other_compression.decompress_jpeg(compressed), preserve_decompressed=False))
+			compression_factors.append(other_compression.get_compression_factor_jpeg(data, compressed))
+			print(quality, rel_errors[-1])
+		plt.plot(rel_errors, compression_factors, label="JPEG")
+		
+		# x264
+		rel_errors = []
+		compression_factors = []
+		for crf in crfs_medium:
+			print("Testing dataset %s with x264 (medium) with crf %s"%(dataset_name, crf))
+			compressed = other_compression.compress_video(data, crf, preset="medium")
+			rel_errors.append(rel_error(data, other_compression.decompress_video(compressed), preserve_decompressed=False))
+			compression_factors.append(other_compression.get_compression_factor_video(data, compressed))
+			print(crf, rel_errors[-1])
+		plt.plot(rel_errors, compression_factors, label="x264 (medium)")
+			
+		
+		# x264
+		rel_errors = []
+		compression_factors = []
+		for crf in crfs_ultrafast:
+			print("Testing dataset %s with x264 (ultrafast) with crf %s"%(dataset_name, crf))
+			compressed = other_compression.compress_video(data, crf, preset="ultrafast")
+			rel_errors.append(rel_error(data, other_compression.decompress_video(compressed), preserve_decompressed=False))
+			compression_factors.append(other_compression.get_compression_factor_video(data, compressed))
+			print(crf, rel_errors[-1])
+		plt.plot(rel_errors, compression_factors, label="x264 (ultrafast)")
+		plt.xlabel("Relatieve fout")
+		plt.ylabel("Compressiefactor")
+		plt.legend()
+		plt.savefig("../tekst/images/general_comparison_%s.png"%dataset_name)
+		plt.close()
+
+def general_comparison_times():
+	
+	amount = default_experiments_amount
+	
+	#for dataset_name, loader, crfs_medium, crfs_ultrafast in (("Indian_Pines", load_indian_pines_cropped, range(10, 31, 5), range(10, 31, 5)), ("Cuprite", load_cuprite_cropped, range(15, 41, 5), range(15, 36, 5)), ("Pavia_Centre", load_pavia, range(0, 21, 5), range(0, 26, 5)), ("Mauna_Kea", load_mauna_kea, range(0, 31, 5), range(0, 31, 5)), ):
+	for dataset_name, loader, crfs_medium, crfs_ultrafast in (("Mauna_Kea", load_mauna_kea, range(0, 31, 5), range(0, 31, 5)), ):
+		
+		data = loader()
+		
+		# Tensor trains
+		rel_target_errors = np.linspace(0.01, 0.05, num=9)
+		rel_errors = []
+		times = []
+		for rel_target_error in rel_target_errors:
+			print("Testing dataset %s with tensor_trains with target error %s"%(dataset_name, rel_target_error))
+			total_time = 0
+			for i in range(amount):
+				print("Running experiment", i)
+				start = time()
+				compressed = tensor_trains.compress(data, rel_target_error)
+				total_time += time() - start
+				if i == 0:
+					rel_errors.append(rel_error(data, tensor_trains.decompress(compressed), preserve_decompressed=False))
+				compressed = None
+				gc.collect()
+				print(total_time/(i + 1))
+			times.append(total_time/amount)
+		plt.plot(rel_errors, times, label="Tensor trains")
+		
+		# x264
+		rel_errors = []
+		times = []
+		for crf in crfs_medium:
+			print("Testing dataset %s with x264 (medium) with crf %s"%(dataset_name, crf))
+			total_time = 0
+			for i in range(amount):
+				print("Running experiment", i)
+				start = time()
+				compressed = other_compression.compress_video(data, crf, preset="medium")
+				total_time += time() - start
+				if i == 0:
+					rel_errors.append(rel_error(data, other_compression.decompress_video(compressed), preserve_decompressed=False))
+				compressed = None
+				gc.collect()
+				print(total_time/(i + 1))
+			times.append(total_time/amount)
+		plt.plot(rel_errors, times, label="x264 (medium)")
+		
+		# x264
+		rel_errors = []
+		times = []
+		for crf in crfs_ultrafast:
+			print("Testing dataset %s with x264 (ultrafast) with crf %s"%(dataset_name, crf))
+			total_time = 0
+			for i in range(amount):
+				print("Running experiment", i)
+				start = time()
+				compressed = other_compression.compress_video(data, crf, preset="ultrafast")
+				total_time += time() - start
+				if i == 0:
+					rel_errors.append(rel_error(data, other_compression.decompress_video(compressed), preserve_decompressed=False))
+				compressed = None
+				gc.collect()
+				print(total_time/(i + 1))
+			times.append(total_time/amount)
+		plt.plot(rel_errors, times, label="x264 (ultrafast)")
+			
+		plt.xlabel("Relatieve fout")
+		plt.ylabel("Compressietijd (s)")
+		plt.legend()
+		plt.savefig("../tekst/images/general_comparison_times_%s.png"%dataset_name)
+		plt.close()
+
+def general_comparison_decompression_times():
+	
+	amount = default_experiments_amount
+	
+	#for dataset_name, loader, crfs_medium, crfs_ultrafast in (("Indian_Pines", load_indian_pines_cropped, range(10, 31, 5), range(10, 31, 5)), ("Cuprite", load_cuprite_cropped, range(15, 41, 5), range(15, 36, 5)), ("Pavia_Centre", load_pavia, range(0, 21, 5), range(0, 26, 5)), ("Mauna_Kea", load_mauna_kea, range(0, 31, 5), range(0, 31, 5)), ):
+	for dataset_name, loader, crfs_medium, crfs_ultrafast in (("Mauna_Kea", load_mauna_kea, range(0, 31, 5), range(0, 31, 5)), ):
+		
+		data = loader()
+		
+		# Tensor trains
+		rel_target_errors = np.linspace(0.01, 0.05, num=9)
+		rel_errors = []
+		times = []
+		for rel_target_error in rel_target_errors:
+			print("Testing dataset %s with tensor_trains with target error %s"%(dataset_name, rel_target_error))
+			total_time = 0
+			compressed = tensor_trains.compress(data, rel_target_error)
+			for i in range(amount):
+				print("Running experiment", i)
+				start = time()
+				decompressed = tensor_trains.decompress(compressed)
+				total_time += time() - start
+				if i == 0:
+					rel_errors.append(rel_error(data, decompressed, preserve_decompressed=False))
+				decompressed = None
+				gc.collect()
+				print(total_time/(i + 1))
+			compressed = None
+			gc.collect()
+			times.append(total_time/amount)
+		plt.plot(rel_errors, times, label="Tensor trains")
+		
+		# x264
+		rel_errors = []
+		times = []
+		for crf in crfs_medium:
+			print("Testing dataset %s with x264 (medium) with crf %s"%(dataset_name, crf))
+			total_time = 0
+			compressed = other_compression.compress_video(data, crf, preset="medium")
+			for i in range(amount):
+				print("Running experiment", i)
+				start = time()
+				decompressed = other_compression.decompress_video(compressed)
+				total_time += time() - start
+				if i == 0:
+					rel_errors.append(rel_error(data, decompressed, preserve_decompressed=False))
+				decompressed = None
+				gc.collect()
+				print(total_time/(i + 1))
+			compressed = None
+			gc.collect()
+			times.append(total_time/amount)
+		plt.plot(rel_errors, times, label="x264 (medium)")
+		
+		# x264
+		rel_errors = []
+		times = []
+		for crf in crfs_ultrafast:
+			print("Testing dataset %s with x264 (ultrafast) with crf %s"%(dataset_name, crf))
+			total_time = 0
+			compressed = other_compression.compress_video(data, crf, preset="ultrafast")
+			for i in range(amount):
+				print("Running experiment", i)
+				start = time()
+				decompressed = other_compression.decompress_video(compressed)
+				total_time += time() - start
+				if i == 0:
+					rel_errors.append(rel_error(data, decompressed, preserve_decompressed=False))
+				decompressed = None
+				gc.collect()
+				print(total_time/(i + 1))
+			compressed = None
+			gc.collect()
+			times.append(total_time/amount)
+		plt.plot(rel_errors, times, label="x264 (ultrafast)")
+			
+		plt.xlabel("Relatieve fout")
+		plt.ylabel("Decompressietijd (s)")
+		plt.legend()
+		plt.savefig("../tekst/images/general_comparison_decompression_times_%s.png"%dataset_name)
+		plt.close()
+
+# Sectie 6.3: Voorbeeldcompressies
+
+def save_example_compressions():
+	
+	qualities = [0.01, 0.025, 0.05]
+	#for dataset_name, loader in (("Indian_Pines", load_indian_pines_cropped), ("Cuprite", load_cuprite_cropped), ("Pavia_Centre", load_pavia), ("Mauna_Kea", load_mauna_kea), ):
+	for dataset_name, loader in (("Mauna_Kea", load_mauna_kea), ):
+		
+		print("")
+		print(dataset_name)
+		print("")
+		
+		data = loader()
+		print("Original size (KB):\t", data.size*data.itemsize/1024)
+		print("")
+		for quality in qualities:
+			compressed = tensor_trains.compress(data, quality)
+			decompressed = tensor_trains.decompress(compressed)
+			save_image(decompressed, "../tekst/images/example_compression_%s_%s.png"%(dataset_name, str(quality).replace(".", "_")))
+			print("Relative error:\t\t", st_hosvd.rel_error(data, decompressed))
+			decompressed = None
+			gc.collect()
+			print("Compression factor:\t", st_hosvd.get_compression_factor_quantize(data, compressed))
+			print("Size (KB):\t\t", st_hosvd.get_compress_quantize_size(compressed)/1024)
+			compressed = None
+			gc.collect()
+			print("")
+
+general_comparison_times()

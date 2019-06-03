@@ -1,0 +1,483 @@
+Testing dataset Mauna_Kea with tensor_trains with target error 0.01
+Running experiment 0
+20.083500385284424
+Running experiment 1
+18.98904263973236
+Running experiment 2
+18.62719742457072
+Running experiment 3
+18.444015562534332
+Running experiment 4
+18.330757045745848
+Running experiment 5
+18.26032892862956
+Running experiment 6
+18.211605548858643
+Running experiment 7
+18.17178189754486
+Running experiment 8
+18.149099932776558
+Running experiment 9
+18.130873036384582
+Testing dataset Mauna_Kea with tensor_trains with target error 0.015
+Running experiment 0
+15.198081254959106
+Running experiment 1
+15.197437047958374
+Running experiment 2
+15.180076360702515
+Running experiment 3
+15.180834770202637
+Running experiment 4
+15.190047311782838
+Running experiment 5
+15.195842782656351
+Running experiment 6
+15.19887454169137
+Running experiment 7
+15.199645698070526
+Running experiment 8
+15.211558553907606
+Running experiment 9
+15.219942355155945
+Testing dataset Mauna_Kea with tensor_trains with target error 0.02
+Running experiment 0
+13.824487209320068
+Running experiment 1
+13.877354502677917
+Running experiment 2
+13.91136089960734
+Running experiment 3
+13.883514821529388
+Running experiment 4
+13.87839217185974
+Running experiment 5
+13.873270392417908
+Running experiment 6
+13.8925153868539
+Running experiment 7
+13.982927411794662
+Running experiment 8
+14.050001409318712
+Running experiment 9
+14.02939693927765
+Testing dataset Mauna_Kea with tensor_trains with target error 0.025
+Running experiment 0
+13.171716690063477
+Running experiment 1
+13.18605661392212
+Running experiment 2
+13.195803244908651
+Running experiment 3
+13.214083790779114
+Running experiment 4
+13.21472897529602
+Running experiment 5
+13.23973568280538
+Running experiment 6
+13.24553384099688
+Running experiment 7
+13.24781385064125
+Running experiment 8
+13.250336911943224
+Running experiment 9
+13.254448437690735
+Testing dataset Mauna_Kea with tensor_trains with target error 0.03
+Running experiment 0
+12.53917384147644
+Running experiment 1
+12.568062663078308
+Running experiment 2
+12.599573214848837
+Running experiment 3
+12.608828246593475
+Running experiment 4
+12.612514352798462
+Running experiment 5
+12.61576267083486
+Running experiment 6
+12.610175234930855
+Running experiment 7
+12.611913174390793
+Running experiment 8
+12.596202558941311
+Running experiment 9
+12.566707563400268
+Testing dataset Mauna_Kea with tensor_trains with target error 0.035
+Running experiment 0
+12.07998538017273
+Running experiment 1
+12.096715450286865
+Running experiment 2
+12.090091546376547
+Running experiment 3
+12.096654117107391
+Running experiment 4
+12.10829954147339
+Running experiment 5
+12.120126207669577
+Running experiment 6
+12.174185684749059
+Running experiment 7
+12.167219519615173
+Running experiment 8
+12.168088886472914
+Running experiment 9
+12.172513437271117
+Testing dataset Mauna_Kea with tensor_trains with target error 0.04
+Running experiment 0
+11.809538841247559
+Running experiment 1
+11.805436849594116
+Running experiment 2
+11.836287339528402
+Running experiment 3
+11.838091433048248
+Running experiment 4
+11.842707633972168
+Running experiment 5
+11.83575681845347
+Running experiment 6
+11.838698523385185
+Running experiment 7
+11.84217220544815
+Running experiment 8
+11.844122065438164
+Running experiment 9
+11.848454999923707
+Testing dataset Mauna_Kea with tensor_trains with target error 0.045000000000000005
+Running experiment 0
+12.061834573745728
+Running experiment 1
+12.001658320426941
+Running experiment 2
+11.986085414886475
+Running experiment 3
+11.895454347133636
+Running experiment 4
+11.843043231964112
+Running experiment 5
+11.808493733406067
+Running experiment 6
+11.787245171410698
+Running experiment 7
+11.768963098526001
+Running experiment 8
+11.765141857994927
+Running experiment 9
+11.750267028808594
+Testing dataset Mauna_Kea with tensor_trains with target error 0.05
+Running experiment 0
+11.412088394165039
+Running experiment 1
+11.43752133846283
+Running experiment 2
+11.488333145777384
+Running experiment 3
+11.495576441287994
+Running experiment 4
+11.479819726943969
+Running experiment 5
+11.471092939376831
+Running experiment 6
+11.476527452468872
+Running experiment 7
+11.477476328611374
+Running experiment 8
+11.470554828643799
+Running experiment 9
+11.46949143409729
+Testing dataset Mauna_Kea with x264 (medium) with crf 0
+Running experiment 0
+56.298588514328
+Running experiment 1
+53.89661526679993
+Running experiment 2
+52.93802388509115
+Running experiment 3
+52.78661012649536
+Running experiment 4
+52.29967794418335
+Running experiment 5
+52.024859507878624
+Running experiment 6
+51.94696051733835
+Running experiment 7
+51.989006608724594
+Running experiment 8
+51.98488601048788
+Running experiment 9
+51.98590133190155
+Testing dataset Mauna_Kea with x264 (medium) with crf 5
+Running experiment 0
+58.777350664138794
+Running experiment 1
+59.95226562023163
+Running experiment 2
+58.92206883430481
+Running experiment 3
+58.4292733669281
+Running experiment 4
+58.16171517372131
+Running experiment 5
+58.35007425149282
+Running experiment 6
+58.428248916353496
+Running experiment 7
+58.6070302426815
+Running experiment 8
+58.56432191530863
+Running experiment 9
+58.69606883525849
+Testing dataset Mauna_Kea with x264 (medium) with crf 10
+Running experiment 0
+55.49307632446289
+Running experiment 1
+54.770487904548645
+Running experiment 2
+54.78196430206299
+Running experiment 3
+54.63735502958298
+Running experiment 4
+55.366937494277956
+Running experiment 5
+55.39508732159933
+Running experiment 6
+55.32436980519976
+Running experiment 7
+55.104230523109436
+Running experiment 8
+54.713559812969635
+Running experiment 9
+54.73801012039185
+Testing dataset Mauna_Kea with x264 (medium) with crf 15
+Running experiment 0
+49.69366264343262
+Running experiment 1
+51.4390754699707
+Running experiment 2
+52.19267249107361
+Running experiment 3
+52.034207820892334
+Running experiment 4
+51.808955907821655
+Running experiment 5
+51.502180894215904
+Running experiment 6
+51.24466013908386
+Running experiment 7
+50.809373050928116
+Running experiment 8
+50.719876209894814
+Running experiment 9
+51.05831470489502
+Testing dataset Mauna_Kea with x264 (medium) with crf 20
+Running experiment 0
+43.96251058578491
+Running experiment 1
+44.485326647758484
+Running experiment 2
+44.487738370895386
+Running experiment 3
+44.26600366830826
+Running experiment 4
+44.36944575309754
+Running experiment 5
+44.21259335676829
+Running experiment 6
+44.038770948137554
+Running experiment 7
+43.74900034070015
+Running experiment 8
+43.85230859120687
+Running experiment 9
+43.646284222602844
+Testing dataset Mauna_Kea with x264 (medium) with crf 25
+Running experiment 0
+38.876195192337036
+Running experiment 1
+38.86197531223297
+Running experiment 2
+39.25565425554911
+Running experiment 3
+39.717655181884766
+Running experiment 4
+39.47758145332337
+Running experiment 5
+39.3762184381485
+Running experiment 6
+39.37628861836025
+Running experiment 7
+39.47954943776131
+Running experiment 8
+39.50983887248569
+Running experiment 9
+39.64589338302612
+Testing dataset Mauna_Kea with x264 (medium) with crf 30
+Running experiment 0
+35.328088998794556
+Running experiment 1
+36.39005947113037
+Running experiment 2
+36.8428643544515
+Running experiment 3
+36.55480045080185
+Running experiment 4
+36.56921920776367
+Running experiment 5
+36.41766333580017
+Running experiment 6
+36.328802483422415
+Running experiment 7
+36.287269949913025
+Running experiment 8
+36.26818352275424
+Running experiment 9
+36.370764803886416
+Testing dataset Mauna_Kea with x264 (ultrafast) with crf 0
+Running experiment 0
+26.208370685577393
+Running experiment 1
+26.175000548362732
+Running experiment 2
+26.32451669375102
+Running experiment 3
+26.226446628570557
+Running experiment 4
+26.262947845458985
+Running experiment 5
+26.29606783390045
+Running experiment 6
+26.329962594168528
+Running experiment 7
+26.3048078417778
+Running experiment 8
+26.32026669714186
+Running experiment 9
+26.311121582984924
+Testing dataset Mauna_Kea with x264 (ultrafast) with crf 5
+Running experiment 0
+26.432806968688965
+Running experiment 1
+26.771149277687073
+Running experiment 2
+26.75540582338969
+Running experiment 3
+26.65963649749756
+Running experiment 4
+26.619774436950685
+Running experiment 5
+26.781614899635315
+Running experiment 6
+26.755253076553345
+Running experiment 7
+26.777909576892853
+Running experiment 8
+26.78488763173421
+Running experiment 9
+26.799573564529418
+Testing dataset Mauna_Kea with x264 (ultrafast) with crf 10
+Running experiment 0
+26.36676335334778
+Running experiment 1
+25.987385153770447
+Running experiment 2
+26.529566526412964
+Running experiment 3
+26.41242218017578
+Running experiment 4
+26.429154205322266
+Running experiment 5
+26.433433055877686
+Running experiment 6
+26.380950110299246
+Running experiment 7
+26.35633936524391
+Running experiment 8
+26.310858726501465
+Running experiment 9
+26.277224326133727
+Testing dataset Mauna_Kea with x264 (ultrafast) with crf 15
+Running experiment 0
+25.226770162582397
+Running experiment 1
+25.424585103988647
+Running experiment 2
+25.48123574256897
+Running experiment 3
+25.488063633441925
+Running experiment 4
+26.034281635284422
+Running experiment 5
+25.90923309326172
+Running experiment 6
+25.83928656578064
+Running experiment 7
+25.78128695487976
+Running experiment 8
+25.71367155181037
+Running experiment 9
+25.683327412605287
+Testing dataset Mauna_Kea with x264 (ultrafast) with crf 20
+Running experiment 0
+25.004688262939453
+Running experiment 1
+25.882326006889343
+Running experiment 2
+25.855035463968914
+Running experiment 3
+26.193619668483734
+Running experiment 4
+26.014784002304076
+Running experiment 5
+26.037190834681194
+Running experiment 6
+25.884060791560582
+Running experiment 7
+25.796241492033005
+Running experiment 8
+25.70168341530694
+Running experiment 9
+25.629969191551208
+Testing dataset Mauna_Kea with x264 (ultrafast) with crf 25
+Running experiment 0
+24.858190059661865
+Running experiment 1
+24.729926228523254
+Running experiment 2
+24.632792472839355
+Running experiment 3
+24.6270751953125
+Running experiment 4
+24.57170925140381
+Running experiment 5
+24.634378512700398
+Running experiment 6
+24.662739549364364
+Running experiment 7
+24.66512531042099
+Running experiment 8
+24.655852450264824
+Running experiment 9
+24.665185976028443
+Testing dataset Mauna_Kea with x264 (ultrafast) with crf 30
+Running experiment 0
+24.45724582672119
+Running experiment 1
+24.351301789283752
+Running experiment 2
+24.42531156539917
+Running experiment 3
+24.340531706809998
+Running experiment 4
+24.289548206329346
+Running experiment 5
+24.200681805610657
+Running experiment 6
+24.145922831126622
+Running experiment 7
+24.14693957567215
+Running experiment 8
+24.09607172012329
+Running experiment 9
+24.061561346054077

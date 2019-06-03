@@ -1,4 +1,3 @@
-- DCT
 - Andere heuristiek om compressierang per mode te kiezen: kan dat de trade-off tussen fout en compressierang veel beter ligt in één mode dan een andere
 - Heuristieken om steekproefgrootte te kiezen bij randomized SVD
 - Parallelizatie:
@@ -8,5 +7,5 @@
 	- Meer quantizatieblokken nemen
 	- Niet alle bomen in compressie opslaan, maar (sommige) bomen hard-coden in algoritme op basis van typische datasets
 - Verschillende quantisatie voor verschillende factormatrices bij TT's
-- Parameter tuning
-- Geblokte compressie: om rekentijd lineair te houden, door fout op te splitsen kunnen parameters ook beter gekozen worden, maar niet optimaal om fout gelijk te verdelen
+- Parameter tuning: betere selectiefuncties.
+- Betere quantisatie voor tensor trains, voordeel t.o.v. Tucker na ST-HOSVD is verloren.

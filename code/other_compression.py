@@ -14,18 +14,20 @@ def compress_jpeg(data, quality):
 	# Shift and scale data to bytes
 	min_value = np.amin(data)
 	scale = (np.amax(data) - min_value)/255
-	data = np.rint((data - min_value)/scale)
+	# Next lines could be one line, but often exceeds memory
+	quantized_data = np.empty(data.shape, dtype="uint8")
+	for i in range(data.shape[2]):
+		quantized_data[:, :, i] = np.rint((data[:, :, i] - min_value)/scale).astype("uint8")
 	
 	# Extend data so that channels are a multiple of 3
-	extended_data = np.empty((data.shape[0], data.shape[1], ((data.shape[2] - 1)//3 + 1)*3))
-	extended_data[:, :, :data.shape[2]] = data
+	extended_data = np.empty((quantized_data.shape[0], quantized_data.shape[1], ((quantized_data.shape[2] - 1)//3 + 1)*3), dtype="uint8")
+	extended_data[:, :, :data.shape[2]] = quantized_data.astype("uint8")
 	for i in range(data.shape[2], extended_data.shape[2]):
 		extended_data[:, :, i] = data[:, :, -1]
 	
 	# Compress to series of JPEG's
 	images = []
 	for i in range(0, data.shape[2], 3):
-		#print(extended_data[-3:, -3:, i:i + 3])
 		image = Image.fromarray(np.uint8(extended_data[:, :, i:i + 3]%256))
 		out = BytesIO()
 		image.save(out, format='jpeg', quality=quality)
@@ -38,14 +40,11 @@ def decompress_jpeg(compressed):
 	# Decompress series of RGB-formatted JPEG images
 	
 	images, shape, min_value, scale = compressed
-	data = np.empty(shape)
+	data = np.empty(shape, dtype="float32")
 	for i in range(0, data.shape[2], 3):
-		#print(np.array(Image.open(BytesIO(images[i//3][0]))))
 		image_array = np.array(Image.open(BytesIO(images[i//3])))
-		data[:, :, i:i + 3] = image_array[:, :, :min(3, data.shape[2] - i)]
-		#print(data[-3:, -3:, :])
+		data[:, :, i:i + 3] = image_array[:, :, :min(3, data.shape[2] - i)].astype("float32").__imul__(scale).__iadd__(min_value)
 	
-	data = scale*data + min_value
 	return data
 
 def get_compress_jpeg_size(compressed):
@@ -58,10 +57,13 @@ def get_compress_jpeg_size(compressed):
 	
 	return size
 
-def compress_video(data, crf=23, preset="veryfast"):
+def get_compression_factor_jpeg(data, compressed):
+	return (data.size*data.itemsize)/get_compress_jpeg_size(compressed)
+
+def compress_video(data, crf=23, preset="medium"):
 	
 	# Compresses using video compression
-	# crf is the quality parameter. The range of the CRF scale is 0–51, where 0 is lossless, 23 is the default, and 51 is worst quality possible.
+	# crf is the quality parameter. The range of the CRF scale is 0-51, where 0 is lossless, 23 is the default, and 51 is worst quality possible.
 	
 	# Quantize data and convert to bytes
 	min_value = np.amin(data)
@@ -75,7 +77,7 @@ def compress_video(data, crf=23, preset="veryfast"):
 	# Set up process
 	command = [
 		"ffmpeg",
-		"-loglevel", "quiet",
+		"-loglevel", "error",
 		"-y",
 		"-pix_fmt", "gray",
 		"-s", "%dx%d" % (data.shape[1], data.shape[0]),
@@ -87,6 +89,7 @@ def compress_video(data, crf=23, preset="veryfast"):
 		"-c:v", "libx264",
 		"-preset", preset,
 		"-f", "matroska",
+		"-threads", "1",
 		"-" # Output to stdout
 	]
 	buffer_size = 2**24
@@ -123,6 +126,7 @@ def decompress_video(compressed):
 		"-r", "30",
 		"-c:v", "rawvideo",
 		"-f", "rawvideo",
+		"-threads", "1",
 		"-" # Output to stdout
 	]
 	buffer_size = 2**24
@@ -149,3 +153,6 @@ def decompress_video(compressed):
 def get_compress_video_size(compressed):
 	video, _, _, _ = compressed
 	return len(video)
+
+def get_compression_factor_video(data, compressed):
+	return (data.size*data.itemsize)/get_compress_video_size(compressed)

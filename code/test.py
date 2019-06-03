@@ -9,17 +9,18 @@ import other_compression
 from tools import *
 
 def main():
-	test_compression_ratio_tucker()
+	test_compress_jpeg()
 
 def test_compression_ratio_tucker():
 	
 	print("="*20 + " Phase 1 " + "="*20)
-	data = load_mauna_kea()
+	data = load_pavia_centre()
 	compressed1 = st_hosvd.compress_tucker(data, 0.025, reshape=False, method="tucker")
 	decompressed = st_hosvd.decompress_tucker(compressed1)
 	st_hosvd.print_compression_rate_tucker(data, compressed1)
 	print_difference(data, decompressed)
 	
+	"""
 	print("="*20 + " Phase 2 " + "="*20)
 	compressed2 = st_hosvd.compress_orthogonality(compressed1, method="householder")
 	decompressed = st_hosvd.decompress_tucker(st_hosvd.decompress_orthogonality(compressed2, renormalize=True))
@@ -34,7 +35,7 @@ def test_compression_ratio_tucker():
 	print("Finished decoding and dequantizing in:", clock() - start_time)
 	decompressed = st_hosvd.decompress_tucker(st_hosvd.decompress_orthogonality(decompressed1))
 	print("Compression ratio:", st_hosvd.get_compress_quantize_size(compressed3, print_intermediate_values=False)/st_hosvd.memory_size(data))
-	print_difference(data, decompressed)
+	print_difference(data, decompressed)"""
 
 def plot_mauna_kea_range():
 	
@@ -125,19 +126,21 @@ def test_compress_jpeg():
 	data = load_cuprite()
 	original_size = data.dtype.itemsize*data.size
 	rel_errors = []
-	compression_ratios = []
+	compression_factors = []
 	
 	for quality in range(5, 100, 5):
 		print(quality)
 		compressed = other_compression.compress_jpeg(data, quality)
 		decompressed = other_compression.decompress_jpeg(compressed)
 		rel_errors.append(np.linalg.norm(data - decompressed)/np.linalg.norm(data))
-		compression_ratios.append(other_compression.get_compress_jpeg_size(compressed)/original_size)
+		compression_factors.append(original_size/other_compression.get_compress_jpeg_size(compressed))
+		print(rel_errors[-1])
+		print(compression_factors[-1])
 	
 	print("rel_errors =", rel_errors)
-	print("compression_ratios =", compression_ratios)
-	plt.plot(rel_errors, compression_ratios, "bo")
-	plt.plot(rel_errors, compression_ratios, "b")
+	print("compression_factors =", compression_factors)
+	plt.plot(rel_errors, compression_factors, "bo")
+	plt.plot(rel_errors, compression_factors, "b")
 	plt.show()
 
 def test_compress_video():
@@ -151,9 +154,9 @@ def test_compress_video():
 	for quality in range(0, 55, 5):
 		print(quality)
 		start = time()
-		compressed = other_compression.compress_video(data, crf=quality, preset="superfast")
-		decompressed = other_compression.decompress_video(compressed)
+		compressed = other_compression.compress_video(data, crf=quality, preset="ultrafast")
 		print("Time elapsed:", time() - start)
+		decompressed = other_compression.decompress_video(compressed)
 		rel_errors.append(np.linalg.norm(data - decompressed)/np.linalg.norm(data))
 		compression_factors.append(original_size/other_compression.get_compress_video_size(compressed))
 		print(rel_errors[-1])
