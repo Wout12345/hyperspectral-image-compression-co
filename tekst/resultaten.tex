@@ -7,7 +7,7 @@ Na het ontwikkelen van zowel Tucker-gebaseerde als tensor-train-gebaseerde compr
 
 In figuren \ref{fig:tucker-vs-tensor-trains-indian-pines}, \ref{fig:tucker-vs-tensor-trains-cuprite}, \ref{fig:tucker-vs-tensor-trains-pavia-centre} en \ref{fig:tucker-vs-tensor-trains-mauna-kea} tonen we de resultaten van Tucker-gebaseerde compressie en tensor-train-gebaseerde compressie voor verschillende datasets met vari\"erende kwaliteitsparameter. Zoals eerder besproken, wordt adaptieve parameterselectie alleen gebruikt bij de Tucker-methode bij kleine datasets (Indian Pines en Cuprite). We zien dat de tensor trains het altijd minstens even goed doen als Tucker zonder adaptieve parameterselectie en dat Tucker met adaptieve parameterselectie alleen beter scoort bij Indian Pines, een kleine en minder belangrijke dataset.\\
 
-Bovendien zien we in figuur \ref{fig:tucker-vs-tensor-trains-times} dat tensor trains minstens even snel is als niet-adaptieve Tucker en zelfs significant sneller voor grote datasets. Om deze redenen lijken tensor trains ons beter en zullen we alleen hiermee werken in de volgende secties.
+Bovendien zien we in figuur \ref{fig:tucker-vs-tensor-trains-times} dat de methode met tensor trains minstens even snel is als niet-adaptieve Tucker en zelfs significant sneller voor grote datasets. Om deze redenen lijken tensor trains ons over het algemeen beter en zullen we hierop de focus leggen in de volgende secties.
 
 \begin{figure}[]
   \centering
@@ -71,7 +71,7 @@ In deze sectie zullen we kort enkele algemene lossy-compressie-methoden bespreke
 \newpage
 \subsection{JPEG}
 
-We hebben JPEG \cite{ref:jpeg} al besproken in hoofdstuk \ref{hoofdstuk:achtergrond}, maar nu leggen we uit hoe men hiermee een simpel algoritme kan maken voor het comprimeren van hyperspectrale afbeeldingen. Eerst verschuiven en schalen we de originele data, gevolgd door afronding, zodat elke waarde zich bevindt in het domein $\{0, 1, \dots, 255\}$. Deze quantisatie cre\"eert en fout die verwaarloosbaar is voor onze toepassingen. Daarna splitsen we de spectrale banden op in groepen van drie, comprimeren elke groep als \'e\'en RGB-afbeelding met JPEG en slaan de reeks gecomprimeerde afbeeldingen op. Bij de compressie wordt een kwaliteitsparameter opgegeven tussen 1 (slechtste kwaliteit) en 95 (beste kwaliteit). Deze methode houdt alleen rekening met de correlatie tussen de spectrale banden binnen elke groep, waardoor erg veel redundantie niet benut wordt en men geen goede compressie moet verwachten.
+We hebben JPEG \cite{ref:jpeg} al aangehaald in hoofdstuk \ref{hoofdstuk:achtergrond}, maar nu leggen we uit hoe men hiermee een simpel algoritme kan maken voor het comprimeren van hyperspectrale afbeeldingen. Eerst verschuiven en schalen we de originele data, gevolgd door afronding, zodat elke waarde zich bevindt in het domein $\{0, 1, \dots, 255\}$. Deze quantisatie cre\"eert een fout die verwaarloosbaar is voor onze toepassingen. Daarna splitsen we de spectrale banden op in groepen van drie, comprimeren elke groep als \'e\'en RGB-afbeelding met JPEG en slaan de reeks gecomprimeerde afbeeldingen op. Bij de compressie wordt een kwaliteitsparameter opgegeven tussen 1 (slechtste kwaliteit) en 95 (beste kwaliteit). Deze methode houdt alleen rekening met de correlatie tussen de spectrale banden binnen elke groep, waardoor erg veel redundantie niet benut wordt en men geen goede compressie moet verwachten.
 
 \newpage
 \subsection{Videocompressie met x264}
@@ -82,35 +82,35 @@ Concreet zullen we (zoals bij de JPEG-methode) eerst de volledige tensor quantis
 
 \subsection{Vergelijking}
 
-In figuren \ref{fig:general-comparison-indian-pines}, \ref{fig:general-comparison-cuprite}, \ref{fig:general-comparison-pavia-centre} en \ref{fig:general-comparison-mauna-kea} zien we de algemene vergelijkingen op vlak van compressiefout en -factor. Zoals verwacht doet de JPEG-methode het erg slecht, dus hier zullen we verder geen rekening mee houden. Videocompressie aan de hand van x264 met preset medium scoort echter wel hoog en geeft ongeveer even goede compressie als tensor trains. Aan de andere kant zien we dat de preset ultrafast veel slechtere resultaten geeft. Het is dus de vraag wat de verschillen in compressietijd dan zijn.\\
+In figuren \ref{fig:general-comparison-indian-pines}, \ref{fig:general-comparison-cuprite}, \ref{fig:general-comparison-pavia-centre} en \ref{fig:general-comparison-mauna-kea} zien we de algemene vergelijkingen op vlak van compressiefout en -factor. Zoals verwacht doet de JPEG-methode het erg slecht, dus hier zullen we verder geen rekening mee houden. Videocompressie aan de hand van x264 met preset medium scoort echter wel hoog en geeft ongeveer even goede compressie als tensor trains. Aan de andere kant zien we dat de preset ultrafast veel slechtere resultaten geeft. De resultaten van Tucker-gebaseerde compressie zijn weer even goed tot slechter dan bij tensor trains, zoals besproken in de vorige sectie, waar we ook al leerden dat deze methode trager was. Het is dus de vraag wat de verschillen in compressietijd tussen tensor trains en videocompressie dan zijn.\\
 
 Het antwoord hierop vindt men in figuur \ref{fig:general-comparison-times}. Als het gaat om videocompressie zijn de resultaten consistent: de preset ultrafast is elke keer significant sneller dan medium. Daarnaast heeft de CRF-parameter ook slechts een beperkte invloed op de compressietijd. Dit ligt anders bij tensor trains: we merken dat de compressietijd hierbij sterker daalt in functie van de relatieve fout. Daarnaast zijn tensor trains sneller dan videocompressie voor goed comprimeerbare datasets (zie Cuprite en Mauna Kea) maar trager voor slecht comprimeerbare (zie Pavia Centre). Als men deze twee zaken combineert, kan men concluderen dat de compressietijd van onze methode met tensor trains sterk afhankelijk is van de grootte van de uitvoer van de ST-HOSVD en dat een significante hoeveelheid tijd besteed wordt aan het quantiseren en encoderen van deze uitvoer.
 
 \newpage
 \begin{figure}[H]
   \centering
-  \includegraphics[scale=0.7]{images/general_comparison_Indian_Pines.png}
+  \includegraphics[scale=0.7]{images/general_comparison_new_Indian_Pines.png}
   \caption{Vergelijking tussen tensor trains en algemene compressiemethoden voor Indian Pines.}
 \label{fig:general-comparison-indian-pines}
 \end{figure}
 
 \begin{figure}[H]
   \centering
-  \includegraphics[scale=0.7]{images/general_comparison_Cuprite.png}
+  \includegraphics[scale=0.7]{images/general_comparison_new_Cuprite.png}
   \caption{Vergelijking tussen tensor trains en algemene compressiemethoden voor Cuprite.}
 \label{fig:general-comparison-cuprite}
 \end{figure}
 
 \begin{figure}[H]
   \centering
-  \includegraphics[scale=0.7]{images/general_comparison_Pavia_Centre.png}
+  \includegraphics[scale=0.7]{images/general_comparison_new_Pavia_Centre.png}
   \caption{Vergelijking tussen tensor trains en algemene compressiemethoden voor Pavia Centre.}
 \label{fig:general-comparison-pavia-centre}
 \end{figure}
 
 \begin{figure}[H]
   \centering
-  \includegraphics[scale=0.7]{images/general_comparison_Mauna_Kea.png}
+  \includegraphics[scale=0.7]{images/general_comparison_new_Mauna_Kea.png}
   \caption{Vergelijking tussen tensor trains en algemene compressiemethoden voor Mauna Kea.}
 \label{fig:general-comparison-mauna-kea}
 \end{figure}

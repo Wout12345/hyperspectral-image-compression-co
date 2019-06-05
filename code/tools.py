@@ -98,11 +98,12 @@ def rel_error(original, decompressed, preserve_decompressed=True):
 def print_difference(original, decompressed):
 	print("Relative error: %s\n"%rel_error(original, decompressed))
 
-def print_bands():
+def print_cuprite_bands(steps=None, path="../data/bands/cuprite_bands"):
 	
 	data = load_cuprite()
 	bands = data.shape[2]
-	steps = bands
+	if steps is None:
+		steps = bands
 	print("Bands:", bands)
 	
 	# Determine max value
@@ -115,10 +116,10 @@ def print_bands():
 	
 	# Print images
 	for i in range(steps):
-		start = int(floor(bands/steps*i))
-		end = int(floor(bands/steps*(i + 1)))
+		start = int(round(bands/steps*i))
+		end = int(round(bands/steps*(i + 1)))
 		image = np.sum(data[:, :, start:end], axis=2)
-		imsave("../data/bands/cuprite_bands_%s-%s.png"%(start + 0, end), np.rint(image/max_value*255).astype(int))
+		imsave(path + "_%s-%s.png"%(start, end), np.rint(image/max_value*255).astype(int))
 
 def plot_intensities(data):
 	

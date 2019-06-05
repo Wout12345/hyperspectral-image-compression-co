@@ -13,46 +13,51 @@ A level-1 auxiliary file: app-code-voorverwerker.aux
 A level-1 auxiliary file: app-code-bitarray.aux
 The style file: abbrv.bst
 Database file #1: referenties.bib
+Warning--I didn't find a database entry for "ref:ehu_aviris"
+Warning--to sort, need author or key in ref:aviris_website
+Warning--to sort, need author or key in ref:aviris
+Warning--to sort, need author or key in ref:eigh_tridiagonal
+Warning--to sort, need author or key in ref:ffmpeg
 Warning--empty journal in ref:saad
-You've used 22 entries,
+You've used 33 entries,
             2118 wiz_defined-function locations,
-            588 strings with 6357 characters,
-and the built_in function-call counts, 4650 in all, are:
-= -- 432
-> -- 177
+            626 strings with 7488 characters,
+and the built_in function-call counts, 6948 in all, are:
+= -- 648
+> -- 268
 < -- 0
-+ -- 75
-- -- 52
-* -- 141
-:= -- 802
-add.period$ -- 66
-call.type$ -- 22
-change.case$ -- 92
++ -- 115
+- -- 80
+* -- 244
+:= -- 1180
+add.period$ -- 95
+call.type$ -- 33
+change.case$ -- 139
 chr.to.int$ -- 0
-cite$ -- 23
-duplicate$ -- 166
-empty$ -- 465
-format.name$ -- 52
-if$ -- 1000
+cite$ -- 38
+duplicate$ -- 261
+empty$ -- 681
+format.name$ -- 80
+if$ -- 1492
 int.to.chr$ -- 0
-int.to.str$ -- 22
-missing$ -- 4
-newline$ -- 113
-num.names$ -- 44
-pop$ -- 166
+int.to.str$ -- 33
+missing$ -- 10
+newline$ -- 164
+num.names$ -- 58
+pop$ -- 237
 preamble$ -- 1
-purify$ -- 70
+purify$ -- 106
 quote$ -- 0
-skip$ -- 173
+skip$ -- 256
 stack$ -- 0
-substring$ -- 111
-swap$ -- 21
+substring$ -- 167
+swap$ -- 32
 text.length$ -- 0
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 88
-warning$ -- 1
-while$ -- 44
-width$ -- 24
-write$ -- 203
-(There was 1 warning)
+type$ -- 132
+warning$ -- 5
+while$ -- 58
+width$ -- 35
+write$ -- 300
+(There were 6 warnings)

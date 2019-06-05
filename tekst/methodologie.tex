@@ -1,7 +1,7 @@
 \chapter{Methodologie}
 \label{hoofdstuk:methodologie}
 
-We zullen zowel bij het vergelijken van de uiteindelijke algoritmes in hoofdstuk \ref{hoofdstuk:resultaten} als bij het vergelijken van verschillende technieken en parameterwaarden in hoofdstuk \ref{hoofdstuk:tucker} en hoofdstuk \ref{hoofdstuk:tensor_trains} experimenten uitvoeren om onze conclusies te staven. Om deze reden zullen we eerst alle nodige context voor deze experimenten beschrijven in dit hoofdstuk.
+We zullen zowel bij het vergelijken van de uiteindelijke algoritmes in hoofdstuk \ref{hoofdstuk:resultaten} als bij het vergelijken van verschillende technieken en parameterwaarden in hoofdstuk \ref{hoofdstuk:tucker} en hoofdstuk \ref{hoofdstuk:hervorming} experimenten uitvoeren om onze conclusies te staven. Om deze reden zullen we eerst alle nodige context voor deze experimenten beschrijven in dit hoofdstuk.
 
 \section{Algemeen}
 Om rekening te houden met variantie, zullen tijdsmetingen in deze tekst uitgemiddeld worden over 10 experimenten, tenzij anders vermeld. Technisch gezien zijn de resultaten van stochastische algoritmen ook niet compleet deterministisch, maar aangezien de variantie hierop vaak minimaal is zal de nood aan een grotere steekproef geval per geval behandeld worden. Daarnaast zullen tijdsmetingen ook uitgedrukt worden in CPU-tijd.
@@ -11,7 +11,7 @@ Tenzij anders vermeld werden de tijdsmetingen in deze tekst uitgevoerd op \'e\'e
 
 \section{Compressiefactor}
 
-De compressiefactor is een belangrijke variabele die we zullen gebruiken in deze tekst. Hiermee hebben we het over de verhouding tussen de grootte van de originele, ongecomprimeerde 3D-tensor (dus bijvoorbeeld voor een $100 \times 100 \times 10$ tensor bestaande uit 16-bit integers is dit 200000 bytes) en de grootte van de gecomprimeerde versie (met als datatype voor niet-gehele getallen 32-bit floats, tenzij anders vermeld). Dit is echter een erg simpel formaat en niet altijd de beste manier om deze data op te slaan. Men moet er dus rekening mee houden dat men alleen al door de rauwe data op te slaan in een Zip-archief een compressiefactor van bijvoorbeeld 1.35 kan bekomen. Bijgevolg dient deze factor vooral relatief bekeken te worden, om verschillende compressietechnieken met elkaar te kunnen vergelijken.\\
+De compressiefactor is een belangrijke variabele die we zullen gebruiken in deze thesis. Hiermee hebben we het over de verhouding tussen de grootte van de originele, ongecomprimeerde 3D-tensor (dus bijvoorbeeld voor een $100 \times 100 \times 10$ tensor bestaande uit 16-bit integers is dit 200000 bytes) en de grootte van de gecomprimeerde versie (met als datatype voor niet-gehele getallen 32-bit floats, tenzij anders vermeld). Dit is echter een erg simpel formaat en niet altijd de beste manier om deze data op te slaan. Men moet er dus rekening mee houden dat men alleen al door de rauwe data op te slaan in een Zip-archief een compressiefactor van bijvoorbeeld 1.35 kan bekomen. Bijgevolg dient deze factor vooral relatief bekeken te worden, om verschillende compressietechnieken met elkaar te kunnen vergelijken.\\
 
 Verder zal het geheugengebruik van metadata (onder meer afmetingen van tensoren, compressieparameters en modevolgorde) verwaarloosd worden, aangezien dit veel kleiner is dan de benodigde opslagruimte voor tensoren en matrices. Concreet betekent dit dat we alleen geheugenruimte zullen meetellen van objecten die in een zekere zin groeien met de grootte van de invoer, behalve als deze groeien met het aantal dimensies van de tensoren waarmee we werken (aangezien dit in de praktijk toch heel beperkt is).
 
@@ -29,7 +29,7 @@ De implementatie van de besproken algoritmen gebeurde in Python, waarbij het zwa
 
 Om enkele verschillende encoderingen effici\"ent te kunnen uitvoeren, hebben we niet alleen de Python-module \texttt{bitarray} \cite{ref:bitarray} gebruikt, maar deze ook uitgebreid met enkele methodes (zie sectie \ref{sec:encodering} voor meer informatie). Deze code werd, zoals de rest van de module, in C geschreven voor performantie.\\
 
-Zoals eerder vermeld, zullen de belangrijkste stukken broncode toegevoegd worden als bijlage. Om het aantal pagina's van deze tekst te beperken, zal niet de volledige code aanwezig zijn in deze bijlagen, maar deze is beschikbaar via de \textit{repository}: \url{https://github.com/Wout12345/hyperspectral-image-compression-co}
+Zoals eerder vermeld, zullen de belangrijkste stukken broncode toegevoegd worden als bijlage. Om de lengte van deze tekst te beperken, zal niet de volledige code aanwezig zijn in deze bijlagen, maar deze is beschikbaar via de \textit{repository}: \url{https://github.com/Wout12345/hyperspectral-image-compression-co}
 
 \section{Datasets}
 
@@ -44,7 +44,7 @@ Omdat de geproduceerde bestanden te groot zijn om in bijlage toe te voegen en de
 \begin{figure}[H]
   \centering
   \includegraphics[scale=1]{images/indian_pines_sum.png}
-  \caption{Indian Pines, VS. Bron: AVIRIS \cite{ref:ehu_aviris}}
+  \caption{Indian Pines, VS. Bron: AVIRIS \cite{ref:ehu_aviris_indian_pines}}
   \label{fig:indian_pines_sum}
 \end{figure}
 
@@ -58,7 +58,7 @@ Omdat de geproduceerde bestanden te groot zijn om in bijlage toe te voegen en de
 \begin{figure}[H]
   \centering
   \includegraphics[scale=0.5]{images/cuprite_sum.png}
-  \caption{Cuprite, VS. Bron: AVIRIS \cite{ref:ehu_aviris}}
+  \caption{Cuprite, VS. Bron: AVIRIS \cite{ref:ehu_aviris_cuprite}}
   \label{fig:cuprite_sum}
 \end{figure}
 

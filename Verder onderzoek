@@ -1,3 +1,4 @@
+- DCT
 - Andere heuristiek om compressierang per mode te kiezen: kan dat de trade-off tussen fout en compressierang veel beter ligt in één mode dan een andere
 - Heuristieken om steekproefgrootte te kiezen bij randomized SVD
 - Parallelizatie:

@@ -26,8 +26,10 @@
 % Tenslotte wordt hyperref gebruikt voor pdf bestanden.
 % Dit mag verwijderd worden voor de af te drukken versie.
 \usepackage[pdfusetitle,colorlinks,plainpages=false]{hyperref}
+%\usepackage[pdfusetitle,plainpages=false]{hyperref}
 
-% Eigen imports
+% Eigen toevegingen
+%\setup{coverpageonly}
 \maxsecnumdepth{subsubsection}
 \usepackage{float}
 \usepackage{amsmath}
@@ -39,6 +41,7 @@
 \usepackage{multirow}
 \usepackage{xcolor}
 \usepackage[mathscr]{euscript}
+\setcounter{MaxMatrixCols}{20}
 
 % Listings stuff
 \usepackage{listings}

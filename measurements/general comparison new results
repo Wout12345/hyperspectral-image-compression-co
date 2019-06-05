@@ -1,0 +1,270 @@
+Testing dataset Indian_Pines with tensor_trains with target error 0.01
+Testing dataset Indian_Pines with tensor_trains with target error 0.015
+Testing dataset Indian_Pines with tensor_trains with target error 0.02
+Testing dataset Indian_Pines with tensor_trains with target error 0.025
+Testing dataset Indian_Pines with tensor_trains with target error 0.03
+Testing dataset Indian_Pines with tensor_trains with target error 0.035
+Testing dataset Indian_Pines with tensor_trains with target error 0.04
+Testing dataset Indian_Pines with tensor_trains with target error 0.045000000000000005
+Testing dataset Indian_Pines with tensor_trains with target error 0.05
+rel_errors = [0.01013484576929546, 0.01462821121250426, 0.019379960576154348, 0.023138490574190214, 0.02848439757737666, 0.031992042300178825, 0.04106731597055816, 0.04426939747605674, 0.04754352148308668]
+compression_factors = [12.150086293226515, 20.740148029605923, 35.69451779866906, 55.88841722255913, 103.15368178272224, 157.0314274895873, 242.97195813693378, 362.54629261702297, 504.74883823854833]
+Testing dataset Indian_Pines with JPEG with quality 95
+95 0.027079122893049323
+Testing dataset Indian_Pines with JPEG with quality 85
+85 0.03403363543950359
+Testing dataset Indian_Pines with JPEG with quality 75
+75 0.03788412923213962
+Testing dataset Indian_Pines with JPEG with quality 65
+65 0.040955478711487796
+Testing dataset Indian_Pines with JPEG with quality 55
+55 0.04350145153632918
+Testing dataset Indian_Pines with JPEG with quality 45
+45 0.04536634326780688
+Testing dataset Indian_Pines with JPEG with quality 35
+35 0.04834065835239657
+Testing dataset Indian_Pines with JPEG with quality 25
+25 0.05397951920207266
+rel_errors = [0.027079122893049323, 0.03403363543950359, 0.03788412923213962, 0.040955478711487796, 0.04350145153632918, 0.04536634326780688, 0.04834065835239657, 0.05397951920207266]
+compression_factors = [22.422035122900663, 40.57257967689004, 52.20065909923105, 60.55311100049776, 67.81759393466385, 73.79180382229484, 81.11666281406141, 91.41574654830372]
+Testing dataset Indian_Pines with x264 (medium) with crf 10
+10 0.009957142359652687
+Testing dataset Indian_Pines with x264 (medium) with crf 15
+15 0.014975078504459748
+Testing dataset Indian_Pines with x264 (medium) with crf 20
+20 0.02371258360850895
+Testing dataset Indian_Pines with x264 (medium) with crf 25
+25 0.03638476856116386
+Testing dataset Indian_Pines with x264 (medium) with crf 30
+30 0.04946545859791211
+rel_errors = [0.009957142359652687, 0.014975078504459748, 0.02371258360850895, 0.03638476856116386, 0.04946545859791211]
+compression_factors = [21.717843982975808, 39.06522688543121, 72.4332735269367, 165.50282977797127, 377.7049180327869]
+Testing dataset Indian_Pines with x264 (ultrafast) with crf 10
+10 0.009245682746855877
+Testing dataset Indian_Pines with x264 (ultrafast) with crf 15
+15 0.014383044943309135
+Testing dataset Indian_Pines with x264 (ultrafast) with crf 20
+20 0.02274557825044337
+Testing dataset Indian_Pines with x264 (ultrafast) with crf 25
+25 0.03511841270896844
+Testing dataset Indian_Pines with x264 (ultrafast) with crf 30
+30 0.05055144316317219
+rel_errors = [0.009245682746855877, 0.014383044943309135, 0.02274557825044337, 0.03511841270896844, 0.05055144316317219]
+compression_factors = [9.80570942177112, 16.309055223672498, 27.5573113934144, 50.5291140081743, 107.00192334756298]
+Testing dataset Indian_Pines with Tucker (non-adaptive) with target error 0.01
+Testing dataset Indian_Pines with Tucker (non-adaptive) with target error 0.015
+Testing dataset Indian_Pines with Tucker (non-adaptive) with target error 0.02
+Testing dataset Indian_Pines with Tucker (non-adaptive) with target error 0.025
+Testing dataset Indian_Pines with Tucker (non-adaptive) with target error 0.03
+Testing dataset Indian_Pines with Tucker (non-adaptive) with target error 0.035
+Testing dataset Indian_Pines with Tucker (non-adaptive) with target error 0.04
+Testing dataset Indian_Pines with Tucker (non-adaptive) with target error 0.045000000000000005
+Testing dataset Indian_Pines with Tucker (non-adaptive) with target error 0.05
+rel_errors = [0.00925641692521497, 0.015102632413827982, 0.019331571088914364, 0.02408759426779591, 0.02869913552331318, 0.0335062770400407, 0.038255631831736255, 0.04288837378294026, 0.0475969372353488]
+compression_factors = [13.341151389045267, 30.74049366244163, 44.340853202181115, 68.69637237038265, 103.8865926558497, 158.183047556303, 225.27443766820574, 327.6064631956912, 471.10239066453244]
+Testing dataset Indian_Pines with Tucker (adaptive) with target error 0.01
+Testing dataset Indian_Pines with Tucker (adaptive) with target error 0.015
+Testing dataset Indian_Pines with Tucker (adaptive) with target error 0.02
+Testing dataset Indian_Pines with Tucker (adaptive) with target error 0.025
+Testing dataset Indian_Pines with Tucker (adaptive) with target error 0.03
+Testing dataset Indian_Pines with Tucker (adaptive) with target error 0.035
+Testing dataset Indian_Pines with Tucker (adaptive) with target error 0.04
+Testing dataset Indian_Pines with Tucker (adaptive) with target error 0.045000000000000005
+Testing dataset Indian_Pines with Tucker (adaptive) with target error 0.05
+rel_errors = [0.009920442700483461, 0.015102632413827982, 0.019720531341401955, 0.02476976898238865, 0.029979934325059063, 0.03454605706599575, 0.03968379639050774, 0.044680952394707804, 0.04978091027099812]
+compression_factors = [17.27558294754182, 30.74049366244163, 45.4480879488725, 88.49247839539102, 161.2242229329752, 239.08807421189172, 386.1615947856266, 532.903451901174, 778.0199539524175]
+Testing dataset Cuprite with tensor_trains with target error 0.01
+Testing dataset Cuprite with tensor_trains with target error 0.015
+Testing dataset Cuprite with tensor_trains with target error 0.02
+Testing dataset Cuprite with tensor_trains with target error 0.025
+Testing dataset Cuprite with tensor_trains with target error 0.03
+Testing dataset Cuprite with tensor_trains with target error 0.035
+Testing dataset Cuprite with tensor_trains with target error 0.04
+Testing dataset Cuprite with tensor_trains with target error 0.045000000000000005
+Testing dataset Cuprite with tensor_trains with target error 0.05
+rel_errors = [0.009751622796049164, 0.014097980064952645, 0.01873405573651547, 0.026098847468308026, 0.030273878071282935, 0.033998732771449325, 0.03921678580147842, 0.044567396103993566, 0.04927243186783191]
+compression_factors = [136.24790042415933, 281.7078307486119, 468.843137602011, 649.6110474064717, 1017.176545142056, 1301.7684934873432, 1669.8125876771276, 2199.7989949748744, 2888.4807503544553]
+Testing dataset Cuprite with JPEG with quality 95
+95 0.027177772764297035
+Testing dataset Cuprite with JPEG with quality 85
+85 0.030454602938725945
+Testing dataset Cuprite with JPEG with quality 75
+75 0.032935609152854664
+Testing dataset Cuprite with JPEG with quality 65
+65 0.03560068644380823
+Testing dataset Cuprite with JPEG with quality 55
+55 0.03773465650319679
+Testing dataset Cuprite with JPEG with quality 45
+45 0.03936149166355455
+Testing dataset Cuprite with JPEG with quality 35
+35 0.04147154040304357
+Testing dataset Cuprite with JPEG with quality 25
+25 0.04410163470049796
+Testing dataset Cuprite with JPEG with quality 15
+15 0.04885791081457985
+rel_errors = [0.027177772764297035, 0.030454602938725945, 0.032935609152854664, 0.03560068644380823, 0.03773465650319679, 0.03936149166355455, 0.04147154040304357, 0.04410163470049796, 0.04885791081457985]
+compression_factors = [17.169579588252628, 32.439922649751274, 43.49372214873224, 52.535672044810426, 61.99343771889632, 70.9529882015067, 84.03389661105281, 107.1456659465495, 154.9314172978459]
+Testing dataset Cuprite with x264 (medium) with crf 15
+15 0.009878938583421036
+Testing dataset Cuprite with x264 (medium) with crf 20
+20 0.014913301231950045
+Testing dataset Cuprite with x264 (medium) with crf 25
+25 0.02175272474870117
+Testing dataset Cuprite with x264 (medium) with crf 30
+30 0.030247953914856074
+Testing dataset Cuprite with x264 (medium) with crf 35
+35 0.04054424674433064
+Testing dataset Cuprite with x264 (medium) with crf 40
+40 0.05310995686194987
+rel_errors = [0.009878938583421036, 0.014913301231950045, 0.02175272474870117, 0.030247953914856074, 0.04054424674433064, 0.05310995686194987]
+compression_factors = [72.28405448225888, 192.9793063246867, 417.6802794578014, 814.91961414791, 1627.360594795539, 3349.921578547938]
+Testing dataset Cuprite with x264 (ultrafast) with crf 15
+15 0.009920517788602827
+Testing dataset Cuprite with x264 (ultrafast) with crf 20
+20 0.01591654180248969
+Testing dataset Cuprite with x264 (ultrafast) with crf 25
+25 0.02434377392783487
+Testing dataset Cuprite with x264 (ultrafast) with crf 30
+30 0.03529515440547194
+Testing dataset Cuprite with x264 (ultrafast) with crf 35
+35 0.048590654412777684
+rel_errors = [0.009920517788602827, 0.01591654180248969, 0.02434377392783487, 0.03529515440547194, 0.048590654412777684]
+compression_factors = [20.138064597807734, 38.513062670206615, 75.01160883021652, 148.16575197623484, 345.80795106235047]
+Testing dataset Cuprite with Tucker (non-adaptive) with target error 0.01
+Testing dataset Cuprite with Tucker (non-adaptive) with target error 0.015
+Testing dataset Cuprite with Tucker (non-adaptive) with target error 0.02
+Testing dataset Cuprite with Tucker (non-adaptive) with target error 0.025
+Testing dataset Cuprite with Tucker (non-adaptive) with target error 0.03
+Testing dataset Cuprite with Tucker (non-adaptive) with target error 0.035
+Testing dataset Cuprite with Tucker (non-adaptive) with target error 0.04
+Testing dataset Cuprite with Tucker (non-adaptive) with target error 0.045000000000000005
+Testing dataset Cuprite with Tucker (non-adaptive) with target error 0.05
+rel_errors = [0.009364820373109664, 0.014416766274541314, 0.018987223849252857, 0.023837948811516595, 0.02861899263542359, 0.033409944197424254, 0.038172172491045146, 0.04281717261644949, 0.04763571938321705]
+compression_factors = [81.35709431049776, 238.29139421422354, 364.56147837158886, 555.3437023290925, 737.3595411771257, 982.4622318671229, 1248.0463697088935, 1581.4934463917834, 1988.1377498357888]
+Testing dataset Cuprite with Tucker (adaptive) with target error 0.01
+Testing dataset Cuprite with Tucker (adaptive) with target error 0.015
+Testing dataset Cuprite with Tucker (adaptive) with target error 0.02
+Testing dataset Cuprite with Tucker (adaptive) with target error 0.025
+Testing dataset Cuprite with Tucker (adaptive) with target error 0.03
+Testing dataset Cuprite with Tucker (adaptive) with target error 0.035
+Testing dataset Cuprite with Tucker (adaptive) with target error 0.04
+Testing dataset Cuprite with Tucker (adaptive) with target error 0.045000000000000005
+Testing dataset Cuprite with Tucker (adaptive) with target error 0.05
+rel_errors = [0.00989873609557653, 0.014782241369548548, 0.019560538898935907, 0.02482314553693453, 0.029226695404462766, 0.03474982260093236, 0.039964653633664124, 0.0441012879799566, 0.049414561781769714]
+compression_factors = [109.07233159298768, 269.3859740576773, 461.17110332368367, 727.6505779969641, 938.7332080955588, 1322.504743833017, 1740.1961331865893, 2167.040052366731, 2792.7640840429176]
+Testing dataset Pavia_Centre with tensor_trains with target error 0.01
+Testing dataset Pavia_Centre with tensor_trains with target error 0.015
+Testing dataset Pavia_Centre with tensor_trains with target error 0.02
+Testing dataset Pavia_Centre with tensor_trains with target error 0.025
+Testing dataset Pavia_Centre with tensor_trains with target error 0.03
+Testing dataset Pavia_Centre with tensor_trains with target error 0.035
+Testing dataset Pavia_Centre with tensor_trains with target error 0.04
+Testing dataset Pavia_Centre with tensor_trains with target error 0.045000000000000005
+Testing dataset Pavia_Centre with tensor_trains with target error 0.05
+rel_errors = [0.013848426329798595, 0.020840711018722775, 0.028810278980660155, 0.029848395164457194, 0.041467388386156386, 0.04337818012057822, 0.04473601575443189, 0.047308165468435734, 0.05016037086427253]
+compression_factors = [11.667416590697949, 18.497753946882536, 29.617172334512873, 36.795619144924714, 52.96431531406347, 61.61844333862899, 70.93904231142946, 80.2448615808794, 90.6643129849337]
+Testing dataset Pavia_Centre with JPEG with quality 95
+95 0.04205893847438045
+Testing dataset Pavia_Centre with JPEG with quality 85
+85 0.0708138062354838
+rel_errors = [0.04205893847438045, 0.0708138062354838]
+compression_factors = [15.077182870311342, 27.904051395755754]
+Testing dataset Pavia_Centre with x264 (medium) with crf 0
+0 0.006406382454356747
+Testing dataset Pavia_Centre with x264 (medium) with crf 5
+5 0.012604094746035634
+Testing dataset Pavia_Centre with x264 (medium) with crf 10
+10 0.019556316590893765
+Testing dataset Pavia_Centre with x264 (medium) with crf 15
+15 0.031857655355139035
+Testing dataset Pavia_Centre with x264 (medium) with crf 20
+20 0.05144055813140116
+rel_errors = [0.006406382454356747, 0.012604094746035634, 0.019556316590893765, 0.031857655355139035, 0.05144055813140116]
+compression_factors = [7.714084416463649, 10.751029626468055, 19.135088521351694, 38.52452420714016, 81.05852634851547]
+Testing dataset Pavia_Centre with x264 (ultrafast) with crf 0
+0 0.006406382454356747
+Testing dataset Pavia_Centre with x264 (ultrafast) with crf 5
+5 0.010739528111078993
+Testing dataset Pavia_Centre with x264 (ultrafast) with crf 10
+10 0.01647993743899368
+Testing dataset Pavia_Centre with x264 (ultrafast) with crf 15
+15 0.025889335365415343
+Testing dataset Pavia_Centre with x264 (ultrafast) with crf 20
+20 0.04345920681466816
+Testing dataset Pavia_Centre with x264 (ultrafast) with crf 25
+25 0.07047128857057655
+rel_errors = [0.006406382454356747, 0.010739528111078993, 0.01647993743899368, 0.025889335365415343, 0.04345920681466816, 0.07047128857057655]
+compression_factors = [5.734186951788906, 6.54755946464489, 10.070338394717416, 18.03942289685751, 34.13725281157477, 66.48626909996308]
+Testing dataset Pavia_Centre with Tucker (non-adaptive) with target error 0.01
+Testing dataset Pavia_Centre with Tucker (non-adaptive) with target error 0.015
+Testing dataset Pavia_Centre with Tucker (non-adaptive) with target error 0.02
+Testing dataset Pavia_Centre with Tucker (non-adaptive) with target error 0.025
+Testing dataset Pavia_Centre with Tucker (non-adaptive) with target error 0.03
+Testing dataset Pavia_Centre with Tucker (non-adaptive) with target error 0.035
+Testing dataset Pavia_Centre with Tucker (non-adaptive) with target error 0.04
+Testing dataset Pavia_Centre with Tucker (non-adaptive) with target error 0.045000000000000005
+Testing dataset Pavia_Centre with Tucker (non-adaptive) with target error 0.05
+rel_errors = [0.009310428441550068, 0.014291375011612819, 0.01940563088946998, 0.02689456164871537, 0.03118480431995347, 0.03560983214558843, 0.04004734058817857, 0.04467891333115685, 0.04925604620455579]
+compression_factors = [3.4134970021269595, 5.5189234146552275, 7.62009997022032, 10.468631946626221, 13.043196135716155, 16.55308932856565, 20.967992065034547, 24.091918530781967, 28.613590332870594]
+Testing dataset Mauna_Kea with tensor_trains with target error 0.01
+Testing dataset Mauna_Kea with tensor_trains with target error 0.015
+Testing dataset Mauna_Kea with tensor_trains with target error 0.02
+Testing dataset Mauna_Kea with tensor_trains with target error 0.025
+Testing dataset Mauna_Kea with tensor_trains with target error 0.03
+Testing dataset Mauna_Kea with tensor_trains with target error 0.035
+Testing dataset Mauna_Kea with tensor_trains with target error 0.04
+Testing dataset Mauna_Kea with tensor_trains with target error 0.045000000000000005
+Testing dataset Mauna_Kea with tensor_trains with target error 0.05
+rel_errors = [0.010351287129460318, 0.015561325512506555, 0.023019759860799772, 0.025665642929951216, 0.03171502169916407, 0.03517389399575578, 0.04339036677687993, 0.04618879116544016, 0.04962885428179875]
+compression_factors = [120.99582822979066, 195.5680623469445, 303.35886560582725, 392.66740007187235, 571.194321139558, 699.6136672504629, 858.526642927647, 1068.6644391018, 1271.3050653279686]
+Testing dataset Mauna_Kea with JPEG with quality 95
+95 0.06257927597607485
+Testing dataset Mauna_Kea with JPEG with quality 85
+85 0.0665796719517607
+Testing dataset Mauna_Kea with JPEG with quality 75
+75 0.07048732508207863
+rel_errors = [0.06257927597607485, 0.0665796719517607, 0.07048732508207863]
+compression_factors = [31.005070675150634, 60.83960840564724, 84.09780525068906]
+Testing dataset Mauna_Kea with x264 (medium) with crf 0
+0 0.006204081850615542
+Testing dataset Mauna_Kea with x264 (medium) with crf 5
+5 0.009515440837717088
+Testing dataset Mauna_Kea with x264 (medium) with crf 10
+10 0.013468833837128947
+Testing dataset Mauna_Kea with x264 (medium) with crf 15
+15 0.018870831552385108
+Testing dataset Mauna_Kea with x264 (medium) with crf 20
+20 0.026743218683564832
+Testing dataset Mauna_Kea with x264 (medium) with crf 25
+25 0.03767486640365249
+Testing dataset Mauna_Kea with x264 (medium) with crf 30
+30 0.05122790235394021
+rel_errors = [0.006204081850615542, 0.009515440837717088, 0.013468833837128947, 0.018870831552385108, 0.026743218683564832, 0.03767486640365249, 0.05122790235394021]
+compression_factors = [13.238178934983818, 26.606330079675136, 64.47583043831574, 154.2322775026741, 308.5556033624973, 595.8044412852252, 1212.883467678351]
+Testing dataset Mauna_Kea with x264 (ultrafast) with crf 0
+0 0.006204081850615542
+Testing dataset Mauna_Kea with x264 (ultrafast) with crf 5
+5 0.009280160462963982
+Testing dataset Mauna_Kea with x264 (ultrafast) with crf 10
+10 0.01344224826677739
+Testing dataset Mauna_Kea with x264 (ultrafast) with crf 15
+15 0.018826407473661322
+Testing dataset Mauna_Kea with x264 (ultrafast) with crf 20
+20 0.02788681359777252
+Testing dataset Mauna_Kea with x264 (ultrafast) with crf 25
+25 0.0403406824406492
+Testing dataset Mauna_Kea with x264 (ultrafast) with crf 30
+30 0.057631210670231636
+rel_errors = [0.006204081850615542, 0.009280160462963982, 0.01344224826677739, 0.018826407473661322, 0.02788681359777252, 0.0403406824406492, 0.057631210670231636]
+compression_factors = [7.755171116786539, 10.741741292711517, 19.704493565757144, 40.105103117758034, 76.78853856550606, 164.34707654562433, 389.36169997354773]
+Testing dataset Mauna_Kea with Tucker (non-adaptive) with target error 0.01
+Testing dataset Mauna_Kea with Tucker (non-adaptive) with target error 0.015
+Testing dataset Mauna_Kea with Tucker (non-adaptive) with target error 0.02
+Testing dataset Mauna_Kea with Tucker (non-adaptive) with target error 0.025
+Testing dataset Mauna_Kea with Tucker (non-adaptive) with target error 0.03
+Testing dataset Mauna_Kea with Tucker (non-adaptive) with target error 0.035
+Testing dataset Mauna_Kea with Tucker (non-adaptive) with target error 0.04
+Testing dataset Mauna_Kea with Tucker (non-adaptive) with target error 0.045000000000000005
+Testing dataset Mauna_Kea with Tucker (non-adaptive) with target error 0.05
+rel_errors = [0.009134000388153277, 0.014294145253839012, 0.01893735941365444, 0.024602944743520747, 0.02915024217328339, 0.03388844935350061, 0.03859477687795048, 0.04330023819697263, 0.04807127881977634]
+compression_factors = [72.79835753097399, 151.85852572507656, 196.4757476866872, 301.7777417058084, 361.31971156835283, 435.79529600757223, 532.7769999918509, 630.5670589975149, 723.8472080623479]

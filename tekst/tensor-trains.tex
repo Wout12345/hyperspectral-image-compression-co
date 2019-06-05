@@ -8,11 +8,15 @@ Ter herinnering: bij een Tucker-decompositie benaderen we een tensor $A \in \mat
 \[
 A \approx B \times_1 U_1 \times_2 U_2 \times_3 \dots \times_d U_d
 \]
-waarbij $C \times_n U_n$ het n-mode product is van de tensor $C$ en matrix $U_k$. Een tensor train is vrij analoog, maar voegt voor elke mode een hervormingsstap toe. Hierbij hebben we een kerntensor $B \in \mathbb{R}^{r_{d-1},n_d}$, factormatrices $U_1 \in \mathbb{R}^{n_1 \times r_1}$, $U_2 \in \mathbb{R}^{r_1 n_2 \times r_2}$, $U_3 \in \mathbb{R}^{r_2 n_3 \times r_3}$, $\dots$, $U_{d-1} \in \mathbb{R}^{r_{d-2} n_{d-1} \times r_{d-1}}$ en de volgende formule:
+waarbij $C \times_n U_n$ het n-mode product is van de tensor $C$ en matrix $U_k$. Een tensor train is vrij analoog, maar voegt voor elke mode een hervormingsstap toe. Hierbij hebben we een kerntensor $B \in \mathbb{R}^{r_{d-1} n_d}$, factormatrices $U_1 \in \mathbb{R}^{n_1 \times r_1}$, $U_2 \in \mathbb{R}^{r_1 n_2 \times r_2}$, $U_3 \in \mathbb{R}^{r_2 n_3 \times r_3}$, $\dots$, $U_{d-1} \in \mathbb{R}^{r_{d-2} n_{d-1} \times r_{d-1}}$ en de volgende formule:
 \[
 A \approx h(\dots h(h(B, r_{d-1} \times n_d) \times_1 U_{d-1}, r_{d-2} \times n_{d-1} \times n_d) \times_1 U_{d-2} \dots, r_1 \times n_2 \times \dots \times n_d) \times_1 U_1
 \]
-waarbij $h(C, \text{vorm})$ de hervormingsfunctie is die de tensor $C$ hervormt naar de gegeven vorm. Ter illustratie zullen we de constructieprocedure van een Tucker-decompositie vergelijken met die van een tensor train. Bij het uitvoeren van een normale ST-HOSVD op een 5D-tensor ($n_1 \times n_2 \times n_3 \times n_4 \times n_5$) ondergaat de kerntensor de volgende transformaties:
+waarbij $h(C, \text{vorm})$ de hervormingsfunctie is die de tensor $C$ hervormt naar de gegeven vorm. Een alternatieve manier om tensor trains te defini\"eren is door de factormatrices voor te stellen als 3D-tensoren $U_2 \in \mathbb{R}^{r_1 \times n_2 \times r_2}$, $U_3 \in \mathbb{R}^{r_2 \times n_3 \times r_3}$, $\dots$, $U_{d-1} \in \mathbb{R}^{r_{d-2} \times n_{d-1} \times r_{d-1}}$ na hervorming. De kerntensor kunnen we hervormen tot de laatste factormatrix $U_d \in \mathbb{R}^{r_{d-1} \times n_d}$. We defini\"eren dan $U_1(j)$ als de $j$-de rij van $U_1$, $U_d(j)$ als de $j$-de kolom van $U_d$ en $U_i(j)$ met $1 < i < d$ als de matrix gevormd door de elementen $U_i(\dots, j, \dots)$. Elk element van de gedecomprimeerde tensor $A$ is dan simpelweg gedefinieerd als: 
+\[
+A(i_1, \dots, i_d) = U_1(i_1) U_2(i_2) \dots U_d(i_d)
+\]
+Ter illustratie zullen we de constructieprocedure van een Tucker-decompositie vergelijken met die van een tensor train. Bij het uitvoeren van een normale ST-HOSVD op een 5D-tensor ($n_1 \times n_2 \times n_3 \times n_4 \times n_5$) ondergaat de kerntensor de volgende transformaties:
 
 \begin{enumerate}
 \item Comprimeer naar $r_1 \times n_2 \times n_3 \times n_4 \times n_5$
@@ -37,7 +41,7 @@ Met kleine aanpassingen aan de ST-HOSVD kunnen we deze procedure even goed gebru
 
 Elke iteratie, na de compressie, voegen we dus de twee eerste modes van de tensor samen, tot er slechts \'e\'en mode overblijft. Men zou kunnen redeneren dat, als men een $k$-D tensor van $n \times n \times \dots \times n$ comprimeert, telkens naar een compressierang $r$, de tensor train slechts $O(knr^2)$ ruimte inneemt. Er zijn namelijk $nr$ elementen in de eerste factormatrix, $nr^2$ elementen in elke andere factormatrix en $rn$ elementen in de uiteindelijke kerntensor. Bij de Tucker-decompositie is de ingenomen ruimte $O(r^k + knr)$, dus voor hoge $k$ zouden tensor trains het beter moeten doen. Deze redenering houdt echter geen rekening met het effect van telkens te comprimeren naar een vaste compressierang, wat een grote fout zou kunnen introduceren. Bijgevolg zullen we experimenteel moeten bepalen hoe effectief deze methode is in de praktijk.
 
-\begin{figure}[H]
+\begin{figure}[]
 \centering
 \begin{subfigure}{0.48\textwidth}
   \centering
@@ -72,6 +76,7 @@ Analoog aan de vorige sectie, hebben we in figuur \ref{fig:tensor_trains_st_hosv
 
 Zoals in hoofdstuk \ref{hoofdstuk:tucker} uitgebreid beschreven werd, moeten er bij het ontwikkelen van een volledig compressie-algoritme een aantal ontwerpkeuzes gemaakt worden. Aangezien we de meeste technieken hergebruiken, zullen we dit hier slechts kort bespreken:
 
+\newpage
 \begin{enumerate}
 \item \textbf{Versnellen van de ST-HOSVD:}
 \begin{enumerate}
@@ -80,6 +85,7 @@ Zoals in hoofdstuk \ref{hoofdstuk:tucker} uitgebreid beschreven werd, moeten er 
 \end{enumerate}
 \item \textbf{Orthogonaliteitscompressie:} Zoals eerder gebruiken we de methode met Householder-reflecties, aangezien deze een ideaal resultaat geven.
 
+\newpage
 \item \textbf{Quantisatie:}
 \begin{enumerate}
 
@@ -119,6 +125,7 @@ Zoals in hoofdstuk \ref{hoofdstuk:tucker} uitgebreid beschreven werd, moeten er 
 \item $BPF = max(9, round(-132.505*\text{kwaliteit} + 13.048))$
 \end{itemize}
 
+\newpage
 \item \textbf{Adaptief:} We zullen, zoals eerder, ook een adaptieve selectieprocedure uitwerken. Hierbij wordt de RDS weer vast gekozen aan de hand van de RDS-selectiefunctie en verlagen we de BPF-waarde (startend bij de waarde gekozen door de BPF-selectiefunctie) totdat de compressiefout de kwaliteitsparameter overschrijdt. Omdat er maar \'e\'en parameter adaptief gekozen wordt in plaats van twee, is deze procedure veel simpeler dan bij Tucker-gebaseerde compressie.\\
 
 In figuren \ref{fig:parameter_functions_results_including_adaptive_Cuprite_tensor_trains} en \ref{fig:parameter_functions_results_including_adaptive_Indian_Pines_tensor_trains} tonen we opnieuw een vergelijking van compressie met (niet-)adaptieve parameterselectie en met optimale parameters uit de steekproef van ons onderzoek. We zien dat er voor Cuprite en Indian Pines weinig verschil is tussen het adaptieve en niet-adaptieve resultaat. We hebben ook gekeken naar grotere datasets, maar daar werkte de niet-adaptieve methode ook even goed, zonder de extra rekenkost, dus we zullen niet verder werken met adaptieve parameterselectie voor tensor trains.
@@ -126,7 +133,6 @@ In figuren \ref{fig:parameter_functions_results_including_adaptive_Cuprite_tenso
 \end{enumerate}
 \end{enumerate}
 
-\newpage
 \begin{figure}[H]
   \centering
   \includegraphics[scale=0.7]{images/parameter_functions_results_including_adaptive_Cuprite_tensor_trains.png}
@@ -134,11 +140,10 @@ In figuren \ref{fig:parameter_functions_results_including_adaptive_Cuprite_tenso
   \label{fig:parameter_functions_results_including_adaptive_Cuprite_tensor_trains}
 \end{figure}
 
+\newpage
 \begin{figure}[H]
   \centering
   \includegraphics[scale=0.7]{images/parameter_functions_results_including_adaptive_Indian_Pines_tensor_trains.png}
   \caption{Resultaten van compressie met en zonder adaptieve parameterselectie voor Indian Pines.}
   \label{fig:parameter_functions_results_including_adaptive_Indian_Pines_tensor_trains}
 \end{figure}
-
-\newpage

@@ -16,6 +16,11 @@ import other_compression
 # Constants
 default_experiments_amount = 10
 
+# Hoofdstuk 1: Inleiding
+
+def save_cuprite_bands():
+	print_cuprite_bands(6, "../tekst/images/cuprite_bands")
+
 # Hoofdstuk 3: Methodologie
 
 def save_image(data, path):
@@ -1379,12 +1384,13 @@ def tucker_vs_tensor_trains_timings():
 
 def general_comparison():
 	
+	rel_target_errors = np.linspace(0.01, 0.05, num=9)
+	
 	for dataset_name, loader, qualities, crfs_medium, crfs_ultrafast in (("Indian_Pines", load_indian_pines_cropped, range(95, 20, -10), range(10, 31, 5), range(10, 31, 5)), ("Cuprite", load_cuprite_cropped, range(95, 10, -10), range(15, 41, 5), range(15, 36, 5)), ("Pavia_Centre", load_pavia, range(95, 75, -10), range(0, 21, 5), range(0, 26, 5)), ("Mauna_Kea", load_mauna_kea, range(95, 65, -10), range(0, 31, 5), range(0, 31, 5)), ):
 		
 		data = loader()
 		
 		# Tensor trains
-		rel_target_errors = np.linspace(0.01, 0.05, num=9)
 		rel_errors = []
 		compression_factors = []
 		for rel_target_error in rel_target_errors:
@@ -1392,6 +1398,10 @@ def general_comparison():
 			compressed = tensor_trains.compress(data, rel_target_error)
 			rel_errors.append(rel_error(data, tensor_trains.decompress(compressed), preserve_decompressed=False))
 			compression_factors.append(st_hosvd.get_compression_factor_quantize(data, compressed))
+			compressed = None
+			gc.collect()
+		print("rel_errors =", rel_errors)
+		print("compression_factors =", compression_factors)
 		plt.plot(rel_errors, compression_factors, label="Tensor trains")
 		
 		# JPEG
@@ -1402,10 +1412,14 @@ def general_comparison():
 			compressed = other_compression.compress_jpeg(data, quality)
 			rel_errors.append(rel_error(data, other_compression.decompress_jpeg(compressed), preserve_decompressed=False))
 			compression_factors.append(other_compression.get_compression_factor_jpeg(data, compressed))
+			compressed = None
+			gc.collect()
 			print(quality, rel_errors[-1])
+		print("rel_errors =", rel_errors)
+		print("compression_factors =", compression_factors)
 		plt.plot(rel_errors, compression_factors, label="JPEG")
 		
-		# x264
+		# x264 (medium)
 		rel_errors = []
 		compression_factors = []
 		for crf in crfs_medium:
@@ -1413,11 +1427,15 @@ def general_comparison():
 			compressed = other_compression.compress_video(data, crf, preset="medium")
 			rel_errors.append(rel_error(data, other_compression.decompress_video(compressed), preserve_decompressed=False))
 			compression_factors.append(other_compression.get_compression_factor_video(data, compressed))
+			compressed = None
+			gc.collect()
 			print(crf, rel_errors[-1])
+		print("rel_errors =", rel_errors)
+		print("compression_factors =", compression_factors)
 		plt.plot(rel_errors, compression_factors, label="x264 (medium)")
 			
 		
-		# x264
+		# x264 (ultrafast)
 		rel_errors = []
 		compression_factors = []
 		for crf in crfs_ultrafast:
@@ -1425,12 +1443,48 @@ def general_comparison():
 			compressed = other_compression.compress_video(data, crf, preset="ultrafast")
 			rel_errors.append(rel_error(data, other_compression.decompress_video(compressed), preserve_decompressed=False))
 			compression_factors.append(other_compression.get_compression_factor_video(data, compressed))
+			compressed = None
+			gc.collect()
 			print(crf, rel_errors[-1])
+		print("rel_errors =", rel_errors)
+		print("compression_factors =", compression_factors)
 		plt.plot(rel_errors, compression_factors, label="x264 (ultrafast)")
+		
+		use_adaptive_tucker = dataset_name in ("Indian_Pines", "Cuprite")
+		
+		# Tucker (non-adaptive)
+		rel_errors = []
+		compression_factors = []
+		for rel_target_error in rel_target_errors:
+			print("Testing dataset %s with Tucker (non-adaptive) with target error %s"%(dataset_name, rel_target_error))
+			compressed = st_hosvd.compress(data, rel_target_error)
+			rel_errors.append(rel_error(data, st_hosvd.decompress(compressed), preserve_decompressed=False))
+			compression_factors.append(st_hosvd.get_compression_factor_quantize(data, compressed))
+			compressed = None
+			gc.collect()
+		print("rel_errors =", rel_errors)
+		print("compression_factors =", compression_factors)
+		plt.plot(rel_errors, compression_factors, label="Tucker (niet-adaptief)" if use_adaptive_tucker else "Tucker")
+		
+		# Tucker (adaptive)
+		if use_adaptive_tucker:
+			rel_errors = []
+			compression_factors = []
+			for rel_target_error in rel_target_errors:
+				print("Testing dataset %s with Tucker (adaptive) with target error %s"%(dataset_name, rel_target_error))
+				compressed = st_hosvd.compress(data, rel_target_error, adaptive=True)
+				rel_errors.append(rel_error(data, st_hosvd.decompress(compressed), preserve_decompressed=False))
+				compression_factors.append(st_hosvd.get_compression_factor_quantize(data, compressed))
+				compressed = None
+				gc.collect()
+			print("rel_errors =", rel_errors)
+			print("compression_factors =", compression_factors)
+			plt.plot(rel_errors, compression_factors, label="Tucker (adaptief)")
+		
 		plt.xlabel("Relatieve fout")
 		plt.ylabel("Compressiefactor")
 		plt.legend()
-		plt.savefig("../tekst/images/general_comparison_%s.png"%dataset_name)
+		plt.savefig("../tekst/images/general_comparison_new_%s.png"%dataset_name)
 		plt.close()
 
 def general_comparison_times():
@@ -1616,4 +1670,4 @@ def save_example_compressions():
 			gc.collect()
 			print("")
 
-general_comparison_times()
+general_comparison()
