@@ -8,10 +8,9 @@
 \setup{filingcard,
   translatedtitle={Hyperspectral image compression via tensor decompositions},
   udc=681.3,
-  shortabstract={Hier komt een heel bondig abstract van hooguit 500
-    woorden. \LaTeX\ commando's mogen hier gebruikt worden. Blanco lijnen
-    (of het commando \texttt{\string\pa r}) zijn wel niet toegelaten!
-    \endgraf \lipsum[2]}}
+  shortabstract={
+Hyperspectrale afbeeldingen zijn afbeeldingen met veel spectrale banden, ten opzichte van de typische drie kleurenbanden in normale afbeeldingen, met toepassingen in bijvoorbeeld voedselverwerking en mijnbouw. Als men alle banden ongecomprimeerd bijhoudt, kan dit voor opslagproblemen zorgen, maar vanwege grote redundantie over de spectrale dimensie kan dit effici\"enter. In deze thesis comprimeren we dergelijke afbeeldingen aan de hand van tensordecomposities. Ten eerste is er de Tucker-decompositie, die berekend zal worden met de ST-HOSVD-procedure, versneld door het gebruik van de Gram-matrix. Voor de opslag van de factormatrices gebruiken we een nieuwe techniek, gebaseerd op QR-factorizatie met Householder-reflecties. Hierna volgt de quantisatiefase, waarbij we kiezen voor gelaagde methoden voor zowel de kerntensor als factormatrices, die de inherente structuur van deze objecten benutten. Als laatste stap van de compressie worden de gequantiseerde waarden ge\"encodeerd met een adaptieve strategie, waarbij Gray-codes en Huffman-codes gecombineerd worden. Uiteindelijk worden parameterwaarden voor het volledige algoritme gekozen aan de hand van vaste selectiefuncties, al dan niet gevolgd door een iteratieve verbetering van deze waarden. Ten tweede onderzoeken we ook technieken voor het comprimeren van hyperspectrale afbeeldingen als hervormde 5D-tensoren. De \textit{tensor-train}-decompositie blijkt beter te werken dan de Tucker-decompositie voor het comprimeren van dergelijke hoog-dimensionale tensoren. Daarom ontwikkelen we hiervoor een eigen compressie-algoritme, analoog aan Tucker-gebaseerde compressie. Op het einde vergelijken we de resultaten van onze twee compressie-algoritmen met elkaar, enkele algemene \textit{lossy} compressiemethoden en een algoritme uit de literatuur. Onze resultaten zien er beloftevol uit: zo kan men met onze tensor-train-gebaseerde compressie op typische datasets compressiefactoren van orde 100 tot 1000 halen bij fouten die insignificant zijn voor visualisatie-toepassingen.
+}}
 % Verwijder de "%" op de volgende lijn als je de kaft wil afdrukken
 %\setup{coverpageonly}
 % Verwijder de "%" op de volgende lijn als je enkel de eerste pagina's wil
@@ -25,8 +24,8 @@
 
 % Tenslotte wordt hyperref gebruikt voor pdf bestanden.
 % Dit mag verwijderd worden voor de af te drukken versie.
-\usepackage[pdfusetitle,colorlinks,plainpages=false]{hyperref}
-%\usepackage[pdfusetitle,plainpages=false]{hyperref}
+%\usepackage[pdfusetitle,colorlinks,plainpages=false]{hyperref}
+\usepackage[pdfusetitle,plainpages=false,hidelinks]{hyperref}
 
 % Eigen toevegingen
 %\setup{coverpageonly}
@@ -75,19 +74,23 @@
 \begin{document}
 
 \begin{preface}
-  Dit is mijn dankwoord om iedereen te danken die mij bezig gehouden heeft.
-  Hierbij dank ik mijn promotor, mijn begeleider en de voltallige jury.
-  Ook mijn familie heeft mij erg gesteund natuurlijk.
+In de eerste plaats wil ik mijn co-promotor en begeleider, dr. Nick Vannieuwenhoven bedanken. Doorheen onze vele vergaderingen gaf hij een goede richting aan mijn onderzoek en verleende hij talrijke nuttige tips voor mijn werk. Ook bij het schrijven van deze tekst ontving ik regelmatig uitgebreide en snelle feedback. Zonder zijn begeleiding was deze thesis niet tot stand gekomen, dus hiervoor mijn oprechte dank.\\
+
+Daarnaast bedank ik ook mijn promotor, prof. dr. ir. Karl Meerbergen, voor zijn bijdrage aan de initi\"ele ori\"entering van deze thesis, feedback bij de tussentijdse presentatie en andere hulp. Verder gaat mijn dank eveneens uit naar alle leden van de jury voor het lezen van deze tekst, die uiteindelijk eerder lang geworden is, en het beoordelen van deze thesis.\\
+
+Ten slotte wil ik ook even een aantal medestudenten bedanken, met name Kristof Achten, Michiel Bollen, Sven Cuyt en Arno Coomans. Hun solidariteit en gezelschap in het Departement Computerwetenschappen gedurende de afgelopen weken, waarin er voltijds aan deze thesis werd geschreven, heb ik erg geapprecieerd.
 \end{preface}
 
 \tableofcontents*
 
 \begin{abstract}
-  In dit \texttt{abstract} environment wordt een al dan niet uitgebreide
-  samenvatting van het werk gegeven. De bedoeling is wel dat dit tot
-  1~bladzijde beperkt blijft.
+Hyperspectrale afbeeldingen zijn afbeeldingen met veel spectrale banden, ten opzichte van de typische drie kleurenbanden in normale afbeeldingen. Dergelijke fijne metingen hebben toepassingen in bijvoorbeeld voedselverwerking en mijnbouw. Als men echter alle banden ongecomprimeerd probeert bij te houden, kan dit voor geheugenproblemen zorgen, maar vanwege grote redundantie over de spectrale dimensie kan men deze data effici\"enter opslaan.\\
 
-  \lipsum[1]
+In deze thesis comprimeren we dergelijke hyperspectrale afbeeldingen aan de hand van tensordecomposities. Ten eerste leggen we onze focus op de Tucker-decompositie, die berekend zal worden met de ST-HOSVD-procedure. We onderzoeken enkele optimisaties hiervoor, maar alleen de Gram-matrix-methode blijkt effectief. Voor de opslag van de factormatrices gebruiken we een nieuwe techniek, gebaseerd op het QR-factorizatie-algoritme met Householder-reflecties. Hierna volgt de quantisatiefase, waarbij we kiezen voor gelaagde methoden voor zowel de kerntensor als factormatrices, die de inherente structuur van deze objecten benutten. Als laatste stap van de compressie worden de gequantiseerde waarden ge\"encodeerd en \textit{lossless} gecomprimeerd aan de hand van het Deflate-algoritme. We gebruiken hiervoor adaptieve encodering, waarbij zowel Gray-codes als Huffman-codes gecombineerd worden om de totale opslag te verminderen. Ten slotte worden parameterwaarden voor het volledige algoritme gekozen aan de hand van vaste selectiefuncties, al dan niet gevolgd door een iteratieve verbetering van deze waarden.\\
+
+Ten tweede onderzoeken we ook technieken voor het comprimeren van hyperspectrale afbeeldingen als hervormde 5D-tensoren. De Tucker-decompositie blijkt slechter te werken na hervorming, maar een andere decompositie, de \textit{tensor train}, is beter in het comprimeren van dergelijke hoog-dimensionale tensoren. Daarom ontwikkelen we voor tensor trains een eigen compressie-algoritme, analoog aan Tucker-gebaseerde compressie met kleine aanpassingen.\\
+
+Op het einde van deze tekst vergelijken we de resultaten van onze twee compressie-algoritmen met elkaar, enkele algemene \textit{lossy} compressiemethoden en een algoritme uit de literatuur, zowel op vlak van compressiefactor, -fout, -tijd en decompressietijd. Onze resultaten zien er beloftevol uit: zo kan men met onze tensor-train-gebaseerde compressie op typische datasets compressiefactoren van orde 100 tot 1000 halen bij fouten die insignificant zijn voor visualisatie-toepassingen.
 \end{abstract}
 
 % Een lijst van figuren en tabellen is optioneel

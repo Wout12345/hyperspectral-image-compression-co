@@ -1,7 +1,7 @@
 \chapter{Resultaten}
 \label{hoofdstuk:resultaten}
 
-Na het ontwikkelen van zowel Tucker-gebaseerde als tensor-train-gebaseerde compressie-algoritmen, is het tijd om de uiteindelijke resultaten te bekijken. In dit hoofdstuk vergelijken we zowel onze eigen compressietechnieken met elkaar als met andere algemene methoden, zoals JPEG of videocompressie. We sluiten nog af met enkele voorbeelden van gecomprimeerde hyperspectrale afbeeldingen.
+Na het ontwikkelen van zowel Tucker-gebaseerde als tensor-train-gebaseerde compressie-algoritmen, is het tijd om de uiteindelijke resultaten te bekijken. In dit hoofdstuk vergelijken we onze eigen compressietechnieken zowel met elkaar, met andere algemene methoden, zoals JPEG of videocompressie, als met een methode uit de literatuur. We sluiten nog af met enkele voorbeelden van gecomprimeerde hyperspectrale afbeeldingen.
 
 \section{Tucker versus tensor trains}
 
@@ -142,6 +142,8 @@ Het antwoord hierop vindt men in figuur \ref{fig:general-comparison-times}. Als 
 \label{fig:general-comparison-times}
 \end{figure}
 
+Onthoud wel dat deze vergelijking op \'e\'en core gebeurde. Als men gaat paralleliseren (wat men normaal gezien doet bij videocompressie), zullen tensor trains waarschijnlijk relatief slechter scoren omdat ons algoritme eerder sequentieel ontworpen is.\\
+
 Ten slotte besloten we om ook eens te kijken naar de decompressietijd in figuur \ref{fig:general-comparison-decompression-times}. Opnieuw is de uitvoeringstijd van tensor trains erg afhankelijk van de relatieve fout, terwijl dit bij videocompressie minder invloed heeft. Verder heeft, zoals verwacht, de preset van ffmpeg erg weinig effect op de decompressietijd; deze parameter is namelijk alleen bedoeld om de compressietijd te controleren. We concluderen dat videocompressie over het algemeen veel sneller kan decomprimeren, maar dit verschil wordt kleiner bij grote datasets (zie Mauna Kea).
 
 \newpage
@@ -172,12 +174,30 @@ Ten slotte besloten we om ook eens te kijken naar de decompressietijd in figuur 
 \label{fig:general-comparison-decompression-times}
 \end{figure}
 
+\section{Vergelijking met de literatuur}
+
+Aangezien hyperspectrale compressie een klein onderzoeksdomein is en niet altijd met dezelfde datasets gewerkt wordt, is het moeilijk om veel concrete vergelijkingspunten te vinden in de literatuur. Om deze redenen zullen we ons beperken tot \'e\'en ander resultaat: de compressie van Cuprite door Karami et al. \cite{ref:karami}, wiens paper we al eerder aanhaalden bij de literatuurstudie in hoofdstuk \ref{hoofdstuk:achtergrond}. Zij drukken de compressiefout uit als \textit{signal-to-noise ratio} (SNR) en de compressiegrootte uit als de \textit{rate} in bits per pixel per band. We zullen onze eigen resultaten omzetten met de volgende formules:
+\[
+SNR \text{ (in dB)} = -20 \log_{10}(\text{relatieve fout})
+\]
+\[
+rate = \frac{\text{aantal bits per pixel per band in origineel}}{\text{compressiefactor}}
+\]
+In figuur \ref{fig:literature-comparison} vindt men een vergelijking van de beste eerder besproken technieken (tensor trains en x264 met preset medium) en de technieken van Karami et al. Merk op dat hun domein anders ligt dan hetgene waarvoor wij onze algoritmen afgesteld hebben (de relatieve fouten van de tensor-train-metingen gaan hier van ongeveer 0.004 tot 0.02 in plaats van 0.01 tot 0.05). Desalniettemin geven tensor trains een beter resultaat tot een SNR van 43dB (een relatieve fout van ongeveer 0.007) met een zelfs bijna verdubbelde compressiefactor voor sommige grotere fouten. Voor kleinere fouten doet de beste methode van Karami et al. het echter wel beter.
+
+\begin{figure}[]
+  \centering
+  \includegraphics[scale=0.45]{images/karami_edited.png}
+  \caption{Vergelijking tussen tensor trains, videocompressie met x264 (preset medium) en de compressiemethoden van Karami et al. Deze grafiek is een aangepaste versie van het origineel uit hun paper \cite{ref:karami}.}
+\label{fig:literature-comparison}
+\end{figure}
+
+\newpage
 \section{Voorbeeldcompressies}
 
 Om dit hoofdstuk af te sluiten zullen we nog een aantal hyperspectrale afbeeldingen tonen voor en na compressie met tensor trains. Zoals in hoofdstuk \ref{hoofdstuk:methodologie} zullen we deze voorstellen door de spectrale banden op te tellen en deze sommen te verschuiven en schalen naar het domein $\{0, \dots, 255\}$. In deze sectie zullen relatieve fout en compressiefactor afgekort worden tot RF en CF respectievelijk.
 
-\newpage
-\begin{figure}[]
+\begin{figure}[H]
 \centering
 \begin{subfigure}{0.48\textwidth}
   \centering
@@ -200,7 +220,7 @@ Om dit hoofdstuk af te sluiten zullen we nog een aantal hyperspectrale afbeeldin
   \includegraphics[scale=1]{images/example_compression_Indian_Pines_0_05.png}
   \caption{RF: 0.0475, CF: 504.75, 17.7KB}
 \end{subfigure}
-\caption{Voorbeeldcompressies van Indian Pines \cite{ref:ehu_aviris}.}
+\caption{Voorbeeldcompressies van Indian Pines \cite{ref:ehu_aviris_indian_pines}.}
 \end{figure}
 
 \begin{figure}[]
@@ -230,7 +250,7 @@ Om dit hoofdstuk af te sluiten zullen we nog een aantal hyperspectrale afbeeldin
   \includegraphics[scale=0.55]{images/example_compression_Cuprite_0_05.png}
   \caption{RF: 0.0493, CF: 2888.5, 35.8KB}
 \end{subfigure}
-\caption{Voorbeeldcompressies van Cuprite \cite{ref:ehu_aviris}.}
+\caption{Voorbeeldcompressies van Cuprite \cite{ref:ehu_aviris_cuprite}.}
 \end{figure}
 
 \begin{figure}[]

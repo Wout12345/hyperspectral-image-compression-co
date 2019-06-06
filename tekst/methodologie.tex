@@ -17,8 +17,7 @@ Verder zal het geheugengebruik van metadata (onder meer afmetingen van tensoren,
 
 \section{Compressiefout}
 
-Om de fouten ge\"introduceerd door de lossy compressie te vergelijken, zullen we werken met de relatieve fout, gedefinieerd als:
-
+Idealiter meet men de fout ge\"introduceerd door compressie in functie van de beoogde toepassing van de gedecomprimeerde data. Zo heeft men bij het ontwerp van belangrijke compressiemethoden als JPEG \cite{ref:jpeg} (normale afbeeldingen) en x264 \cite{ref:x264} (video's) rekening gehouden met de eigenschappen van de menselijke waarneming. Om praktische redenen zullen we echter werken met de relatieve fout, simpelweg gedefinieerd als:
 \[
 \text{relatieve fout} = \frac{||\text{gereconstrueerde tensor} - \text{originele tensor}||_F}{||\text{originele tensor}||_F}
 \]
