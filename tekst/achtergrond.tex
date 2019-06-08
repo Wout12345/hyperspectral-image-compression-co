@@ -11,14 +11,14 @@ Wanneer data gecomprimeerd wordt, gebeurt dit vaak \textit{lossless}, waarbij de
 
 \subsection{Lossy compressie}
 
-Men kan meestal data echter veel verder comprimeren als men een zekere fout op het gedecomprimeerde resultaat tolereert. Dit noemen we \textit{lossy} compressie. Een typisch voorbeeld hiervan is het bekende JPEG-compressie-algoritme \cite{ref:jpeg} voor afbeeldingen. Aangezien we bij het opslaan van hyperspectrale afbeeldingen niet ge\"interesseerd zijn in perfecte reconstructies, zullen we ons in deze thesis beperken tot het onderzoeken van lossy compressie van hyperspectrale afbeeldingen.
+Men kan meestal data echter veel verder comprimeren als men een zekere fout op het gedecomprimeerde resultaat tolereert. Dit noemen we \textit{lossy} compressie. Een typisch voorbeeld hiervan is het bekende JPEG-compressie-algoritme \cite{ref:jpeg} voor afbeeldingen. Aangezien we bij het opslaan van hyperspectrale afbeeldingen zelden ge\"interesseerd zijn in perfecte reconstructies, zullen we ons in deze thesis beperken tot het onderzoeken van lossy compressie van hyperspectrale afbeeldingen.
 
 \newpage
 \section{Multilineaire algebra}
 
 \subsection{Tensoren}
 
-In de lineaire algebra zijn we vertrouwd met vectoren en matrices. Er bestaat echter een veralgemening van dit concept: de tensor. Vanuit een informatica-standpunt is een tensor simpelweg een \textit{array} met een arbitrair aantal dimensies. Zo is een vector een 1D-tensor en een matrix een 2D-tensor. We zullen het aantal dimensies van een tensor vanaf nu meestal het aantal modes noemen, dit vermijdt namelijk verwarring met bijvorbeeld de dimensie van ruimtes opgespannen door vectoren uit de tensor. De hyperspectrale afbeeldingen die we gaan comprimeren zullen we dus voorstellen als 3D-tensoren, met twee spatiale modes en \'e\'en spectrale mode.
+In de lineaire algebra zijn we vertrouwd met vectoren en matrices. Er bestaat echter een veralgemening van dit concept: de tensor. Vanuit een informatica-standpunt is een tensor simpelweg een \textit{array} met een arbitrair aantal dimensies. Zo is een vector een 1D-tensor en een matrix een 2D-tensor. We zullen het aantal dimensies van een tensor vanaf nu meestal het aantal modes noemen, dit vermijdt namelijk verwarring met bijvoorbeeld de dimensie van ruimtes opgespannen door vectoren uit de tensor. De hyperspectrale afbeeldingen die we gaan comprimeren zullen we dus voorstellen als 3D-tensoren, met twee spatiale modes en \'e\'en spectrale mode.
 
 \subsection{Vezels, matricisaties en mode-n product}
 
@@ -139,7 +139,7 @@ Analoog aan de T-HOSVD, wordt voor elke mode de afgeknotte SVD over de vezels la
 \item In plaats van de multilineaire rang vast te leggen, kan men een doelfout $\epsilon$ geven als invoer, wat praktischer is in het geval van compressie. Bij de T-HOSVD kan men de doelfout per mode $\epsilon_i$ dan proberen te te verdelen volgens $\epsilon_i^2 = \frac{\epsilon^2}{d}$. In mode $i$ wordt $r_i$ zo gekozen zodat de som van de kwadraten van de weggelaten singuliere waarden uit de afgeknotte SVD kleiner dan of gelijk is aan $\epsilon_i^2$. Aangezien de rang per mode echter gekozen moet worden op discrete wijze, zal er altijd een marge zijn tussen de toegevoegde fout en $\epsilon_i^2$. Omdat de ST-HOSVD sequentieel werkt, kan men dit compenseren door $\epsilon_i$ zowel te laten afhangen van $\epsilon$, het aantal nog te verwerken modes en de fouten toegevoegd in eerdere modes. Op deze manier kan de ST-HOSVD een gegeven doelfout beter benaderen dan de T-HOSVD.
 \end{itemize}
 
-Vanwege deze voordelen zullen we voor het berekenen van Tucker-decomposities (en later ook \textit{tensor trains}) gebruik maken van de ST-HOSVD. Omdat dit algoritme sequentieel werkt, moeten we wel letten op de volgorde waarin de modes verwerkt worden. Wanneer de grootste compressie eerst gebeurd, is de kerntensor meteen sterk verkleind en kunnen de volgende modes sneller verwerkt worden, zodat de uitvoeringstijd daalt.
+Vanwege deze voordelen zullen we voor het berekenen van Tucker-decomposities (en later ook \textit{tensor trains}) gebruik maken van de ST-HOSVD. Omdat dit algoritme sequentieel werkt, moeten we wel letten op de volgorde waarin de modes verwerkt worden. Wanneer de grootste compressie eerst gebeurt, is de kerntensor meteen sterk verkleind en kunnen de volgende modes sneller verwerkt worden, zodat de uitvoeringstijd daalt.
 
 \section{Literatuurstudie}
 
@@ -147,7 +147,7 @@ Hoewel hyperspectrale afbeeldingscompressie een redelijk specifiek onderzoeksdom
 
 \subsection{\textit{Compression of hyperspectral remote sensing images by tensor approach}}
 
-In deze paper van Zhang et al. \cite{ref:zhang} wordt voorgesteld om hyperspectrale data te comprimeren als tensoren aan de hand van volledige Tucker-decomposities, in tegenstelling tot andere technieken, zoals het uitvoeren van \textit{principal component analysis} (PCA) \cite{ref:pca} enkel langs de spectrale as. Hieruit volgen relatief goede resultaten, maar er wordt niet dieper ingegaan op het berekenen van de HOSVD (de auteurs beschrijven zelfs alleen het erg trage iteratieve HOOI-algoritme) of andere compressiefasen zoals quantisatie en encodering.
+In deze paper van Zhang et al. \cite{ref:zhang} wordt voorgesteld om hyperspectrale data te comprimeren als tensoren aan de hand van volledige Tucker-decomposities, in tegenstelling tot andere technieken, zoals het uitvoeren van \textit{principal component analysis} (PCA) \cite{ref:pca} enkel langs de spectrale as. Hieruit volgen relatief goede resultaten, maar er wordt niet dieper ingegaan op het berekenen van de HOSVD (de auteurs beschrijven zelfs alleen het erg trage iteratieve HOOI-algoritme) of andere compressiefasen zoals quantisatie of encodering.
 
 \subsection{\textit{Hyperspectral image compression using 3D discrete cosine transform and support vector machine learning}}
 
@@ -155,7 +155,7 @@ De discrete cosinustransformatie (DCT) \cite{ref:dct} is een transformatie gebas
 \[
 X_k = \sum_{n=0}^{N-1} x_n \cos \left( \frac{k \pi}{N} \left( n + \frac{1}{2} \right) \right) \quad \text{voor } k = 1, \dots, N - 1
 \]
-De inverse transformatie kan berekend worden met een analoge formule. De kern is hier dat men een signaal gaat voorstellen als de som van een reeks cosinusgolven. Wanneer men het signaal gaat comprimeren, kan men typisch de hoogfrequente componenten weglaten (of ten minste met lagere precisie quantiseren) zonder een grote fout te introduceren, zoals men bij de afgeknotte SVD slechts met een gedeeltelijke basis werkt. In tegenstelling tot bij de SVD, liggen de basisvectoren (de cosinusgolven met verschillende frequenties) bij de DCT al vast en moeten deze niet opgeslagen worden, alleen de amplitudes $X_0, \dots, X_{N-1}$. Om deze redenen ligt deze transformatie aan de basis van belangrijke compressie-algoritmen zoals JPEG \cite{ref:jpeg}.\\
+De inverse transformatie kan berekend worden met een analoge formule. De kern is hier dat men een signaal gaat voorstellen als de som van een reeks cosinusgolven. Wanneer men het signaal gaat comprimeren, kan men typisch de hoogfrequente componenten weglaten (of ten minste met lagere precisie quantiseren) zonder een grote fout te introduceren, zoals men bij de afgeknotte SVD slechts met een gedeeltelijke basis werkt. In tegenstelling tot bij de SVD, liggen de basisvectoren (de cosinusgolven met verschillende frequenties) van de DCT al vast en moeten deze niet opgeslagen worden, maar alleen de amplitudes $X_0, \dots, X_{N-1}$. Om deze redenen ligt deze transformatie aan de basis van belangrijke compressie-algoritmen zoals JPEG \cite{ref:jpeg}.\\
 
 In de paper van Karami et al. \cite{ref:karami} bespreekt men een algoritme voor het comprimeren van hyperspectrale afbeeldingen, waarbij de data initieel verwerkt wordt door een 3D-veralgemening van de DCT. Hierna worden de co\"effici\"enten gequantiseerd en benaderd door een klein aantal waarden met behulp van \textit{support vector machines} \cite{ref:svm}, een veel-gebruikt \textit{machine-learning}-model. Door deze technieken te combineren bekomen ze uiteindelijk erg goede experimentele resultaten, waarmee we onze eigen methoden kort zullen vergelijken in hoofdstuk \ref{hoofdstuk:resultaten}.
 

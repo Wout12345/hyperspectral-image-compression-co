@@ -44,6 +44,20 @@ def load_cuprite():
 def load_cuprite_cropped():
 	return load_cuprite()[:484, :576, :] # 22**2, 24**2
 
+def load_cuprite_radiance_cropped():
+	lines = 256 # Full file: 256 lines
+	samples = 256 # Full file: 256 samples
+	channels = 128
+	data = np.fromfile("../data/Cuprite_radiance_cropped", dtype="int16").reshape(lines, samples, channels)
+	return data
+
+def load_moffet_field_radiance_cropped():
+	lines = 256 # Full file: 256 lines
+	samples = 256 # Full file: 256 samples
+	channels = 128
+	data = np.fromfile("../data/Moffet_Field_radiance_cropped", dtype="int16").reshape(lines, samples, channels)
+	return data
+
 def load_botswana():
 	return loadmat("../data/Botswana.mat")["Botswana"][:, :, 2:]
 
@@ -126,3 +140,20 @@ def plot_intensities(data):
 	intensities = np.sum(data, axis=(0, 1))
 	plt.plot(range(data.shape[2]), intensities, "b")
 	plt.show()
+
+def crop_cuprite_radiance():
+	lines = 2776 # Full file: 2776 lines
+	samples = 754 # Full file: 754 samples
+	channels = 224
+	data = np.reshape(np.fromfile("../data/Cuprite_radiance", dtype="int16", count=lines*samples*channels).byteswap(), (lines, samples, channels))
+	data = data[:256, :256, :128]
+	data.tofile("../data/Cuprite_radiance_cropped")
+
+def crop_moffet_field_radiance():
+	lines = 1924 # Full file: 1924 lines
+	samples = 753 # Full file: 753 samples
+	channels = 224
+	data = np.reshape(np.fromfile("../data/Moffet_Field_radiance", dtype="int16", count=lines*samples*channels).byteswap(), (lines, samples, channels))
+	data = data[:256, :256, :128]
+	data.tofile("../data/Moffet_Field_radiance_cropped")
+	

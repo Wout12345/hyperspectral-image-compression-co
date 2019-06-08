@@ -17,46 +17,47 @@ Warning--to sort, need author or key in ref:aviris_website
 Warning--to sort, need author or key in ref:aviris
 Warning--to sort, need author or key in ref:eigh_tridiagonal
 Warning--to sort, need author or key in ref:ffmpeg
+Warning--to sort, need author or key in ref:aviris_standard
 Warning--empty journal in ref:saad
-You've used 40 entries,
+You've used 41 entries,
             2118 wiz_defined-function locations,
-            653 strings with 8506 characters,
-and the built_in function-call counts, 8639 in all, are:
-= -- 803
-> -- 360
+            656 strings with 8614 characters,
+and the built_in function-call counts, 8798 in all, are:
+= -- 818
+> -- 361
 < -- 0
-+ -- 152
++ -- 153
 - -- 110
-* -- 323
-:= -- 1481
-add.period$ -- 116
-call.type$ -- 40
-change.case$ -- 175
+* -- 328
+:= -- 1498
+add.period$ -- 118
+call.type$ -- 41
+change.case$ -- 178
 chr.to.int$ -- 0
-cite$ -- 45
-duplicate$ -- 319
-empty$ -- 820
+cite$ -- 47
+duplicate$ -- 326
+empty$ -- 843
 format.name$ -- 110
-if$ -- 1841
+if$ -- 1881
 int.to.chr$ -- 0
-int.to.str$ -- 40
+int.to.str$ -- 41
 missing$ -- 13
-newline$ -- 199
+newline$ -- 203
 num.names$ -- 72
-pop$ -- 289
+pop$ -- 297
 preamble$ -- 1
-purify$ -- 135
+purify$ -- 137
 quote$ -- 0
-skip$ -- 309
+skip$ -- 317
 stack$ -- 0
-substring$ -- 202
-swap$ -- 39
+substring$ -- 207
+swap$ -- 40
 text.length$ -- 0
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 160
-warning$ -- 5
+type$ -- 164
+warning$ -- 6
 while$ -- 72
-width$ -- 42
-write$ -- 366
-(There were 5 warnings)
+width$ -- 43
+write$ -- 373
+(There were 6 warnings)

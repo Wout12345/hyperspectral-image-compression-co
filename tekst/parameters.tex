@@ -5,6 +5,7 @@ Na de beslissingen die gemaakt werden in de eerdere secties, blijven er drie par
 
 Helaas duurt de compressie en decompressie van grote datasets te lang om met een groot aantal parameterwaarden te experimenteren, dus we zullen ons in onze analyse beperken tot twee kleinere gevallen: Cuprite en Indian Pines.
 
+\newpage
 \subsection{Niet-adaptieve selectie}
 
 Om een idee te krijgen van de optimale parameterwaarden voor een bepaalde relatieve fout, zullen we eerst een groot aantal experimenten uitvoeren met vari\"erende waarden. Hierbij gebruiken we de volgende domeinen:
@@ -33,7 +34,7 @@ In figuur \ref{fig:all_sweep_points_cuprite} zien we de volledige verzameling ui
   \label{fig:filtered_sweep_points_cuprite}
 \end{figure}
 
-In figuren \ref{fig:filtered_sweep_points_RDS}, \ref{fig:filtered_sweep_points_BPK} en \ref{fig:filtered_sweep_points_BPF} zien we welke parameterwaarden corresponderen met deze steekproefoptima. We voerden ook hetzelfde proces uit voor Indian Pines. Voor elke parameter leggen we nu een selectiefunctie vast op basis van deze experimentele resultaten. Het kiezen van deze functies kan geavanceerder en is zeker een piste voor verder onderzoek.
+In figuren \ref{fig:filtered_sweep_points_RDS}, \ref{fig:filtered_sweep_points_BPK} en \ref{fig:filtered_sweep_points_BPF} zien we welke parameterwaarden corresponderen met deze steekproefoptima. We voerden ook hetzelfde proces uit voor Indian Pines. Voor elke parameter leggen we nu een selectiefunctie vast op basis van deze experimentele resultaten. De keuze van deze functies kan geavanceerder en is zeker een piste voor verder onderzoek.
 
 \begin{itemize}
 \item $RDS = max(0.001, 0.962601*\text{kwaliteit} - 0.000414)$, simpelweg op basis van lineaire regressie. De resultaten voor Cuprite en Indian Pines liggen hier vrij dichtbij elkaar.

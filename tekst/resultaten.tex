@@ -176,23 +176,36 @@ Ten slotte besloten we om ook eens te kijken naar de decompressietijd in figuur 
 
 \section{Vergelijking met de literatuur}
 
-Aangezien hyperspectrale compressie een klein onderzoeksdomein is en niet altijd met dezelfde datasets gewerkt wordt, is het moeilijk om veel concrete vergelijkingspunten te vinden in de literatuur. Om deze redenen zullen we ons beperken tot \'e\'en ander resultaat: de compressie van Cuprite door Karami et al. \cite{ref:karami}, wiens paper we al eerder aanhaalden bij de literatuurstudie in hoofdstuk \ref{hoofdstuk:achtergrond}. Zij drukken de compressiefout uit als \textit{signal-to-noise ratio} (SNR) en de compressiegrootte uit als de \textit{rate} in bits per pixel per band. We zullen onze eigen resultaten omzetten met de volgende formules:
+Aangezien hyperspectrale afbeeldingscompressie een klein onderzoeksdomein is en de gebruikte datasets meestal erg beknopt beschreven worden, is het moeilijk om veel concrete vergelijkingspunten te vinden in de literatuur. Om deze redenen zullen we ons beperken tot slechts \'e\'en ander resultaat: de paper van Karami et al. \cite{ref:karami}, die we al eerder aanhaalden bij de literatuurstudie in hoofdstuk \ref{hoofdstuk:achtergrond}. Zelfs hierbij wordt de voorverwerking van de data ook te kort besproken om de volgende vergelijking volledig te kunnen vertrouwen, maar we hebben alles geprobeerd om deze zo waarheidsgetrouw mogelijk voor te stellen.
+
+\newpage
+Karami et al. drukken de compressiefout uit als \textit{signal-to-noise ratio} (SNR) en de compressiegrootte uit als de \textit{rate} in bits per pixel per band. We zullen onze eigen resultaten omzetten met de volgende formules:
 \[
 SNR \text{ (in dB)} = -20 \log_{10}(\text{relatieve fout})
 \]
 \[
 rate = \frac{\text{aantal bits per pixel per band in origineel}}{\text{compressiefactor}}
 \]
-In figuur \ref{fig:literature-comparison} vindt men een vergelijking van de beste eerder besproken technieken (tensor trains en x264 met preset medium) en de technieken van Karami et al. Merk op dat hun domein anders ligt dan hetgene waarvoor wij onze algoritmen afgesteld hebben (de relatieve fouten van de tensor-train-metingen gaan hier van ongeveer 0.004 tot 0.02 in plaats van 0.01 tot 0.05). Desalniettemin geven tensor trains een beter resultaat tot een SNR van 43dB (een relatieve fout van ongeveer 0.007) met een zelfs bijna verdubbelde compressiefactor voor sommige grotere fouten. Voor kleinere fouten doet de beste methode van Karami et al. het echter wel beter.
 
-\begin{figure}[]
+\begin{figure}[H]
+\begin{subfigure}{\textwidth}
   \centering
-  \includegraphics[scale=0.45]{images/karami_edited.png}
-  \caption{Vergelijking tussen tensor trains, videocompressie met x264 (preset medium) en de compressiemethoden van Karami et al. Deze grafiek is een aangepaste versie van het origineel uit hun paper \cite{ref:karami}.}
+  \includegraphics[width=0.9\linewidth]{images/karami_edited_cuprite.png}
+  \caption{De Cuprite-radiantie-dataset van Karami et al. \cite{ref:aviris_standard}.}
+\end{subfigure}
+\\
+\begin{subfigure}{\textwidth}
+  \centering
+  \includegraphics[width=0.9\linewidth]{images/karami_edited_moffet_field.png}
+  \caption{De Moffett-Field-radiantie-dataset van Karami et al. \cite{ref:aviris_standard}.}
+\end{subfigure}
+\caption{Vergelijking tussen tensor trains, videocompressie met x264 (preset medium) en de compressiemethoden van Karami et al. Deze grafieken zijn een aangepaste versies van de originelen uit hun paper \cite{ref:karami}.}
 \label{fig:literature-comparison}
 \end{figure}
 
 \newpage
+In figuur \ref{fig:literature-comparison} vindt men een vergelijking van de beste eerder besproken technieken (tensor trains en x264 met preset medium) en de technieken van Karami et al. Merk op dat hun domein anders ligt dan hetgene waarvoor wij onze algoritmen afgesteld hebben (de relatieve fouten van de tensor-train-metingen gaan hier van ongeveer 0.003 tot 0.03 in plaats van 0.01 tot 0.05). We zien dat hun methode het erg goed doet op de Cuprite-radiantie-dataset, maar bij de Moffett-Field-radiantie-dataset doet videocompressie het voor een groot deel van het domein beter. Ook tensor-train compressie scoort hier even goed tot significant beter voor bepaalde fouten.
+
 \section{Voorbeeldcompressies}
 
 Om dit hoofdstuk af te sluiten zullen we nog een aantal hyperspectrale afbeeldingen tonen voor en na compressie met tensor trains. Zoals in hoofdstuk \ref{hoofdstuk:methodologie} zullen we deze voorstellen door de spectrale banden op te tellen en deze sommen te verschuiven en schalen naar het domein $\{0, \dots, 255\}$. In deze sectie zullen relatieve fout en compressiefactor afgekort worden tot RF en CF respectievelijk.

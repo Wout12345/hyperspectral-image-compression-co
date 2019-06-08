@@ -1645,10 +1645,13 @@ def general_comparison_decompression_times():
 
 # Sectie 6.3: Vergelijking met de literatuur
 
-def literature_comparison():
+def literature_comparison_cuprite():
 	
 	# Make special plot for Cuprite with right dimensions and such
 	
+	def plot_rate_snr(rel_errors, compression_factors, label):
+		plt.plot([data.itemsize*8/factor for factor in compression_factors], [20*math.log10(1/error) for error in rel_errors], label=label)
+		
 	# Plot dimensions in pixels
 	plot_width = 785
 	plt_height = 391
@@ -1662,20 +1665,13 @@ def literature_comparison():
 	plt.figure(figsize=(plot_width/my_dpi, plt_height/my_dpi), dpi=my_dpi)
 	plt.axis("off")
 	
-	# Test
-	#xs = np.linspace(minx, maxx, num=101)
-	#plt.plot(xs, 5/0.2*(xs - 0.8) + 25, label="1")
-	#plt.plot(xs, 10/0.2*xs + 25, label="2")
-	
 	# Plot data
-	data = load_cuprite_cropped()
-	def plot_rate_snr(rel_errors, compression_factors, label):
-		plt.plot([data.itemsize*8/factor for factor in compression_factors], [20*math.log10(1/error) for error in rel_errors], label=label)
+	data = load_cuprite_radiance_cropped()
 	
 	# Tensor trains
 	rel_errors = []
 	compression_factors = []
-	rel_target_errors = np.logspace(math.log10(0.001), math.log10(0.021), num=11)
+	rel_target_errors = np.logspace(math.log10(0.001), math.log10(0.031), num=11)
 	for rel_target_error in rel_target_errors:
 		print("Testing tensor_trains with target error %s"%rel_target_error)
 		compressed = tensor_trains.compress(data, rel_target_error)
@@ -1683,6 +1679,7 @@ def literature_comparison():
 		compression_factors.append(st_hosvd.get_compression_factor_quantize(data, compressed))
 		compressed = None
 		gc.collect()
+		print(rel_target_error, rel_errors[-1])
 	print("rel_errors =", rel_errors)
 	print("compression_factors =", compression_factors)
 	plot_rate_snr(rel_errors, compression_factors, "Tensor trains")
@@ -1690,7 +1687,7 @@ def literature_comparison():
 	# x264 (medium)
 	rel_errors = []
 	compression_factors = []
-	crfs_medium = [0, 2, 4, 6, 10, 13, 16, 20, 24]
+	crfs_medium = [0, 1, 2, 3, 4, 6, 10, 13, 16, 20, 24]
 	for crf in crfs_medium:
 		print("Testing x264 (medium) with crf %s"%crf)
 		compressed = other_compression.compress_video(data, crf, preset="medium")
@@ -1708,7 +1705,70 @@ def literature_comparison():
 	plt.ylim(miny, maxy)
 	plt.legend()
 	plt.subplots_adjust(left=0, right=1, bottom=0, top=1)
-	plt.savefig("../tekst/images/literature_comparison.png", dpi=my_dpi)
+	plt.savefig("../tekst/images/literature_comparison_cuprite.png", dpi=my_dpi)
+	plt.close()
+
+def literature_comparison_moffet_field():
+	
+	# Make special plot for Moffet Field with right dimensions and such
+	
+	def plot_rate_snr(rel_errors, compression_factors, label):
+		plt.plot([data.itemsize*8/factor for factor in compression_factors], [20*math.log10(1/error) for error in rel_errors], label=label)
+		
+	# Plot dimensions in pixels
+	plot_width = 772
+	plt_height = 420
+	
+	# Axes ranges
+	minx, maxx = 0, 2
+	miny, maxy = 20, 50
+	
+	# Initialize plot
+	my_dpi = 96
+	plt.figure(figsize=(plot_width/my_dpi, plt_height/my_dpi), dpi=my_dpi)
+	plt.axis("off")
+	
+	# Plot data
+	data = load_moffet_field_radiance_cropped()
+	
+	# Tensor trains
+	rel_errors = []
+	compression_factors = []
+	rel_target_errors = np.logspace(math.log10(0.001), math.log10(0.031), num=11)
+	for rel_target_error in rel_target_errors:
+		print("Testing tensor_trains with target error %s"%rel_target_error)
+		compressed = tensor_trains.compress(data, rel_target_error)
+		rel_errors.append(rel_error(data, tensor_trains.decompress(compressed), preserve_decompressed=False))
+		compression_factors.append(st_hosvd.get_compression_factor_quantize(data, compressed))
+		compressed = None
+		gc.collect()
+		print(rel_target_error, rel_errors[-1])
+	print("rel_errors =", rel_errors)
+	print("compression_factors =", compression_factors)
+	plot_rate_snr(rel_errors, compression_factors, "Tensor trains")
+	
+	# x264 (medium)
+	rel_errors = []
+	compression_factors = []
+	crfs_medium = [0, 4, 6, 10, 13, 16, 20, 24]
+	for crf in crfs_medium:
+		print("Testing x264 (medium) with crf %s"%crf)
+		compressed = other_compression.compress_video(data, crf, preset="medium")
+		rel_errors.append(rel_error(data, other_compression.decompress_video(compressed), preserve_decompressed=False))
+		compression_factors.append(other_compression.get_compression_factor_video(data, compressed))
+		compressed = None
+		gc.collect()
+		print(crf, rel_errors[-1])
+	print("rel_errors =", rel_errors)
+	print("compression_factors =", compression_factors)
+	plot_rate_snr(rel_errors, compression_factors, "x264 (medium)")
+	
+	# Finish plot
+	plt.xlim(minx, maxx)
+	plt.ylim(miny, maxy)
+	plt.legend()
+	plt.subplots_adjust(left=0, right=1, bottom=0, top=1)
+	plt.savefig("../tekst/images/literature_comparison_moffet_field.png", dpi=my_dpi)
 	plt.close()
 
 # Sectie 6.4: Voorbeeldcompressies
@@ -1739,4 +1799,4 @@ def save_example_compressions():
 			gc.collect()
 			print("")
 
-literature_comparison()
+literature_comparison_moffet_field()

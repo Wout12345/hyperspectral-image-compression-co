@@ -13,6 +13,7 @@ Modevolgorde & Compressierang \\ \hline
 \input{data/modevolgorde.tex}
 \end{tabular}
 \end{table}
+\newpage
 De spectrale dimensie is dus zeker de best comprimeerbare en zal bijgevolg vanaf nu eerst verwerkt worden, gevolgd door de spatiale dimensies (gerangschikt van groot naar klein).
 
 \subsection{Versnellen van de SVD}
@@ -21,7 +22,7 @@ De spectrale dimensie is dus zeker de best comprimeerbare en zal bijgevolg vanaf
 
 Een belangrijke eigenschap van de SVD is diens verband met de eigenwaardenontbinding. Wanneer $A = U \Sigma V^T$, dan vormen $U$ en $\Sigma^2$ namelijk respectievelijk de eigenvectoren en eigenwaarden van $A A^T$, ook wel bekend als de Gram-matrix van de rijen van $A$ \cite{ref:svd}. Als $A \in \mathbb{R}^{m \times n}$ met $m \ll n$, dan is $A A^T \in \mathbb{R}^{m \times m}$, wat leidt tot een veel snellere eigenwaardenontbinding dan wanneer men de SVD toepast op de volledige matrix. Bij deze methode moet men wel eerst een matrixvermenigvuldiging uitvoeren met complexiteit $O(m^2 n)$, wat van dezelfde orde is als het normaal berekenen van de SVD \cite{ref:svd}, maar dit kan in de praktijk nog steeds erg nuttig zijn aangezien de matrixvermenigvuldiging een relatief eenvoudige operatie is die al sterk geoptimaliseerd is in libraries als LAPACK \cite{ref:lapack}. Verder kan deze aanpak numerieke problemen opleveren omdat we eerst de invoerdata met zichzelf vermenigvuldigen en op het einde de vierkantswortels trekken van de eigenwaarden, wat de precisie verlaagt, maar in deze toepassing hoeft dit geen probleem te zijn aangezien we de SVD sterk afknotten en dit de grootste fout zal veroorzaken. Voor ons zijn fouten van deze grootte dus irrelevant.\\
 
-Een klein nadeel van deze techniek is dat we de matrix $V$ niet meteen hebben zoals bij het berekenen van een SVD. De matricizatie van de gecomprimeerde data $X_k$ (met compressierang $k$) moet nu dus bepaald worden als $X_k := U_k^T X$ (complexiteit $O(kmn)$) in plaats van $X_k := \Sigma_k V_k$ (complexiteit $O(kn)$), wat een hogere complexiteit heeft, maar dit is slechts een matrixvermenigvuldiging dus dit kost niet zo veel tijd meer.\\
+Een klein nadeel van deze techniek is dat we de matrix $V$ niet meteen hebben zoals bij het berekenen van een SVD. De matricisatie van de gecomprimeerde data $X_k$ (met compressierang $k$) moet nu dus bepaald worden als $X_k := U_k^T X$ (complexiteit $O(kmn)$) in plaats van $X_k := \Sigma_k V_k$ (complexiteit $O(kn)$), wat een hogere complexiteit heeft, maar dit is slechts een matrixvermenigvuldiging dus dit kost niet zo veel tijd meer.
 
 \begin{table}[H]
 \centering
@@ -30,7 +31,7 @@ Een klein nadeel van deze techniek is dat we de matrix $V$ niet meteen hebben zo
 Methode & Relatieve fout & Compressietijd (s)\\ \hline
 \input{data/gram-matrix.tex}
 \end{tabular}
-\caption{Vergelijking tussen de standaard ST-HOSVD en de methode met de Gram-matrix voor Cuprite met relatieve doelfout 0.025 (uitgemiddeld over 10 experimenten).}
+\caption{Vergelijking tussen de standaard ST-HOSVD en de methode met de Gram-matrix voor Cuprite met relatieve doelfout 0.025.}
 \end{table}
 Dit voorbeeld bevestigt dus dat deze methode een grote versnelling kan opleveren zonder enige significante fout te introduceren.
 
@@ -45,7 +46,7 @@ Om de eventuele fout die veroorzaakt wordt door te werken met de Gram-matrix te 
 Methode & Relatieve fout & Compressietijd (s)\\ \hline
 \input{data/gram-matrix-qr.tex}
 \end{tabular}
-\caption{Vergelijking tussen de methode met de Gram-matrix met en zonder QR-decompositie voor Cuprite met relatieve doelfout 0.025 (uitgemiddeld over 10 experimenten).}
+\caption{Vergelijking tussen de methode met de Gram-matrix met en zonder QR-decompositie voor Cuprite met relatieve doelfout 0.025.}
 \end{table}
 
 Men ziet dat de QR-decompositie veel rekentijd kost en zoals eerder vermeld is de fout ge\"introduceerd door de methode met de Gram-matrix toch al verwaarloosbaar. Er is dus geen significant verschil in de relatieve fout. Bijgevolg is deze techniek afgeraden voor onze doeleinden.
@@ -74,10 +75,9 @@ De uitvoer hiervan wordt dan samengevoegd in de volgende matrices:
 \[
 Q = 
 \begin{bmatrix}
-    q_1 & q_2 & \dots & q_k
+q_1 & q_2 & \dots & q_k
 \end{bmatrix}
-\]
-\[
+\quad
 T = \begin{bmatrix}
 \alpha_1 & \beta_2 & 0 & \dots & 0 \\
 \beta_2 & \alpha_2 & \beta_3 & \dots & 0 \\
@@ -86,6 +86,7 @@ T = \begin{bmatrix}
 0 & 0 & 0 & \dots & \alpha_k
 \end{bmatrix}
 \]
+\newpage
 
 Voor elke eigenwaarde en eigenvector $\lambda, x$ van $T$ definieert men de corresponderende Ritz-waarden en Ritz-vectoren als $\lambda, Qx$. Nu geldt dat wanneer men het aantal iteraties $k$ verhoogt, de Ritz-waarden en Ritz-vectoren convergeren naar de grootste $k$ eigenwaarden en bijbehorende eigenvectoren van $A A^T$.\\
 
@@ -159,9 +160,9 @@ Methode & Gram-matrix & Steekproef + Gram-matrix\\ \hline
 \label{table:randomized-svd-mauna-kea-average}
 \end{table}
 
-We zien in tabel \ref{table:randomized-svd-cuprite-average} dat, voor deze dataset, de randomized SVD een degelijke versnelling geeft zonder een significant verschil in de fout of compressiefactor. Daarnaast is de variantie op de fout en compressiefactor erg klein. Bovendien toont tabel \ref{table:randomized-svd-mauna-kea-average} aan dat deze techniek ook goed werkt voor voor Mauna Kea, al is het met een steekproef van 20 keer de originele rang.\\
+We zien in tabel \ref{table:randomized-svd-cuprite-average} dat, voor deze dataset, de randomized SVD een degelijke versnelling geeft zonder een significant verschil in de fout of compressiefactor. Daarnaast is de variantie op de fout en compressiefactor erg klein. Bovendien toont tabel \ref{table:randomized-svd-mauna-kea-average} aan dat deze techniek ook goed werkt voor Mauna Kea, al is het met een steekproef van 20 keer de originele rang.\\
 
-Verder hebben we als kleine optimizatie getest of het sorteren van de steekproefindices voor het selecteren van deze kolommen uit de steekproefmatrix effect heeft op de uitvoeringstijd. Dit kost rekenwerk maar kan eventueel een versnelling geven bij het kopi\"eren van de kolommen vanwege het betere \textit{memory access pattern}. In de praktijk bleef de rekentijd ongeveer hetzelfde, dus we gebruiken deze techniek verder niet.\\
+Verder hebben we als kleine optimisatie getest of het sorteren van de steekproefindices voor het selecteren van deze kolommen uit de steekproefmatrix effect heeft op de uitvoeringstijd. Dit kost rekenwerk maar kan eventueel een versnelling geven bij het kopi\"eren van de kolommen vanwege het betere \textit{memory access pattern}. In de praktijk bleef de rekentijd ongeveer hetzelfde, dus we gebruiken deze techniek verder niet.\\
 
 \begin{figure}[]
   \centering
@@ -170,7 +171,7 @@ Verder hebben we als kleine optimizatie getest of het sorteren van de steekproef
 \label{fig:randomized-svd-pavia-ratios}
 \end{figure}
 
-In figuur \ref{fig:randomized-svd-pavia-ratios} ziet men echter dat de randomized SVD geen goede resultaten geeft bij Pavia Centre. Hierbij moesten we de steekproefratio (de verhouding tussen de steekproefgrootte en populatiegrootte) verhogen tot 1 om geen merkbare fout toe te voegen, maar in tabel \ref{table:randomized-svd-pavia-test} zien we dat een steekproefratio van 0.2 nog redelijk lijkt te werken voor de spectrale mode, de best comprimeerbare mode. Daarnaast zijn alle modes van Pavia significant slechter comprimeerbaar dan die van Cuprite. Hierdoor denken we dat de steekproefgrootte best groter gekozen wordt wanneer de mode slecht comprimeerbaar is.\\
+In figuur \ref{fig:randomized-svd-pavia-ratios} ziet men echter dat de randomized SVD geen goede resultaten geeft bij Pavia Centre. Hierbij moesten we de steekproefratio (de verhouding tussen de steekproefgrootte en populatiegrootte) verhogen tot 1 om geen merkbare fout toe te voegen, maar in tabel \ref{table:randomized-svd-pavia-test} zien we dat een steekproefratio van 0.2 nog redelijk lijkt te werken voor de spectrale mode, de best comprimeerbare mode. Daarnaast zijn alle modes van Pavia Centre significant slechter comprimeerbaar dan die van Cuprite. Hierdoor denken we dat de steekproefgrootte best groter gekozen wordt wanneer de mode slecht comprimeerbaar is.\\
 
 De meest logische manier om de ``comprimeerbaarheid'' van een mode in te schatten, is echter door te kijken naar de verdeling van de singuliere waarden, die men pas kent na het berekenen van de SVD. Het lijkt ons dus moeilijk om voor een brede verzameling datasets op consistente wijze snel een goede steekproefgrootte te kiezen zonder verdere gegevens over de data, hoewel dit mogelijk verder onderzocht kan worden. Om deze reden zullen we de randomized SVD verder niet gebruiken, hoewel ze voor bepaalde datasets zeker een mooie versnelling kan opleveren.
 
@@ -178,6 +179,7 @@ De meest logische manier om de ``comprimeerbaarheid'' van een mode in te schatte
 
 Na de resultaten van alle bovenstaande methodes te vergelijken, kiezen we ervoor om vanaf nu de methode met de Gram-matrix zonder verdere toevoegingen te gebruiken voor het berekenen van de SVD. Dit lijkt ons de snelste methode die geen significant effect heeft op de compressiefout- of factor.
 
+\newpage
 \begin{table}[H]
 \centering
 \begin{tabular}{|l|l|l|}
