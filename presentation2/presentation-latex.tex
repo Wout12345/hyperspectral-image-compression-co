@@ -1,0 +1,1487 @@
+% KU Leuven latex presentation template
+%
+% © 2012 Michael Hofmann
+%
+% This work is licensed under the Creative Commons Attribution 3.0 Unported License.
+% To view a copy of this license, visit
+% http://creativecommons.org/licenses/by/3.0/ or send a letter to Creative
+% Commons, 444 Castro Street, Suite 900, Mountain View, California, 94041, USA.
+
+\documentclass[t,12pt,dutch
+\ifx\beamermode\undefined\else,\beamermode\fi
+]{beamer}
+%\setbeameroption{show notes}
+%\setbeameroption{show only notes}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+\usepackage[nohyperlinks]{acronym}
+\usepackage{babel,lmodern,graphicx,mathptmx,xspace,wasysym,microtype,booktabs,tabularx,relsize,textcomp,longtable,lipsum,colortbl,eurosym,url,multicol,etoolbox,multimedia,pdfpages,fixltx2e,ifluatex,epstopdf}
+\usepackage[olditem,oldenum]{paralist}
+\usepackage[babel=true]{csquotes}
+\usepackage[thinqspace,amssymb,textstyle]{SIunits}
+\usepackage[textsize=tiny]{todonotes}
+\usepackage[symbol]{footmisc}
+\usepackage[notquote]{hanging}
+\usepackage[normalem]{ulem}
+\usepackage[mathscr]{euscript}
+%\usepackage{lua-visual-debug}
+
+\pdfstringdefDisableCommands{\renewcommand{\sout}{}}
+\graphicspath{{figures/}}
+% Fix sort order in case the same file exists with multiple extensions
+\DeclareGraphicsExtensions{.pdf,.png,.jpeg,.jpg,.eps}
+\frenchspacing
+
+\input{templates/definitions.tex}
+
+
+
+%% From pandoc default template
+%% End pandoc
+
+\mode<presentation>
+
+%\hypersetup{pdfpagemode=FullScreen}
+
+\setbeamercolor{structure}{fg=kulbright}
+\setbeamercolor{title}{fg=white}
+\setbeamercolor{footline}{parent=title}
+\setbeamercolor{normal text}{fg=kuldefault}
+\setbeamercolor{item}{parent=normal text}
+\setbeamercolor{section in toc}{parent=normal text}
+\setbeamercolor{footline extra}{fg=white}
+\setbeamerfont{title}{size=\Large}
+\setbeamerfont{tiny structure}{series=\bfseries}
+\setbeamerfont{caption}{}
+
+\setbeamersize{text margin left=0.8cm}
+\setbeamersize{text margin right=0.8cm}
+\setbeamersize{sidebar width left=0cm}
+
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{itemize item}{\footnotesize\raise1pt\hbox{\textbullet}}
+\setbeamertemplate{itemize subitem}{--}
+\setbeamertemplate{itemize subsubitem}{\tiny\raise1.5pt\hbox{\textbullet}}
+
+\setlength\leftmargini{1em}
+\setlength\leftmarginii{1em}
+\setlength\leftmarginiii{1em}
+
+\defbeamertemplate{background canvas}{title}
+{%
+    \pgfdeclarehorizontalshading{bgshading}{8.70cm}{color(0cm)=(kulleft); color(\the\paperwidth)=(kulright)}%
+    \vbox to 8.70cm{%
+        \pgfuseshading{bgshading}\hspace*{-1.6cm}%
+    }%
+    \hskip-\paperwidth%
+    \hskip1.6cm%
+    \vbox to \paperheight{%
+        \vskip0.5cm\hskip0.5cm\includegraphics[width=2.83cm]{templates/kuleuven}%
+        \vskip0.99cm\hskip0.76cm\includegraphics[width=2.84cm]{templates/key}%
+        \vskip-0.57cm\hskip11.61cm\includegraphics[width=0.58cm]{templates/sedes}\hspace*{-1cm}%
+        \vfill
+    }%
+}
+
+\defbeamertemplate{background canvas}{grid}
+{%
+    \begin{tikzpicture}[remember picture,overlay,every node/.style={anchor=center}]
+        \foreach \d in {0,...,20} {
+            \draw[gray] (\d,0) -- (\d,-20);
+            \draw[gray] (0,-\d) -- (20,-\d);
+            \draw[lightgray] (\d+0.5,0) -- (\d+0.5,-20);
+            \draw[lightgray] (0,-\d-0.5) -- (20,-\d-0.5);
+            \node[anchor=north,red,font=\tiny] at (\d,0) {\d};
+            \node[anchor=west,red,font=\tiny] at (0,-\d) {\d};
+        }
+    \end{tikzpicture}
+}
+
+
+
+% add a macro that saves its argument
+\newcommand{\footlineextra}[1]{\gdef\insertfootlineextra{#1}}
+\newbox\footlineextrabox
+
+
+% add a beamer template that sets the saved argument in a box.
+% The * means that the beamer font and color "footline extra" are automatically added.
+\defbeamertemplate*{footline extra}{default}{
+    %\begin{beamercolorbox}[ht=2.25ex,dp=1ex,leftskip=\Gm@lmargin]{footline extra}
+    \begin{beamercolorbox}[ht=0.37cm,dp=0.25cm,wd=0.4\paperwidth,left,leftskip=2ex]{footline extra}
+    \insertfootlineextra
+    %\par\vspace{2.5pt}
+    \end{beamercolorbox}
+}
+
+\defbeamertemplate{background canvas}{plain}{}
+
+\defbeamertemplate{footline}{large}
+{%
+    \pgfdeclarehorizontalshading{bgshading}{0.62cm}{color(0cm)=(kulleft); color(\the\paperwidth)=(kulright)}%
+    \vskip.3cm% make room for the logo
+    \parbox[t][0.62cm]{\paperwidth}{\pgfuseshading{bgshading}}\par%
+    \vskip-0.62cm%
+    \begin{beamercolorbox}[ht=0.37cm,dp=0.25cm,center]{page number in head/foot}%
+    \insertframenumber%
+    \end{beamercolorbox}%
+    \vskip-0.92cm%
+    \parbox[t][0.92cm]{\paperwidth}{\hskip10.33cm\includegraphics[width=2.10cm]{templates/kuleuven}}\par%
+
+    % set the box with the extra footline material but make it add no vertical space
+    \setbox\footlineextrabox=\vbox{\usebeamertemplate*{footline extra}}
+    \vskip -\ht\footlineextrabox
+    \vskip -\dp\footlineextrabox
+    \box\footlineextrabox%
+}
+
+% patch \begin{frame} to reset the footline extra material
+\makeatletter
+\let\beamer@original@frame=\frame
+\def\frame{\gdef\insertfootlineextra{}\beamer@original@frame}
+\footlineextra{}
+\makeatother
+
+
+\defbeamertemplate{footline}{nopagenumber}
+{%
+    \pgfdeclarehorizontalshading{bgshading}{0.62cm}{color(0cm)=(kulleft); color(\the\paperwidth)=(kulright)}%
+    \vskip.3cm% make room for the logo
+    \parbox[t][0.62cm]{\paperwidth}{\pgfuseshading{bgshading}}\par%
+    \vskip-0.62cm%
+    \begin{beamercolorbox}[ht=0.37cm,dp=0.25cm,center,ignorebg]{page number in head/foot}%
+    %
+    \end{beamercolorbox}%
+    \vskip-0.92cm%
+    \parbox[t][0.92cm]{\paperwidth}{\hskip10.33cm\includegraphics[width=2.10cm]{templates/kuleuven}}\par%
+}
+
+\defbeamertemplate{footline}{small}
+{%
+    \vskip.3cm% make room for the logo
+    \begin{beamercolorbox}[ht=0.37cm,dp=0.25cm,center,ignorebg]{normal text}%
+    \mdseries\insertframenumber%
+    \end{beamercolorbox}%
+}
+
+\setbeamertemplate{footline}[large]
+
+\setbeamertemplate{frametitle}
+{%
+    \nointerlineskip%
+    \vskip.28cm%
+    {\usebeamercolor[fg]{framesubtitle}\usebeamerfont{framesubtitle}\insertsupertitle\strut\par}%
+    \vskip-.2cm%
+    {\usebeamercolor[fg]{frametitle}\usebeamerfont{frametitle}\insertframetitle\strut\par}%
+    \vskip-.3cm%
+}
+
+\setbeamertemplate{title page}
+{
+    \vbox{}%
+    \vskip2.8cm%
+    \vbox to 6.5cm{%
+        \hskip2.8cm%
+        \begin{minipage}{7.9cm}
+            \begin{beamercolorbox}{title}
+                \usebeamerfont{title}%
+                \inserttitle\par%
+                \ifx\insertsubtitle\undefined%
+                \else%
+                    \vskip0.25em%
+                    {\usebeamerfont{subtitle}\usebeamercolor[fg]{subtitle}\insertsubtitle\par}%
+                \fi%
+            \end{beamercolorbox}%
+            \vskip1em\par
+            \begin{beamercolorbox}{author}
+                \usebeamerfont{author}\usebeamercolor[fg]{subtitle}%
+                \insertauthor
+            \end{beamercolorbox}
+            \begin{beamercolorbox}{institute}
+                \usebeamerfont{institute}\usebeamercolor[fg]{subtitle}%
+                \insertinstitute
+                \end{beamercolorbox}
+            \begin{beamercolorbox}{date}
+                \usebeamerfont{date}\usebeamercolor[fg]{subtitle}%
+                \insertdate
+            \end{beamercolorbox}%
+        \end{minipage}%
+        \vfill
+    }
+}
+
+\mode<all>
+
+\newcommand{\inlinesound}[2]{\movie[inlinesound,encoding=Signed,samplingrate=44100]{#1}{#2}}
+
+% disable for now as otherwise all commands that go between frames generated by
+% the filter will result in duplicate toc lines
+\renewcommand{\addcontentsline}[3]{}
+
+\newcommand{\largefooter}{\setbeamertemplate{footline}[large]}
+\newcommand{\emptyfooter}{\setbeamertemplate{footline}[nopagenumber]}
+\newcommand{\smallfooter}{\setbeamertemplate{footline}[small]}
+\newcommand{\nofooter}{\setbeamertemplate{footline}[nofooter]}
+
+\newcommand{\sectiontoc}{\AtBeginSection[]{{
+    \nosupertitle
+    \emptyfooter
+    \begin{frame}[noframenumbering]{Outline}
+                \tableofcontents[currentsection]
+            \end{frame}
+    \largefooter
+}}}
+
+\newcommand{\subsectiontoc}{\AtBeginSubsection[]{{
+    \nosupertitle
+    \emptyfooter
+    \begin{frame}[noframenumbering]{Outline}
+                \tableofcontents[currentsection,currentsubsection]
+           \end{frame}
+    \largefooter
+}}}
+
+\newcommand{\notoc}{\AtBeginSection[]{}\AtBeginSubsection[]{}}
+
+\newcommand{\nosupertitle}{\renewcommand{\insertsupertitle}{}}
+\newcommand{\sectiontitle}{\renewcommand{\insertsupertitle}{\insertsectionhead}}
+\newcommand{\subsectiontitle}{\renewcommand{\insertsupertitle}{\insertsectionhead\ifx\insertsubsectionhead\empty\else{} -- \insertsubsectionhead\fi}}
+
+% animations do not work atm as figures are set on independent frames
+\newcommand{\slidefig}[2]{\usebackgroundtemplate{\parbox[c][\paperheight][c]{\paperwidth}{\centering\includegraphics#1[height=\paperheight,width=\paperwidth,keepaspectratio]{#2}}}\begin{frame}[plain]\end{frame}\usedefaultcanvas}
+
+\newcommand{\usedefaultcanvas}{\setbeamertemplate{background canvas}[\defaultcanvas]}
+\newcommand{\gridcanvas}{\renewcommand{\defaultcanvas}{grid}\usedefaultcanvas}
+\newcommand{\plaincanvas}{\renewcommand{\defaultcanvas}{plain}\usedefaultcanvas}
+
+\newcommand{\insertsupertitle}{}
+
+
+
+
+
+
+\newcommand{\defaultcanvas}{plain}
+
+
+% Defining a new coordinate system for the page:
+%
+% ----------------
+% |(0,1)    (1,1)|
+% |              |
+% |(0,0)    (1,0)|
+% ----------------
+\makeatletter
+\def\parsecomma#1,#2\endparsecomma{\def\page@x{#1}\def\page@y{#2}}
+\tikzdeclarecoordinatesystem{page}{
+    \parsecomma#1\endparsecomma
+    \pgfpointanchor{current page}{north east}
+    % Save the upper right corner
+    \pgf@xc=\pgf@x%
+    \pgf@yc=\pgf@y%
+    % save the lower left corner
+    \pgfpointanchor{current page}{south west}
+    \pgf@xb=\pgf@x%
+    \pgf@yb=\pgf@y%
+    % Transform to the correct placement
+    \pgfmathparse{(\pgf@xc-\pgf@xb)*\page@x+(\pgf@xb)}
+    \expandafter\pgf@x\expandafter=\pgfmathresult pt
+    \pgfmathparse{(\pgf@yc-\pgf@yb)*\page@y+(\pgf@yb)}
+    \expandafter\pgf@y\expandafter=\pgfmathresult pt
+}
+\makeatother
+
+% Example:
+%\begin{tikzpicture}[remember picture,overlay,every node/.style={anchor=center}]
+%  \node at (page cs:0.5,0.3) {0.5,0.3};
+%  \node at (page cs:0,0) {0,0};
+%  \draw(page cs:0,0) -- (page cs:1,1);
+%  \draw[thick,red] (page cs:0,0) rectangle (page cs:1,1);
+%  \draw[thick,green] (page cs:0.2,0.2) rectangle (page cs:0.8,0.8);
+%\end{tikzpicture}
+
+\setcounter{secnumdepth}{0}
+
+\title{Hyperspectrale afbeeldingscompressie via tensordecomposities}
+\author{\mbox{Wouter Baert} \and \mbox{Begeleider: dr. Nick Vannieuwenhoven}}
+\date{28 juni 2019}
+\institute{}
+
+% Own imports
+\usepackage[]{algorithm2e}
+\usepackage{subcaption}
+\usepackage{graphicx,array}
+
+\newcolumntype{C}[1]{>{\centering\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+\newcolumntype{L}[1]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+
+\begin{document}
+
+\setbeamertemplate{background canvas}[title]
+
+\begin{frame}[plain,noframenumbering]
+    \titlepage
+\end{frame}
+
+\usedefaultcanvas
+
+
+%\emptyfooter
+%\begin{frame}[noframenumbering]{Outline}
+%        \tableofcontents
+%    \end{frame}
+%\largefooter
+
+%\section{First Section}\label{first-section}
+
+% Slide 1-1
+\begin{frame}{Hyperspectrale afbeeldingen}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.3]{images/cuprite_bands_0-32.png}
+\caption{Cuprite, Nevada (VS): banden 0-31 (bron: AVIRIS)}
+\end{figure}
+
+\end{frame}
+
+% Slide 1-2
+\begin{frame}{Hyperspectrale afbeeldingen}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.3]{images/cuprite_bands_32-63.png}
+\caption{Cuprite, Nevada (VS): banden 32-62 (bron: AVIRIS)}
+\end{figure}
+
+\end{frame}
+
+% Slide 1-3
+\begin{frame}{Hyperspectrale afbeeldingen}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.3]{images/cuprite_bands_63-95.png}
+\caption{Cuprite, Nevada (VS): banden 63-94 (bron: AVIRIS)}
+\end{figure}
+
+\end{frame}
+
+% Slide 1-4
+\begin{frame}{Hyperspectrale afbeeldingen}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.3]{images/cuprite_bands_95-127.png}
+\caption{Cuprite, Nevada (VS): banden 95-126 (bron: AVIRIS)}
+\end{figure}
+
+\end{frame}
+
+% Slide 1-5
+\begin{frame}{Hyperspectrale afbeeldingen}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.3]{images/cuprite_bands_127-158.png}
+\caption{Cuprite, Nevada (VS): banden 127-157 (bron: AVIRIS)}
+\end{figure}
+
+\end{frame}
+
+% Slide 1-6
+\begin{frame}{Hyperspectrale afbeeldingen}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.3]{images/cuprite_bands_158-190.png}
+\caption{Cuprite, Nevada (VS): banden 158-189 (bron: AVIRIS)}
+\end{figure}
+
+\end{frame}
+
+% Titelslide 1
+\begin{frame}{}
+\begin{center}
+\topskip0pt
+\vspace*{\fill}
+\vspace*{\fill}
+\Huge
+Achtergrond
+\normalsize
+\vspace*{\fill}
+\end{center}
+\end{frame}
+
+% Slide 2
+\begin{frame}{Algemeen}
+
+\begin{itemize}
+\item \textit{Lossless} (Deflate, PNG) vs \textit{lossy} (JPEG, x264) compressie
+\item Compressiefactor = $\frac{\text{originele grootte}}{\text{gecomprimeerde grootte}}$
+\item Compressiefout = $\frac{||\text{gecomprimeerde data } - \text{ originele data}||_F}{||\text{originele data}||_F}$
+\end{itemize}
+
+\end{frame}
+
+% Slide 3
+\begin{frame}{Singulierewaardenontbinding (SVD)}
+
+$A = U \Sigma V^T$ met 
+\begin{itemize}
+\item $A \in \mathbb{R}^{m \times n}$, $U \in \mathbb{R}^{m \times m}$, $\Sigma \in \mathbb{R}^{m \times n}$ en $V \in \mathbb{R}^{n \times n}$
+\item $U$ en $V$ orthogonaal
+\item $\Sigma$ diagonaal en positief, van groot naar klein
+\newline
+\end{itemize}
+$A \approx \widetilde{U} \widetilde{\Sigma} \widetilde{V}^T$ met 
+\begin{itemize}
+\item $A \in \mathbb{R}^{m \times n}$, $\widetilde{U} \in \mathbb{R}^{m \times k}$, $\widetilde{\Sigma} \in \mathbb{R}^{k \times k}$ en $\widetilde{V} \in \mathbb{R}^{n \times k}$
+\item $\widetilde{U}$, $\widetilde{V}$ eerste $k$ kolommen $U, V$
+\item $\widetilde{\Sigma}$ eerste $k$ diagonaalelementen $\Sigma$
+\item Beste rang-$k$ benadering van $A$ (Frobeniusnorm)
+\end{itemize}
+
+\end{frame}
+
+% Slide 4
+\begin{frame}{Tensoren en $n$-mode product (Kolda, Bader 2009)}
+
+\begin{itemize}
+\item $A$ is tensor met $d$ modes
+\item $A \times_k U$ met $U \in \mathbb{R}^{r_k \times n_k}$ betekent:
+\begin{enumerate}
+\item Neem mode-$k$-vezels (lengte $n_k$)
+\item Transformeer elke vector $a$ naar $Ua$ (lengte $r_k$)
+\item Vouw terug in tensor
+\end{enumerate}
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.13]{images/fibers.png}
+\caption{Vezels van een 3D-tensor (bron: Kolda, Bader 2009)}
+\end{figure}
+
+\end{frame}
+
+% Slide 5
+\begin{frame}{Tucker-decompositie (Tucker 1963)}
+
+\begin{itemize}
+\item Stel $A$ voor als kerntensor $B$ en factormatrices $U_1, \dots, U_d$ zodat\\
+$A \approx B \times_1 U_1 \dots \times_d U_d$\\
+met $A \in \mathbb{R}^{n_1 \times n_2 \times \dots \times n_d}$, $B \in \mathbb{R}^{r_1 \times r_2 \times \dots \times r_d}$, $U_i \in \mathbb{R}^{n_i \times r_i}$
+\item Voor hoge $d$: compressiefactor $\sim \prod_{i=1}^{d}\frac{n_i}{r_i}$
+\end{itemize}
+
+\end{frame}
+
+% Slide 6
+\begin{frame}{T-HOSVD (Tucker 1963)}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.3]{images/T-HOSVD.png}
+\caption{Standaard T-HOSVD-algoritme (bron: Kolda, Bader 2009)}
+\end{figure}
+
+Niet zozeer beste Tucker-decompositie!
+
+\end{frame}
+
+% Slide 7
+\begin{frame}{ST-HOSVD (Vannieuwenhoven, Vandebril, Meerbergen 2012)}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.25]{images/ST-HOSVD.png}
+\caption{ST-HOSVD-algoritme (bron: VVM 2012)}
+\end{figure}
+
+\begin{itemize}
+\item Sneller (sequentieel), zeker met goede modevolgorde
+\item Bijna altijd betere benadering in de praktijk
+\item Doelfout kan goed benaderd worden
+\end{itemize}
+
+\end{frame}
+
+% Titelslide 2
+\begin{frame}{}
+\begin{center}
+\topskip0pt
+\vspace*{\fill}
+\vspace*{\fill}
+\Huge
+Eigen onderzoek
+\normalsize
+\vspace*{\fill}
+\end{center}
+\end{frame}
+
+% Titelslide 3
+\begin{frame}{}
+\begin{center}
+\topskip0pt
+\vspace*{\fill}
+\vspace*{\fill}
+\Huge
+Tucker-gebaseerde compressie
+\normalsize
+\vspace*{\fill}
+\end{center}
+\end{frame}
+
+% Slide 8
+\begin{frame}{Versnellen ST-HOSVD: modevolgorde}
+
+\begin{itemize}
+\item Eerst spectrale mode\\
+Voorbeeld: Cuprite (512, 614, 190) comprimeert naar:
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|}
+\hline
+Modevolgorde & Compressierang \\ \hline
+\input{data/modevolgorde.tex}
+\end{tabular}
+\end{table}
+\end{itemize}
+\end{frame}
+
+% Slide 9
+\begin{frame}{Versnellen ST-HOSVD: Gram-matrix}
+
+\begin{itemize}
+
+\item SVD van $A \in \mathbb{R}^{m \times n}$ met $m < n$: $O(m^2 n)$
+
+\item Eigenwaardenontbinding van $A A^T$:
+\begin{itemize}
+\item Berekenen $A A^T$: $O(m^2 n)$
+\item Berekenen eigenwaardenontbinding: $O(m^3)$
+\end{itemize}
+
+\item Voorbeeld:
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|l|}
+\hline
+Methode & Relatieve fout & Compressietijd (s)\\ \hline
+\input{data/gram-matrix.tex}
+\end{tabular}
+\end{table}
+
+\end{itemize}
+\end{frame}
+
+% Slide 10
+\begin{frame}{Versnellen ST-HOSVD: Lanczos}
+
+\begin{algorithm}[H]
+\KwData{$A, k, q_1$}
+\KwResult{$q_i$'s, $\alpha_i$'s, $\beta_i$'s}
+$\beta_1 := 0$\\
+$q_0 := 0$\\
+\For{$i = 1, ..., k$}{
+$w_i := A (A^T q_i) - \beta_i q_{i-1}$\\
+$\alpha_i := \langle w_i, q_i \rangle$\\
+$w_i := w_i - \alpha_i q_i$\\
+$w_i := w_i - \Sigma^{i-1}_{j = 1} \langle w_i q_j \rangle q_j$\\
+$\beta_{i+1} := ||w_i||$\\
+$q_{i+1} := w_i/\beta_{i+1}$\\
+}
+\end{algorithm}
+
+\end{frame}
+
+% Slide 11
+\begin{frame}{Versnellen ST-HOSVD: Lanczos}
+
+\[
+Q = 
+\begin{bmatrix}
+q_1 & q_2 & \dots & q_k
+\end{bmatrix}
+\quad
+T = \begin{bmatrix}
+\alpha_1 & \beta_2 & 0 & \dots & 0 \\
+\beta_2 & \alpha_2 & \beta_3 & \dots & 0 \\
+0 & \beta_3 & \alpha_3 & \dots & 0 \\
+\vdots & \vdots & \vdots & \ddots & \vdots \\
+0 & 0 & 0 & \dots & \alpha_k
+\end{bmatrix}
+\]
+
+\begin{itemize}
+\item Eigenwaarde $\lambda$, eigenvector $x$ van $T$\\
+$\rightarrow$ Ritz-waarde $\lambda$, Ritz-vector $Qx$
+\item Hoge $k$: Ritz-waarden/vectoren\\
+$\rightarrow$ grootste eigenwaarden/vectoren $A A^T$
+\end{itemize}
+
+\end{frame}
+
+% Slide 12
+\begin{frame}{Versnellen ST-HOSVD: Lanczos}
+
+\begin{itemize}
+\item Stopcriterion: som Ritz-waarden ($= \Sigma_{j=1}^i \alpha_j$)
+\item Rekenwerk: $O(kmn)$
+\item Resultaat: te veel overhead
+
+\begin{table}[H]
+\centering
+\tiny
+\begin{tabular}{|l|l|l|l|l|}
+\hline
+Methode & Relatieve fout & Compressietijd (s) & Compressierang & Compressiefactor\\ \hline
+\input{data/gram-matrix-lanczos.tex}
+\end{tabular}
+\normalsize
+\end{table}
+
+\end{itemize}
+
+\end{frame}
+
+% Slide 13
+\begin{frame}{Versnellen ST-HOSVD: Lanczos}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.5]{images/lanczos_rank_comparison.png}
+\end{figure}
+
+\end{frame}
+
+% Slide 14
+\begin{frame}{Versnellen ST-HOSVD: Randomized SVD}
+\begin{itemize}
+\item Neem SVD van beperkte verzameling kolommen/vectoren (steekproef)
+\item Benadert (eerste kolommen van) $U$ en $\sqrt{\frac{\text{steekproefgrootte}}{\text{populatiegrootte}}} \Sigma$
+\item Voorbeeld: 950 vectoren uit 314368, van dimensie 190 naar 4
+\item Voorbeeldversnellingen ($\approx$ zelfde fout):
+\begin{itemize}
+\item Cuprite: 1.28s $\rightarrow$ 0.79s
+\item Mauna Kea: 15.05s $\rightarrow$ 11.96s
+\item Pavia Centre: Volledige populatie nodig!
+\end{itemize}
+$\rightarrow$ Steekproefgrootte moeilijk op voorhand te bepalen
+\end{itemize}
+\end{frame}
+
+% Slide 15
+\begin{frame}{Orthogonaliteitscompressie}
+
+\begin{itemize}
+\item Voorbeelden ruimte-inname factormatrices:
+\begin{itemize}
+\item Cuprite: 64\%
+\item Mauna Kea: 55\%
+\end{itemize}
+\item Maar: $r (r - 1)/2$ orthogonaliteitsconstraints ($r$ kolommen)!
+\end{itemize}
+
+\end{frame}
+
+% Slide 16
+\begin{frame}{Orthogonaliteitscompressie: stelsels}
+
+\begin{center}
+$
+\begin{bmatrix}
+A & b & \dots \\[0.3em]
+C & x & \dots \\[0.3em]
+\end{bmatrix}
+$
+met $A \in \mathbb{R}^{(n-k) \times k}, C \in \mathbb{R}^{k \times k}, b \in \mathbb{R}^{n - k}, x \in \mathbb{R}^{k}$
+\end{center}
+
+\begin{itemize}
+\item Orthogonaliteit: $\Rightarrow C^T x = -A^T b$
+\item Volledige driehoek herberekenen:
+\begin{itemize}
+\item Fouten stapelen op, erg grote eindfout
+\item Grote decompressietijd: $O(r^4)$
+\end{itemize}
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.8]{images/orthogonality_compression1.png}
+\end{figure}
+
+\end{frame}
+
+% Slide 17
+\begin{frame}{Orthogonaliteitscompressie: stelsels}
+
+Oplossingen:
+\begin{itemize}
+\item Hernormalisatie
+\item Blokken
+\item Marge
+\item Hergebruik stelsels
+\end{itemize}
+
+\begin{figure}[]
+\centering
+\begin{subfigure}{0.3\textwidth}
+  \centering
+  \includegraphics[width=0.9\linewidth]{images/orthogonality_compression2.png}
+\end{subfigure}
+\begin{subfigure}{0.3\textwidth}
+  \centering
+  \includegraphics[width=0.9\linewidth]{images/orthogonality_compression3.png}
+\end{subfigure}
+\begin{subfigure}{0.3\textwidth}
+  \centering
+  \includegraphics[width=0.9\linewidth]{images/orthogonality_compression4.png}
+\end{subfigure}
+\end{figure}
+
+\end{frame}
+
+% Slide 18
+\begin{frame}{Orthogonaliteitscompressie: Householder-reflecties}
+\[
+H_i = I - 2 v_i v_i^T
+\]
+\[
+U = H_1 H_2 \dots H_r \quad \text{met dimensie } v_i = n + 1 - i
+\]
+\begin{itemize}
+\item Fout: erg klein (nog beter met hernormalisatie), numeriek OK want weggelaten waarden zijn specifiek gekozen
+\item Compressiefactor: perfect, $r (r - 1)/2$ minder opgeslagen waarden
+\item (De)compressietijd: geen probleem, $O(r^3)$
+\end{itemize}
+\end{frame}
+
+% Slide 19
+\begin{frame}{Quantisatie}
+\begin{itemize}
+\item Floating-point getallen $\rightarrow$ kleine discrete verzameling
+\item ``Quantiseren $x_1, \dots, x_n$ naar $b$ bits'':\\
+$x_i \rightarrow round(\frac{2^b - 1}{max(x_1, \dots, x_n) - min(x_1, \dots, x_n)} (x_i - min(x_1, \dots, x_n)))$
+\end{itemize}
+\end{frame}
+
+% Slide 20
+\begin{frame}{Quantisatie: kerntensor}
+
+\begin{itemize}
+\item ST-HOSVD concentreert energie in lage indices
+\item Definitie laag (schil):
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{images/core_tensor_layers.png}
+\end{figure}
+
+\end{frame}
+
+% Slide 21
+\begin{frame}{Quantisatie: kerntensor}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.5]{images/core_tensor_values_distribution.png}
+\end{figure}
+
+\end{frame}
+
+% Slide 22
+\begin{frame}{Quantisatie: kerntensor}
+\begin{itemize}
+\item Factormatrices genormaliseerd $\rightarrow$ absolute fout op elke positie kerntensor even significant
+\item Gevolg: eerste lagen ongequantiseerd opslaan
+\item Quantisatietechnieken:
+\begin{itemize}
+\item Globaal: quantiseer tensor in geheel naar $b$ bits
+\item Gelaagd (constant): quantiseer elke laag apart naar $b$ bits, fijner bereik per laag, veel kleinere fouten met kleine overhead
+\item Gelaagd (variabel): per laag, $b \sim \log{(\text{bereik})}$, houdt absolute fout/waarde ongeveer constant
+\end{itemize}
+\end{itemize}
+\end{frame}
+
+% Slide 23
+\begin{frame}{Quantisatie: kerntensor}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.5]{images/core_tensor_quantization_comparison.png}
+\end{figure}
+
+\end{frame}
+
+% Slide 24
+\begin{frame}{Quantisatie: factormatrices}
+\begin{itemize}
+\item Hoeveel bits/waarde voor eerste reflectoren?
+\begin{enumerate}
+\item Kolom $i$ factormatrix bepaald door reflectoren $1, \dots, i$ $\rightarrow$ meer bits/waarde
+\item Eerste kolommen (singuliere vectoren) belangrijker $\rightarrow$ meer bits/waarde
+\item Eerste reflectoren bestaan uit meer waarden $\rightarrow$ minder bits/waarde (voor zelfde aantal bits/reflector)
+\end{enumerate}
+\item Quantisatietechnieken:
+\begin{itemize}
+\item Globaal: quantiseer elke factormatrix in geheel naar $b$ bits
+\item Gelaagd (constant): quantiseer elke laag naar $b$ bits
+\item Gelaagd (norm): $\text{bits/waarde} \sim \log{(||\text{snede}||_F)}$ want effect 2
+\item Gelaagd (norm + dimensie): $\text{bits/reflector} \sim \log{(||\text{snede}||_F)}$ want effect 2+3
+\end{itemize}
+\end{itemize}
+\end{frame}
+
+% Slide 25
+\begin{frame}{Quantisatie: factormatrices}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.5]{images/factor_matrix_quantization_comparison.png}
+\end{figure}
+
+\end{frame}
+
+% Slide 26
+\begin{frame}{Encodering}
+\begin{itemize}
+\item Omzetting symbolen uit discrete verzameling $\rightarrow$ bits
+\item Adaptief: Gray-code/Huffman-code, neem beste per blok
+\item Benaderende Huffman-code: boom impliciet opslaan, weinig overhead voor goede code per blok\\
+Maar: erg kleine verbetering voor grote compressietijd $\rightarrow$ niet gebruikt
+\item Finaal: \textit{lossless} bitstring-compressie met Deflate
+\end{itemize}
+
+\end{frame}
+
+% Slide 27
+\begin{frame}{Afstellen van de parameters}
+
+\begin{itemize}
+\item Parameters:
+\begin{itemize}
+\item Relatieve doelfout ST-HOSVD (RDS)
+\item Bits-parameter quantisatie kerntensor (BPK)
+\item Bits-parameter quantisatie factormatrices (BPF)
+\end{itemize}
+\item Moeten gekozen worden in functie van 1 invoerparameter: kwaliteit
+\end{itemize}
+
+\end{frame}
+
+% Slide 28
+\begin{frame}{Afstellen van de parameters: }
+
+Niet-adaptief:
+\begin{itemize}
+\item Selectiefuncties: simpele functies gekozen a.d.h.v. optimale resultaten uit grote verzameling parametercombinaties voor 2 datasets
+\item Probleem: BPK/BPF grotendeels afhankelijk van dataset
+\item ``Oplossing'': neem ``veilige'' (hoge) waarde
+\end{itemize}
+
+Adaptief:
+\begin{itemize}
+\item ``Oplossing'': begin bij hoge BPK/BPF, test iteratief lagere waarden
+\item Maar: grote compressietijd, meer werkgeheugen nodig\\
+$\rightarrow$ Alleen voor kleine datasets
+\end{itemize}
+
+\end{frame}
+
+% Slide 29
+\begin{frame}{Afstellen van de parameters}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.5]{images/parameter_functions_results_including_adaptive_Cuprite.png}
+\end{figure}
+
+\end{frame}
+
+% Titelslide 4
+\begin{frame}{}
+\begin{center}
+\topskip0pt
+\vspace*{\fill}
+\vspace*{\fill}
+\Huge
+Compressie na hervorming
+\normalsize
+\vspace*{\fill}
+\end{center}
+\end{frame}
+
+% Slide 30
+\begin{frame}{Hervorming}
+
+\begin{itemize}
+\item Herinterpretatie geheugen: bv. tensor van (64, 100, 20) $\rightarrow$ (8, 8, 10, 10, 20)
+\item Resultaat: meer modes, kleinere modes
+\item In ons geval: 3D $\rightarrow$ 5D door splitsen spatiale modes
+\item Tucker-decompositie na hervorming: verkleinde factormatrices, verbetering?\\
+Praktijk: slechter dan zonder hervorming
+\end{itemize}
+
+\end{frame}
+
+% Slide 31
+\begin{frame}{Tensor trains: definitie}
+
+Formeel:
+\begin{itemize}
+\item Tucker-decompositie:
+\[
+A \approx B \times_1 U_1 \times_2 U_2 \times_3 \dots \times_d U_d
+\]
+\item Tensor trains:
+\end{itemize}
+
+\begin{equation*}
+\begin{split}
+A \approx \; & h(\dots h(h(B, r_{d-1} \times n_d) \times_1 U_{d-1}, \\
+& r_{d-2} \times n_{d-1} \times n_d) \times_1 U_{d-2}, \\
+& \dots \\
+& r_1 \times n_2 \times \dots \times n_d) \times_1 U_1
+\end{split}
+\end{equation*}
+
+\end{frame}
+
+% Slide 32
+\begin{frame}{Tensor trains: definitie}
+
+Proceduraal:
+\begin{itemize}
+\item Tucker-decompositie:
+\begin{enumerate}
+\item Comprimeer naar $r_1 \times n_2 \times n_3 \times n_4 \times n_5$
+\item Comprimeer naar $r_1 \times r_2 \times n_3 \times n_4 \times n_5$
+\item Comprimeer naar $r_1 \times r_2 \times r_3 \times n_4 \times n_5$
+\item Comprimeer naar $r_1 \times r_2 \times r_3 \times r_4 \times n_5$
+\item Comprimeer naar $r_1 \times r_2 \times r_3 \times r_4 \times r_5$
+\end{enumerate}
+\end{itemize}
+
+\end{frame}
+
+% Slide 33
+\begin{frame}{Tensor trains: definitie}
+
+Proceduraal:
+\begin{itemize}
+\item Tensor trains:
+\begin{enumerate}
+\item Comprimeer naar $r_1 \times n_2 \times n_3 \times n_4 \times n_5$
+\item Hervorm naar $r_1 n_2 \times n_3 \times n_4 \times n_5$
+\item Comprimeer naar $r_2 \times n_3 \times n_4 \times n_5$
+\item Hervorm naar $r_2 n_3 \times n_4 \times n_5$
+\item Comprimeer naar $r_3 \times n_4 \times n_5$
+\item Hervorm naar $r_3 n_4 \times n_5$
+\item Comprimeer naar $r_4 \times n_5$
+\item Hervorm naar $r_4 n_5$
+\end{enumerate}
+\end{itemize}
+
+\end{frame}
+
+% Slide 34
+\begin{frame}{Tensor trains: compressie}
+
+Proceduraal:
+\begin{itemize}
+\item Compressie na alleen ST-HOSVD: beter dan Tucker (zonder hervorming)!
+\item Verdere uitwerking: grotendeels zoals Tucker, aanpassingen:
+\begin{itemize}
+\item \textbf{Quantisatie kerntensor:} Bijna alle ruimte ingenomen door factormatrices $\rightarrow$ sla kerntensor ongequantiseerd op
+\item \textbf{Parameterselectie:} Alleen RDS/BPF, selectiefuncties werken beter, adaptieve selectie niet nodig
+\end{itemize}
+\end{itemize}
+
+\end{frame}
+
+% Titelslide 5
+\begin{frame}{}
+\begin{center}
+\topskip0pt
+\vspace*{\fill}
+\vspace*{\fill}
+\Huge
+Resultaten
+\normalsize
+\vspace*{\fill}
+\end{center}
+\end{frame}
+
+% Slide 35
+\begin{frame}{Tucker vs tensor trains: Cuprite}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.5]{images/tucker_vs_tensor_trains_Cuprite.png}
+\end{figure}
+
+\end{frame}
+
+% Slide 36
+\begin{frame}{Tucker vs tensor trains: Mauna Kea}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.5]{images/tucker_vs_tensor_trains_Mauna_Kea.png}
+\end{figure}
+
+\end{frame}
+
+% Slide 37
+\begin{frame}{Compressietijd: Cuprite}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.5]{images/tucker_vs_tensor_trains_times_Cuprite.png}
+\end{figure}
+
+\end{frame}
+
+% Slide 38
+\begin{frame}{Compressietijd: Mauna Kea}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.5]{images/tucker_vs_tensor_trains_times_Mauna_Kea.png}
+\end{figure}
+
+\end{frame}
+
+% Slide 39
+\begin{frame}{Algemene \textit{lossy} compressie}
+
+\begin{itemize}
+\item JPEG: bundel elke 3 opeenvolgende spectrale banden als JPEG-afbeelding
+\item x264:
+\begin{itemize}
+\item Videocompressor
+\item Beschouw 3D-tensor als video met 1 frame/spectrale band
+\item Preset (bv. medium of ultrafast) bepaalt compressietijd
+\end{itemize}
+\end{itemize}
+
+\end{frame}
+
+% Slide 40
+\begin{frame}{Algemene vergelijking: Cuprite}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.5]{images/general_comparison_new_Cuprite.png}
+\end{figure}
+
+\end{frame}
+
+% Slide 41
+\begin{frame}{Algemene vergelijking: Mauna Kea}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.5]{images/general_comparison_new_Mauna_Kea.png}
+\end{figure}
+
+\end{frame}
+
+% Slide 42
+\begin{frame}{Compressietijd: Cuprite}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.5]{images/general_comparison_times_Cuprite.png}
+\end{figure}
+
+\end{frame}
+
+% Slide 43
+\begin{frame}{Compressietijd: Mauna Kea}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.5]{images/general_comparison_times_Mauna_Kea.png}
+\end{figure}
+
+\end{frame}
+
+% Slide 44
+\begin{frame}{Compressietijd: Pavia Centre}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.5]{images/general_comparison_times_Pavia_Centre.png}
+\end{figure}
+
+\end{frame}
+
+% Slide 45
+\begin{frame}{Voorbeeldcompressies}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{C{0.6\textwidth}  L{0.4\textwidth}}
+\includegraphics[width=\linewidth]{images/cuprite_cropped_sum.png}
+&
+Cuprite (VS)\newline
+Bron: AVIRIS\newline
+\vspace{5mm}
+Relatieve fout: 0
+Compressiefactor: 1
+\end{tabular}
+\end{table}
+
+\end{frame}
+
+% Slide 46
+\begin{frame}{Voorbeeldcompressies}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{C{0.6\textwidth}  L{0.4\textwidth}}
+\includegraphics[width=\linewidth]{images/example_compression_Cuprite_0_01.png}
+&
+Cuprite (VS)\newline
+Bron: AVIRIS\newline
+\vspace{5mm}
+Relatieve fout: 0.0098
+Compressiefactor: 136.2
+\end{tabular}
+\end{table}
+
+\end{frame}
+
+% Slide 47
+\begin{frame}{Voorbeeldcompressies}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{C{0.6\textwidth}  L{0.4\textwidth}}
+\includegraphics[width=\linewidth]{images/example_compression_Cuprite_0_025.png}
+&
+Cuprite (VS)\newline
+Bron: AVIRIS\newline
+\vspace{5mm}
+Relatieve fout: 0.0261
+Compressiefactor: 649.6
+\end{tabular}
+\end{table}
+
+\end{frame}
+
+% Slide 48
+\begin{frame}{Voorbeeldcompressies}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{C{0.6\textwidth}  L{0.4\textwidth}}
+\includegraphics[width=\linewidth]{images/example_compression_Cuprite_0_05.png}
+&
+Cuprite (VS)\newline
+Bron: AVIRIS\newline
+\vspace{5mm}
+Relatieve fout: 0.0493
+Compressiefactor: 2888.5
+\end{tabular}
+\end{table}
+
+\end{frame}
+
+% Slide 49
+\begin{frame}{Voorbeeldcompressies}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{C{0.6\textwidth}  L{0.4\textwidth}}
+\includegraphics[height=6cm]{images/pavia_sum.png}
+&
+Pavia Centre (Itali\"e)\newline
+Bron: ROSIS\newline
+\vspace{5mm}
+Relatieve fout: 0
+Compressiefactor: 1
+\end{tabular}
+\end{table}
+
+\end{frame}
+
+% Slide 50
+\begin{frame}{Voorbeeldcompressies}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{C{0.6\textwidth}  L{0.4\textwidth}}
+\includegraphics[height=6cm]{images/example_compression_Pavia_Centre_0_01.png}
+&
+Pavia Centre (Itali\"e)\newline
+Bron: ROSIS\newline
+\vspace{5mm}
+Relatieve fout: 0.0138
+Compressiefactor: 11.67
+\end{tabular}
+\end{table}
+
+\end{frame}
+
+% Slide 51
+\begin{frame}{Voorbeeldcompressies}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{C{0.6\textwidth}  L{0.4\textwidth}}
+\includegraphics[height=6cm]{images/example_compression_Pavia_Centre_0_025.png}
+&
+Pavia Centre (Itali\"e)\newline
+Bron: ROSIS\newline
+\vspace{5mm}
+Relatieve fout: 0.0298
+Compressiefactor: 36.8
+\end{tabular}
+\end{table}
+
+\end{frame}
+
+% Slide 52
+\begin{frame}{Voorbeeldcompressies}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{C{0.6\textwidth}  L{0.4\textwidth}}
+\includegraphics[height=6cm]{images/example_compression_Pavia_Centre_0_05.png}
+&
+Pavia Centre (Itali\"e)\newline
+Bron: ROSIS\newline
+\vspace{5mm}
+Relatieve fout: 0.0502
+Compressiefactor: 90.7
+\end{tabular}
+\end{table}
+
+\end{frame}
+
+% Slide 53
+\begin{frame}{Voorbeeldcompressies}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{C{0.6\textwidth}  L{0.4\textwidth}}
+\includegraphics[height=6cm]{images/mauna_kea_sum.png}
+&
+Mauna Kea (VS)\newline
+Bron: AVIRIS\newline
+\vspace{5mm}
+Relatieve fout: 0
+Compressiefactor: 1
+\end{tabular}
+\end{table}
+
+\end{frame}
+
+% Slide 54
+\begin{frame}{Voorbeeldcompressies}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{C{0.6\textwidth}  L{0.4\textwidth}}
+\includegraphics[height=6cm]{images/example_compression_Mauna_Kea_0_01.png}
+&
+Mauna Kea (VS)\newline
+Bron: AVIRIS\newline
+\vspace{5mm}
+Relatieve fout: 0.0104
+Compressiefactor: 121
+\end{tabular}
+\end{table}
+
+\end{frame}
+
+% Slide 55
+\begin{frame}{Voorbeeldcompressies}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{C{0.6\textwidth}  L{0.4\textwidth}}
+\includegraphics[height=6cm]{images/example_compression_Mauna_Kea_0_025.png}
+&
+Mauna Kea (VS)\newline
+Bron: AVIRIS\newline
+\vspace{5mm}
+Relatieve fout: 0.0257
+Compressiefactor: 392.67
+\end{tabular}
+\end{table}
+
+\end{frame}
+
+% Slide 56
+\begin{frame}{Voorbeeldcompressies}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{C{0.6\textwidth}  L{0.4\textwidth}}
+\includegraphics[height=6cm]{images/example_compression_Mauna_Kea_0_05.png}
+&
+Mauna Kea (VS)\newline
+Bron: AVIRIS\newline
+\vspace{5mm}
+Relatieve fout: 0.0496
+Compressiefactor: 1271.31
+\end{tabular}
+\end{table}
+
+\end{frame}
+
+% Slide 57
+\begin{frame}{Conclusies}
+\begin{itemize}
+\item Beperkte versnelling ST-HSOVD mogelijk
+\item Orthogonaliteitscompressie: perfect mogelijk met Householder-reflecties
+\item Quantisatie: veel betere als men structuur kerntensor/factormatrices in rekening brengt
+\item Encodering: adaptief, niet altijd Huffman-code vanwege overhead boom
+\item Parameterselectie: simpele selectiefuncties benaderen optimum beperkt
+\item TT-compressie over het algemeen beter dan Tucker-compressie
+\item T.o.v. videocompressie: hangt van dataset, doelfout en preset af
+\end{itemize}
+\end{frame}
+
+% Slide 58
+\begin{frame}{Verder onderzoek}
+Belangrijkste pistes:
+\begin{itemize}
+\item Verbeterde quantisatie en encodering
+\item Verbeterde parameterselectie
+\item Laag-niveau implementatie
+\item Combinatie met DCT
+\end{itemize}
+\end{frame}
+
+
+
+\iffalse
+
+\begin{split}
+A \approx & h(\dots h(h(B, r_{d-1} \times n_d) \times_1 U_{d-1}, r_{d-2} \times n_{d-1} \times n_d) \\
+& \times_1 U_{d-2} \dots, r_1 \times n_2 \times \dots \times n_d) \times_1 U_1
+\end{split}
+
+% Slide 9
+\begin{frame}{Quantisatie kerntensor}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.5]{images/values_per_layer.png}
+\caption{log$_{10}$ van waarden per laag kerntensor}
+\end{figure}
+
+\end{frame}
+
+% Slide 10
+\begin{frame}{Quantisatie kerntensor}
+
+\begin{itemize}
+\item Grotere waarden op lagere indices
+\item Impact fout op waarden overal gelijk
+\end{itemize}
+$\rightarrow$ Vast aantal bits per waarde, aparte quantizatiestap per laag kerntensor
+
+\end{frame}
+
+% Slide 11
+\begin{frame}{Quantisatie factormatrices}
+
+\begin{itemize}
+\item Orthogonaal, dus elke waarde $\leqslant$ 1 en $\geqslant$ -1
+\end{itemize}
+$\rightarrow$ Vast aantal bits per waarde, vaste precisie voor alle waarden in alle factormatrices
+
+\end{frame}
+
+% Slide 12
+\begin{frame}{Bitstring-compressie}
+
+\begin{itemize}
+\item Lossless compressie van uiteindelijke bitstring zonder interpretatie
+\item DEFLATE-algoritme (gebruikt in zip, PNG, ...) via zlib-library
+\end{itemize}
+
+\end{frame}
+
+% Slide 13
+\begin{frame}{Globaal schema}
+\vfill
+\includegraphics[scale=0.19]{images/globaal_schema.png}
+\end{frame}
+
+% Titelslide 3
+\begin{frame}{}
+\begin{center}
+\topskip0pt
+\vspace*{\fill}
+\vspace*{\fill}
+\Huge
+Resultaten
+\normalsize
+\vspace*{\fill}
+\end{center}
+\end{frame}
+
+% Slide 14
+\begin{frame}{Cuprite, Nevada (VS) (bron: AVIRIS)}
+
+\begin{center}
+\includegraphics[scale=0.5]{images/cuprite_0-025.png}
+\end{center}
+
+Relatieve fout: 2,69\%\\
+Compressieratio: 2,51\%
+
+\end{frame}
+
+% Slide 15
+\begin{frame}{Indian pines, Indiana (VS) (bron: AVIRIS)}
+
+\begin{center}
+\includegraphics[scale=0.5]{images/indian_pines_0-025.png}
+\end{center}
+
+Relatieve fout: 2,60\%\\
+Compressieratio: 2,00\%
+
+\end{frame}
+
+% Slide 16
+\begin{frame}{Okavango-delta, Botswana (bron: NASA)}
+
+\begin{center}
+\includegraphics[scale=0.5]{images/botswana_0-025.png}
+\end{center}
+
+Relatieve fout: 2,84\%\\
+Compressieratio: 1,12\%
+
+\end{frame}
+
+% Slide X
+\begin{frame}{Verder onderzoek}
+
+\begin{itemize}
+\item Variabele quantisatie factormatrices
+\item Tensor trains
+\item Blokgewijse compressie
+\item Parameter tuning
+\item DCT
+\end{itemize}
+
+\end{frame}
+
+\fi
+
+\end{document}
