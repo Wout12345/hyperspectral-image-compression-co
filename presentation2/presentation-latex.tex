@@ -309,7 +309,8 @@
 \date{28 juni 2019}
 \institute{}
 
-% Own imports
+% Own header
+\setbeamertemplate{bibliography item}{\insertbiblabel}
 \usepackage[]{algorithm2e}
 \usepackage{subcaption}
 \usepackage{graphicx,array}
@@ -343,7 +344,7 @@
 \begin{figure}[H]
 \centering
 \includegraphics[scale=0.3]{images/cuprite_bands_0-32.png}
-\caption{Cuprite, Nevada (VS): banden 0-31 (bron: AVIRIS)}
+\caption{Cuprite, Nevada (VS): banden 0-31 (bron: AVIRIS \cite{ref:ehu_aviris_cuprite})}
 \end{figure}
 
 \end{frame}
@@ -353,7 +354,7 @@
 \begin{figure}[H]
 \centering
 \includegraphics[scale=0.3]{images/cuprite_bands_32-63.png}
-\caption{Cuprite, Nevada (VS): banden 32-62 (bron: AVIRIS)}
+\caption{Cuprite, Nevada (VS): banden 32-62 (bron: AVIRIS \cite{ref:ehu_aviris_cuprite})}
 \end{figure}
 
 \end{frame}
@@ -363,7 +364,7 @@
 \begin{figure}[H]
 \centering
 \includegraphics[scale=0.3]{images/cuprite_bands_63-95.png}
-\caption{Cuprite, Nevada (VS): banden 63-94 (bron: AVIRIS)}
+\caption{Cuprite, Nevada (VS): banden 63-94 (bron: AVIRIS \cite{ref:ehu_aviris_cuprite})}
 \end{figure}
 
 \end{frame}
@@ -373,7 +374,7 @@
 \begin{figure}[H]
 \centering
 \includegraphics[scale=0.3]{images/cuprite_bands_95-127.png}
-\caption{Cuprite, Nevada (VS): banden 95-126 (bron: AVIRIS)}
+\caption{Cuprite, Nevada (VS): banden 95-126 (bron: AVIRIS \cite{ref:ehu_aviris_cuprite})}
 \end{figure}
 
 \end{frame}
@@ -383,7 +384,7 @@
 \begin{figure}[H]
 \centering
 \includegraphics[scale=0.3]{images/cuprite_bands_127-158.png}
-\caption{Cuprite, Nevada (VS): banden 127-157 (bron: AVIRIS)}
+\caption{Cuprite, Nevada (VS): banden 127-157 (bron: AVIRIS \cite{ref:ehu_aviris_cuprite})}
 \end{figure}
 
 \end{frame}
@@ -393,7 +394,7 @@
 \begin{figure}[H]
 \centering
 \includegraphics[scale=0.3]{images/cuprite_bands_158-190.png}
-\caption{Cuprite, Nevada (VS): banden 158-189 (bron: AVIRIS)}
+\caption{Cuprite, Nevada (VS): banden 158-189 (bron: AVIRIS \cite{ref:ehu_aviris_cuprite})}
 \end{figure}
 
 \end{frame}
@@ -440,7 +441,7 @@ $A \approx \widetilde{U} \widetilde{\Sigma} \widetilde{V}^T$ met
 
 \end{frame}
 
-\begin{frame}{Tensoren en $n$-mode product (Kolda, Bader 2009)}
+\begin{frame}{Tensoren en $n$-mode product (Kolda, Bader \cite{ref:kolda})}
 
 \begin{itemize}
 \item $A$ is tensor met $d$ modes
@@ -455,12 +456,12 @@ $A \approx \widetilde{U} \widetilde{\Sigma} \widetilde{V}^T$ met
 \begin{figure}[H]
 \centering
 \includegraphics[scale=0.13]{images/fibers.png}
-\caption{Vezels van een 3D-tensor (bron: Kolda, Bader 2009)}
+\caption{Vezels van een 3D-tensor (bron: Kolda, Bader \cite{ref:kolda})}
 \end{figure}
 
 \end{frame}
 
-\begin{frame}{Tucker-decompositie (Tucker 1963)}
+\begin{frame}{Tucker-decompositie (Tucker \cite{ref:tucker})}
 
 \begin{itemize}
 \item Stel $A$ voor als kerntensor $B$ en factormatrices $U_1, \dots, U_d$ zodat\\
@@ -471,12 +472,12 @@ met $A \in \mathbb{R}^{n_1 \times n_2 \times \dots \times n_d}$, $B \in \mathbb{
 
 \end{frame}
 
-\begin{frame}{ST-HOSVD (Vannieuwenhoven, Vandebril, Meerbergen 2012)}
+\begin{frame}{ST-HOSVD (Vannieuwenhoven, Vandebril, Meerbergen \cite{ref:st_hosvd})}
 
 \begin{figure}[H]
 \centering
-\includegraphics[scale=0.25]{images/ST-HOSVD.png}
-\caption{ST-HOSVD-algoritme (bron: VVM 2012)}
+\includegraphics[scale=0.35]{images/ST-HOSVD.png}
+\caption{ST-HOSVD-algoritme (bron: VVM \cite{ref:st_hosvd})}
 \end{figure}
 
 \end{frame}
@@ -507,6 +508,15 @@ Tucker-gebaseerde compressie
 \normalsize
 \vspace*{\fill}
 \end{center}
+\end{frame}
+
+\begin{frame}{Overzicht}
+\begin{enumerate}
+\item ST-HOSVD-compressie
+\item Orthogonaliteitscompressie
+\item Quantisatie
+\item Encodering
+\end{enumerate}
 \end{frame}
 
 \begin{frame}{Versnellen ST-HOSVD}
@@ -720,7 +730,7 @@ Tensor trains na hervorming
 
 \end{frame}
 
-\begin{frame}{Tensor trains: definitie}
+\begin{frame}{Tensor trains: definitie (Oseledets \cite{ref:tensor_trains})}
 
 \begin{itemize}
 \item Vergelijking met ST-HOSVD voor Tucker-decompositie:
@@ -735,10 +745,10 @@ Tensor trains na hervorming
 
 \end{frame}
 
-\begin{frame}{Tensor trains: definitie}
+\begin{frame}{Tensor trains: definitie (Oseledets \cite{ref:tensor_trains})}
 
 \begin{itemize}
-\item ST-HOSVD voor tensor trains:
+\item TT-SVD voor tensor trains:
 \begin{enumerate}
 \item Comprimeer naar $r_1 \times n_2 \times n_3 \times n_4 \times n_5$
 \item Hervorm naar $r_1 n_2 \times n_3 \times n_4 \times n_5$
@@ -757,9 +767,12 @@ Tensor trains na hervorming
 
 \begin{itemize}
 \item Compressie na alleen ST-HOSVD: beter dan Tucker!
-\item Verdere uitwerking: analoog aan Tucker, aanpassingen:
+\item Verdere uitwerking: veel overlap met Tucker
 \begin{itemize}
-\item \textbf{Quantisatie kerntensor:} Bijna alle ruimte ingenomen door factormatrices $\rightarrow$ sla kerntensor ongequantiseerd op
+\item \textbf{TT-SVD-versnelling:} Analoog
+\item \textbf{Orthogonaliteitscompressie:} Analoog
+\item \textbf{Quantisatie:} Bijna alle ruimte ingenomen door factormatrices $\rightarrow$ sla kerntensor ongequantiseerd op
+\item \textbf{Encodering:} Analoog
 \item \textbf{Parameterselectie:} Alleen RDS/BPF, selectiefuncties werken beter, adaptieve selectie niet nodig
 \end{itemize}
 \end{itemize}
@@ -815,8 +828,6 @@ Resultaten
 \end{figure}
 
 \end{frame}
-
-\iffalse
 
 \begin{frame}{Algemene \textit{lossy} compressie}
 
@@ -877,8 +888,6 @@ Resultaten
 
 \end{frame}
 
-\fi
-
 \begin{frame}{Voorbeeldcompressies}
 
 \begin{table}[H]
@@ -887,7 +896,7 @@ Resultaten
 \includegraphics[width=\linewidth]{images/cuprite_cropped_sum.png}
 &
 Cuprite (VS)\newline
-Bron: AVIRIS\newline
+Bron: AVIRIS \cite{ref:ehu_aviris_cuprite}\newline
 \vspace{5mm}
 Relatieve fout: 0
 Compressiefactor: 1
@@ -904,7 +913,7 @@ Compressiefactor: 1
 \includegraphics[width=\linewidth]{images/example_compression_Cuprite_0_01.png}
 &
 Cuprite (VS)\newline
-Bron: AVIRIS\newline
+Bron: AVIRIS \cite{ref:ehu_aviris_cuprite}\newline
 \vspace{5mm}
 Relatieve fout: 0.0098
 Compressiefactor: 136.2
@@ -921,7 +930,7 @@ Compressiefactor: 136.2
 \includegraphics[width=\linewidth]{images/example_compression_Cuprite_0_025.png}
 &
 Cuprite (VS)\newline
-Bron: AVIRIS\newline
+Bron: AVIRIS \cite{ref:ehu_aviris_cuprite}\newline
 \vspace{5mm}
 Relatieve fout: 0.0261
 Compressiefactor: 649.6
@@ -938,7 +947,7 @@ Compressiefactor: 649.6
 \includegraphics[width=\linewidth]{images/example_compression_Cuprite_0_05.png}
 &
 Cuprite (VS)\newline
-Bron: AVIRIS\newline
+Bron: AVIRIS \cite{ref:ehu_aviris_cuprite}\newline
 \vspace{5mm}
 Relatieve fout: 0.0493
 Compressiefactor: 2888.5
@@ -955,7 +964,7 @@ Compressiefactor: 2888.5
 \includegraphics[height=6cm]{images/pavia_sum.png}
 &
 Pavia Centre (Itali\"e)\newline
-Bron: ROSIS\newline
+Bron: ROSIS \cite{ref:ehu_rosis_pavia_centre}\newline
 \vspace{5mm}
 Relatieve fout: 0
 Compressiefactor: 1
@@ -972,7 +981,7 @@ Compressiefactor: 1
 \includegraphics[height=6cm]{images/example_compression_Pavia_Centre_0_05.png}
 &
 Pavia Centre (Itali\"e)\newline
-Bron: ROSIS\newline
+Bron: ROSIS \cite{ref:ehu_rosis_pavia_centre}\newline
 \vspace{5mm}
 Relatieve fout: 0.0502
 Compressiefactor: 90.7
@@ -989,7 +998,7 @@ Compressiefactor: 90.7
 \includegraphics[height=6cm]{images/mauna_kea_sum.png}
 &
 Mauna Kea (VS)\newline
-Bron: AVIRIS\newline
+Bron: AVIRIS \cite{ref:aviris}\newline
 \vspace{5mm}
 Relatieve fout: 0
 Compressiefactor: 1
@@ -1006,7 +1015,7 @@ Compressiefactor: 1
 \includegraphics[height=6cm]{images/example_compression_Mauna_Kea_0_025.png}
 &
 Mauna Kea (VS)\newline
-Bron: AVIRIS\newline
+Bron: AVIRIS \cite{ref:aviris}\newline
 \vspace{5mm}
 Relatieve fout: 0.0257
 Compressiefactor: 392.67
@@ -1023,7 +1032,7 @@ Compressiefactor: 392.67
 \includegraphics[height=6cm]{images/example_compression_Mauna_Kea_0_05.png}
 &
 Mauna Kea (VS)\newline
-Bron: AVIRIS\newline
+Bron: AVIRIS \cite{ref:aviris}\newline
 \vspace{5mm}
 Relatieve fout: 0.0496
 Compressiefactor: 1271.31
@@ -1040,6 +1049,13 @@ Belangrijkste pistes:
 \item Laag-niveau implementatie
 \item Combinatie met DCT
 \end{itemize}
+\end{frame}
+
+\begin{frame}{Referenties}
+	\scriptsize
+	\bibliographystyle{ieeetr}
+	\bibliography{references.bib}
+	\normalsize
 \end{frame}
 
 \end{document}
