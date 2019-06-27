@@ -305,7 +305,7 @@
 \setcounter{secnumdepth}{0}
 
 \title{Hyperspectrale afbeeldingscompressie via tensordecomposities}
-\author{\mbox{Wouter Baert} \and \mbox{Begeleider: dr. Nick Vannieuwenhoven}}
+\author{\mbox{Wouter Baert} \and \mbox{Promotor: dr. prof. ir. Karl Meerbergen} \and \mbox{Co-promotor: dr. Nick Vannieuwenhoven}}
 \date{28 juni 2019}
 \institute{}
 
@@ -336,7 +336,8 @@
 
 %\section{First Section}\label{first-section}
 
-% Slide 1-1
+% Inleiding
+
 \begin{frame}{Hyperspectrale afbeeldingen}
 
 \begin{figure}[H]
@@ -347,7 +348,6 @@
 
 \end{frame}
 
-% Slide 1-2
 \begin{frame}{Hyperspectrale afbeeldingen}
 
 \begin{figure}[H]
@@ -358,7 +358,6 @@
 
 \end{frame}
 
-% Slide 1-3
 \begin{frame}{Hyperspectrale afbeeldingen}
 
 \begin{figure}[H]
@@ -369,7 +368,6 @@
 
 \end{frame}
 
-% Slide 1-4
 \begin{frame}{Hyperspectrale afbeeldingen}
 
 \begin{figure}[H]
@@ -380,7 +378,6 @@
 
 \end{frame}
 
-% Slide 1-5
 \begin{frame}{Hyperspectrale afbeeldingen}
 
 \begin{figure}[H]
@@ -391,7 +388,6 @@
 
 \end{frame}
 
-% Slide 1-6
 \begin{frame}{Hyperspectrale afbeeldingen}
 
 \begin{figure}[H]
@@ -402,7 +398,8 @@
 
 \end{frame}
 
-% Titelslide 1
+% Achtergrond
+
 \begin{frame}{}
 \begin{center}
 \topskip0pt
@@ -415,18 +412,15 @@ Achtergrond
 \end{center}
 \end{frame}
 
-% Slide 2
 \begin{frame}{Algemeen}
 
 \begin{itemize}
-\item \textit{Lossless} (Deflate, PNG) vs \textit{lossy} (JPEG, x264) compressie
 \item Compressiefactor = $\frac{\text{originele grootte}}{\text{gecomprimeerde grootte}}$
 \item Compressiefout = $\frac{||\text{gecomprimeerde data } - \text{ originele data}||_F}{||\text{originele data}||_F}$
 \end{itemize}
 
 \end{frame}
 
-% Slide 3
 \begin{frame}{Singulierewaardenontbinding (SVD)}
 
 $A = U \Sigma V^T$ met 
@@ -446,7 +440,6 @@ $A \approx \widetilde{U} \widetilde{\Sigma} \widetilde{V}^T$ met
 
 \end{frame}
 
-% Slide 4
 \begin{frame}{Tensoren en $n$-mode product (Kolda, Bader 2009)}
 
 \begin{itemize}
@@ -467,32 +460,17 @@ $A \approx \widetilde{U} \widetilde{\Sigma} \widetilde{V}^T$ met
 
 \end{frame}
 
-% Slide 5
 \begin{frame}{Tucker-decompositie (Tucker 1963)}
 
 \begin{itemize}
 \item Stel $A$ voor als kerntensor $B$ en factormatrices $U_1, \dots, U_d$ zodat\\
 $A \approx B \times_1 U_1 \dots \times_d U_d$\\
 met $A \in \mathbb{R}^{n_1 \times n_2 \times \dots \times n_d}$, $B \in \mathbb{R}^{r_1 \times r_2 \times \dots \times r_d}$, $U_i \in \mathbb{R}^{n_i \times r_i}$
-\item Voor hoge $d$: compressiefactor $\sim \prod_{i=1}^{d}\frac{n_i}{r_i}$
+\item Factormatrices kunnen op verschillende manieren gekozen worden
 \end{itemize}
 
 \end{frame}
 
-% Slide 6
-\begin{frame}{T-HOSVD (Tucker 1963)}
-
-\begin{figure}[H]
-\centering
-\includegraphics[scale=0.3]{images/T-HOSVD.png}
-\caption{Standaard T-HOSVD-algoritme (bron: Kolda, Bader 2009)}
-\end{figure}
-
-Niet zozeer beste Tucker-decompositie!
-
-\end{frame}
-
-% Slide 7
 \begin{frame}{ST-HOSVD (Vannieuwenhoven, Vandebril, Meerbergen 2012)}
 
 \begin{figure}[H]
@@ -501,15 +479,10 @@ Niet zozeer beste Tucker-decompositie!
 \caption{ST-HOSVD-algoritme (bron: VVM 2012)}
 \end{figure}
 
-\begin{itemize}
-\item Sneller (sequentieel), zeker met goede modevolgorde
-\item Bijna altijd betere benadering in de praktijk
-\item Doelfout kan goed benaderd worden
-\end{itemize}
-
 \end{frame}
 
-% Titelslide 2
+% Eigen onderzoek
+
 \begin{frame}{}
 \begin{center}
 \topskip0pt
@@ -522,7 +495,8 @@ Eigen onderzoek
 \end{center}
 \end{frame}
 
-% Titelslide 3
+% Tucker-gebaseerde compressie
+
 \begin{frame}{}
 \begin{center}
 \topskip0pt
@@ -535,26 +509,13 @@ Tucker-gebaseerde compressie
 \end{center}
 \end{frame}
 
-% Slide 8
-\begin{frame}{Versnellen ST-HOSVD: modevolgorde}
+\begin{frame}{Versnellen ST-HOSVD}
 
 \begin{itemize}
-\item Eerst spectrale mode\\
-Voorbeeld: Cuprite (512, 614, 190) comprimeert naar:
-\begin{table}[H]
-\centering
-\begin{tabular}{|l|l|}
-\hline
-Modevolgorde & Compressierang \\ \hline
-\input{data/modevolgorde.tex}
-\end{tabular}
-\end{table}
-\end{itemize}
-\end{frame}
 
-% Slide 9
-\begin{frame}{Versnellen ST-HOSVD: Gram-matrix}
+\item Modevolgorde: eerst spectrale mode, best comprimeerbaar
 
+\item Methode met Gram-matrix i.p.v. SVD:
 \begin{itemize}
 
 \item SVD van $A \in \mathbb{R}^{m \times n}$ met $m < n$: $O(m^2 n)$
@@ -576,105 +537,9 @@ Methode & Relatieve fout & Compressietijd (s)\\ \hline
 \end{table}
 
 \end{itemize}
-\end{frame}
-
-% Slide 10
-\begin{frame}{Versnellen ST-HOSVD: Lanczos}
-
-\begin{algorithm}[H]
-\KwData{$A, k, q_1$}
-\KwResult{$q_i$'s, $\alpha_i$'s, $\beta_i$'s}
-$\beta_1 := 0$\\
-$q_0 := 0$\\
-\For{$i = 1, ..., k$}{
-$w_i := A (A^T q_i) - \beta_i q_{i-1}$\\
-$\alpha_i := \langle w_i, q_i \rangle$\\
-$w_i := w_i - \alpha_i q_i$\\
-$w_i := w_i - \Sigma^{i-1}_{j = 1} \langle w_i q_j \rangle q_j$\\
-$\beta_{i+1} := ||w_i||$\\
-$q_{i+1} := w_i/\beta_{i+1}$\\
-}
-\end{algorithm}
-
-\end{frame}
-
-% Slide 11
-\begin{frame}{Versnellen ST-HOSVD: Lanczos}
-
-\[
-Q = 
-\begin{bmatrix}
-q_1 & q_2 & \dots & q_k
-\end{bmatrix}
-\quad
-T = \begin{bmatrix}
-\alpha_1 & \beta_2 & 0 & \dots & 0 \\
-\beta_2 & \alpha_2 & \beta_3 & \dots & 0 \\
-0 & \beta_3 & \alpha_3 & \dots & 0 \\
-\vdots & \vdots & \vdots & \ddots & \vdots \\
-0 & 0 & 0 & \dots & \alpha_k
-\end{bmatrix}
-\]
-
-\begin{itemize}
-\item Eigenwaarde $\lambda$, eigenvector $x$ van $T$\\
-$\rightarrow$ Ritz-waarde $\lambda$, Ritz-vector $Qx$
-\item Hoge $k$: Ritz-waarden/vectoren\\
-$\rightarrow$ grootste eigenwaarden/vectoren $A A^T$
-\end{itemize}
-
-\end{frame}
-
-% Slide 12
-\begin{frame}{Versnellen ST-HOSVD: Lanczos}
-
-\begin{itemize}
-\item Stopcriterion: som Ritz-waarden ($= \Sigma_{j=1}^i \alpha_j$)
-\item Rekenwerk: $O(kmn)$
-\item Resultaat: te veel overhead
-
-\begin{table}[H]
-\centering
-\tiny
-\begin{tabular}{|l|l|l|l|l|}
-\hline
-Methode & Relatieve fout & Compressietijd (s) & Compressierang & Compressiefactor\\ \hline
-\input{data/gram-matrix-lanczos.tex}
-\end{tabular}
-\normalsize
-\end{table}
-
-\end{itemize}
-
-\end{frame}
-
-% Slide 13
-\begin{frame}{Versnellen ST-HOSVD: Lanczos}
-
-\begin{figure}[H]
-\centering
-\includegraphics[scale=0.5]{images/lanczos_rank_comparison.png}
-\end{figure}
-
-\end{frame}
-
-% Slide 14
-\begin{frame}{Versnellen ST-HOSVD: Randomized SVD}
-\begin{itemize}
-\item Neem SVD van beperkte verzameling kolommen/vectoren (steekproef)
-\item Benadert (eerste kolommen van) $U$ en $\sqrt{\frac{\text{steekproefgrootte}}{\text{populatiegrootte}}} \Sigma$
-\item Voorbeeld: 950 vectoren uit 314368, van dimensie 190 naar 4
-\item Voorbeeldversnellingen ($\approx$ zelfde fout):
-\begin{itemize}
-\item Cuprite: 1.28s $\rightarrow$ 0.79s
-\item Mauna Kea: 15.05s $\rightarrow$ 11.96s
-\item Pavia Centre: Volledige populatie nodig!
-\end{itemize}
-$\rightarrow$ Steekproefgrootte moeilijk op voorhand te bepalen
 \end{itemize}
 \end{frame}
 
-% Slide 15
 \begin{frame}{Orthogonaliteitscompressie}
 
 \begin{itemize}
@@ -688,7 +553,8 @@ $\rightarrow$ Steekproefgrootte moeilijk op voorhand te bepalen
 
 \end{frame}
 
-% Slide 16
+\iffalse
+
 \begin{frame}{Orthogonaliteitscompressie: stelsels}
 
 \begin{center}
@@ -717,36 +583,8 @@ met $A \in \mathbb{R}^{(n-k) \times k}, C \in \mathbb{R}^{k \times k}, b \in \ma
 
 \end{frame}
 
-% Slide 17
-\begin{frame}{Orthogonaliteitscompressie: stelsels}
+\fi
 
-Oplossingen:
-\begin{itemize}
-\item Hernormalisatie
-\item Blokken
-\item Marge
-\item Hergebruik stelsels
-\end{itemize}
-
-\begin{figure}[]
-\centering
-\begin{subfigure}{0.3\textwidth}
-  \centering
-  \includegraphics[width=0.9\linewidth]{images/orthogonality_compression2.png}
-\end{subfigure}
-\begin{subfigure}{0.3\textwidth}
-  \centering
-  \includegraphics[width=0.9\linewidth]{images/orthogonality_compression3.png}
-\end{subfigure}
-\begin{subfigure}{0.3\textwidth}
-  \centering
-  \includegraphics[width=0.9\linewidth]{images/orthogonality_compression4.png}
-\end{subfigure}
-\end{figure}
-
-\end{frame}
-
-% Slide 18
 \begin{frame}{Orthogonaliteitscompressie: Householder-reflecties}
 \[
 H_i = I - 2 v_i v_i^T
@@ -755,13 +593,12 @@ H_i = I - 2 v_i v_i^T
 U = H_1 H_2 \dots H_r \quad \text{met dimensie } v_i = n + 1 - i
 \]
 \begin{itemize}
-\item Fout: erg klein (nog beter met hernormalisatie), numeriek OK want weggelaten waarden zijn specifiek gekozen
+\item Fout: erg klein, numeriek OK want weggelaten waarden zijn specifiek gekozen
 \item Compressiefactor: perfect, $r (r - 1)/2$ minder opgeslagen waarden
 \item (De)compressietijd: geen probleem, $O(r^3)$
 \end{itemize}
 \end{frame}
 
-% Slide 19
 \begin{frame}{Quantisatie}
 \begin{itemize}
 \item Floating-point getallen $\rightarrow$ kleine discrete verzameling
@@ -770,7 +607,6 @@ $x_i \rightarrow round(\frac{2^b - 1}{max(x_1, \dots, x_n) - min(x_1, \dots, x_n
 \end{itemize}
 \end{frame}
 
-% Slide 20
 \begin{frame}{Quantisatie: kerntensor}
 
 \begin{itemize}
@@ -785,7 +621,6 @@ $x_i \rightarrow round(\frac{2^b - 1}{max(x_1, \dots, x_n) - min(x_1, \dots, x_n
 
 \end{frame}
 
-% Slide 21
 \begin{frame}{Quantisatie: kerntensor}
 
 \begin{figure}[H]
@@ -795,72 +630,40 @@ $x_i \rightarrow round(\frac{2^b - 1}{max(x_1, \dots, x_n) - min(x_1, \dots, x_n
 
 \end{frame}
 
-% Slide 22
 \begin{frame}{Quantisatie: kerntensor}
 \begin{itemize}
 \item Factormatrices genormaliseerd $\rightarrow$ absolute fout op elke positie kerntensor even significant
 \item Gevolg: eerste lagen ongequantiseerd opslaan
-\item Quantisatietechnieken:
-\begin{itemize}
-\item Globaal: quantiseer tensor in geheel naar $b$ bits
-\item Gelaagd (constant): quantiseer elke laag apart naar $b$ bits, fijner bereik per laag, veel kleinere fouten met kleine overhead
-\item Gelaagd (variabel): per laag, $b \sim \log{(\text{bereik})}$, houdt absolute fout/waarde ongeveer constant
-\end{itemize}
+\item Verschillende technieken geprobeerd, experimenteel beste:\\
+Quantiseer elke laag met aantal bits/waarde $\sim$ $\log (\text{bereik})$
 \end{itemize}
 \end{frame}
 
-% Slide 23
-\begin{frame}{Quantisatie: kerntensor}
-
-\begin{figure}[H]
-\centering
-\includegraphics[scale=0.5]{images/core_tensor_quantization_comparison.png}
-\end{figure}
-
-\end{frame}
-
-% Slide 24
 \begin{frame}{Quantisatie: factormatrices}
 \begin{itemize}
 \item Hoeveel bits/waarde voor eerste reflectoren?
 \begin{enumerate}
-\item Kolom $i$ factormatrix bepaald door reflectoren $1, \dots, i$ $\rightarrow$ meer bits/waarde
-\item Eerste kolommen (singuliere vectoren) belangrijker $\rightarrow$ meer bits/waarde
-\item Eerste reflectoren bestaan uit meer waarden $\rightarrow$ minder bits/waarde (voor zelfde aantal bits/reflector)
+\item Kolom $i$ factormatrix bepaald door reflectoren $1, \dots, i$\\
+$\rightarrow$ meer bits/waarde
+\item Eerste kolommen (singuliere vectoren) belangrijker\\
+$\rightarrow$ meer bits/waarde
+\item Eerste reflectoren bestaan uit meer waarden\\
+$\rightarrow$ minder bits/waarde (voor zelfde aantal bits/reflector)
 \end{enumerate}
-\item Quantisatietechnieken:
-\begin{itemize}
-\item Globaal: quantiseer elke factormatrix in geheel naar $b$ bits
-\item Gelaagd (constant): quantiseer elke laag naar $b$ bits
-\item Gelaagd (norm): $\text{bits/waarde} \sim \log{(||\text{snede}||_F)}$ want effect 2
-\item Gelaagd (norm + dimensie): $\text{bits/reflector} \sim \log{(||\text{snede}||_F)}$ want effect 2+3
-\end{itemize}
+\item Verschillende technieken geprobeerd, experimenteel beste:\\
+Quantiseer elke reflector met aantal bits/waarde $\sim \log (||\text{corresponderende snede kerntensor}||_F)$
 \end{itemize}
 \end{frame}
 
-% Slide 25
-\begin{frame}{Quantisatie: factormatrices}
-
-\begin{figure}[H]
-\centering
-\includegraphics[scale=0.5]{images/factor_matrix_quantization_comparison.png}
-\end{figure}
-
-\end{frame}
-
-% Slide 26
 \begin{frame}{Encodering}
 \begin{itemize}
 \item Omzetting symbolen uit discrete verzameling $\rightarrow$ bits
 \item Adaptief: Gray-code/Huffman-code, neem beste per blok
-\item Benaderende Huffman-code: boom impliciet opslaan, weinig overhead voor goede code per blok\\
-Maar: erg kleine verbetering voor grote compressietijd $\rightarrow$ niet gebruikt
 \item Finaal: \textit{lossless} bitstring-compressie met Deflate
 \end{itemize}
 
 \end{frame}
 
-% Slide 27
 \begin{frame}{Afstellen van de parameters}
 
 \begin{itemize}
@@ -875,8 +678,7 @@ Maar: erg kleine verbetering voor grote compressietijd $\rightarrow$ niet gebrui
 
 \end{frame}
 
-% Slide 28
-\begin{frame}{Afstellen van de parameters: }
+\begin{frame}{Afstellen van de parameters}
 
 Niet-adaptief:
 \begin{itemize}
@@ -894,71 +696,34 @@ $\rightarrow$ Alleen voor kleine datasets
 
 \end{frame}
 
-% Slide 29
-\begin{frame}{Afstellen van de parameters}
+% Compressie na hervorming
 
-\begin{figure}[H]
-\centering
-\includegraphics[scale=0.5]{images/parameter_functions_results_including_adaptive_Cuprite.png}
-\end{figure}
-
-\end{frame}
-
-% Titelslide 4
 \begin{frame}{}
 \begin{center}
 \topskip0pt
 \vspace*{\fill}
 \vspace*{\fill}
 \Huge
-Compressie na hervorming
+Tensor trains na hervorming
 \normalsize
 \vspace*{\fill}
 \end{center}
 \end{frame}
 
-% Slide 30
 \begin{frame}{Hervorming}
 
 \begin{itemize}
 \item Herinterpretatie geheugen: bv. tensor van (64, 100, 20) $\rightarrow$ (8, 8, 10, 10, 20)
-\item Resultaat: meer modes, kleinere modes
 \item In ons geval: 3D $\rightarrow$ 5D door splitsen spatiale modes
-\item Tucker-decompositie na hervorming: verkleinde factormatrices, verbetering?\\
-Praktijk: slechter dan zonder hervorming
+\item Veel modes: beter geschikt voor tensor trains
 \end{itemize}
 
 \end{frame}
 
-% Slide 31
 \begin{frame}{Tensor trains: definitie}
 
-Formeel:
 \begin{itemize}
-\item Tucker-decompositie:
-\[
-A \approx B \times_1 U_1 \times_2 U_2 \times_3 \dots \times_d U_d
-\]
-\item Tensor trains:
-\end{itemize}
-
-\begin{equation*}
-\begin{split}
-A \approx \; & h(\dots h(h(B, r_{d-1} \times n_d) \times_1 U_{d-1}, \\
-& r_{d-2} \times n_{d-1} \times n_d) \times_1 U_{d-2}, \\
-& \dots \\
-& r_1 \times n_2 \times \dots \times n_d) \times_1 U_1
-\end{split}
-\end{equation*}
-
-\end{frame}
-
-% Slide 32
-\begin{frame}{Tensor trains: definitie}
-
-Proceduraal:
-\begin{itemize}
-\item Tucker-decompositie:
+\item Vergelijking met ST-HOSVD voor Tucker-decompositie:
 \begin{enumerate}
 \item Comprimeer naar $r_1 \times n_2 \times n_3 \times n_4 \times n_5$
 \item Comprimeer naar $r_1 \times r_2 \times n_3 \times n_4 \times n_5$
@@ -970,12 +735,10 @@ Proceduraal:
 
 \end{frame}
 
-% Slide 33
 \begin{frame}{Tensor trains: definitie}
 
-Proceduraal:
 \begin{itemize}
-\item Tensor trains:
+\item ST-HOSVD voor tensor trains:
 \begin{enumerate}
 \item Comprimeer naar $r_1 \times n_2 \times n_3 \times n_4 \times n_5$
 \item Hervorm naar $r_1 n_2 \times n_3 \times n_4 \times n_5$
@@ -990,13 +753,11 @@ Proceduraal:
 
 \end{frame}
 
-% Slide 34
 \begin{frame}{Tensor trains: compressie}
 
-Proceduraal:
 \begin{itemize}
-\item Compressie na alleen ST-HOSVD: beter dan Tucker (zonder hervorming)!
-\item Verdere uitwerking: grotendeels zoals Tucker, aanpassingen:
+\item Compressie na alleen ST-HOSVD: beter dan Tucker!
+\item Verdere uitwerking: analoog aan Tucker, aanpassingen:
 \begin{itemize}
 \item \textbf{Quantisatie kerntensor:} Bijna alle ruimte ingenomen door factormatrices $\rightarrow$ sla kerntensor ongequantiseerd op
 \item \textbf{Parameterselectie:} Alleen RDS/BPF, selectiefuncties werken beter, adaptieve selectie niet nodig
@@ -1005,7 +766,8 @@ Proceduraal:
 
 \end{frame}
 
-% Titelslide 5
+% Resultaten
+
 \begin{frame}{}
 \begin{center}
 \topskip0pt
@@ -1018,7 +780,6 @@ Resultaten
 \end{center}
 \end{frame}
 
-% Slide 35
 \begin{frame}{Tucker vs tensor trains: Cuprite}
 
 \begin{figure}[H]
@@ -1028,7 +789,6 @@ Resultaten
 
 \end{frame}
 
-% Slide 36
 \begin{frame}{Tucker vs tensor trains: Mauna Kea}
 
 \begin{figure}[H]
@@ -1038,7 +798,6 @@ Resultaten
 
 \end{frame}
 
-% Slide 37
 \begin{frame}{Compressietijd: Cuprite}
 
 \begin{figure}[H]
@@ -1048,7 +807,6 @@ Resultaten
 
 \end{frame}
 
-% Slide 38
 \begin{frame}{Compressietijd: Mauna Kea}
 
 \begin{figure}[H]
@@ -1058,7 +816,8 @@ Resultaten
 
 \end{frame}
 
-% Slide 39
+\iffalse
+
 \begin{frame}{Algemene \textit{lossy} compressie}
 
 \begin{itemize}
@@ -1073,7 +832,6 @@ Resultaten
 
 \end{frame}
 
-% Slide 40
 \begin{frame}{Algemene vergelijking: Cuprite}
 
 \begin{figure}[H]
@@ -1083,7 +841,6 @@ Resultaten
 
 \end{frame}
 
-% Slide 41
 \begin{frame}{Algemene vergelijking: Mauna Kea}
 
 \begin{figure}[H]
@@ -1093,7 +850,6 @@ Resultaten
 
 \end{frame}
 
-% Slide 42
 \begin{frame}{Compressietijd: Cuprite}
 
 \begin{figure}[H]
@@ -1103,7 +859,6 @@ Resultaten
 
 \end{frame}
 
-% Slide 43
 \begin{frame}{Compressietijd: Mauna Kea}
 
 \begin{figure}[H]
@@ -1113,7 +868,6 @@ Resultaten
 
 \end{frame}
 
-% Slide 44
 \begin{frame}{Compressietijd: Pavia Centre}
 
 \begin{figure}[H]
@@ -1123,7 +877,8 @@ Resultaten
 
 \end{frame}
 
-% Slide 45
+\fi
+
 \begin{frame}{Voorbeeldcompressies}
 
 \begin{table}[H]
@@ -1141,7 +896,6 @@ Compressiefactor: 1
 
 \end{frame}
 
-% Slide 46
 \begin{frame}{Voorbeeldcompressies}
 
 \begin{table}[H]
@@ -1159,7 +913,6 @@ Compressiefactor: 136.2
 
 \end{frame}
 
-% Slide 47
 \begin{frame}{Voorbeeldcompressies}
 
 \begin{table}[H]
@@ -1177,7 +930,6 @@ Compressiefactor: 649.6
 
 \end{frame}
 
-% Slide 48
 \begin{frame}{Voorbeeldcompressies}
 
 \begin{table}[H]
@@ -1195,7 +947,6 @@ Compressiefactor: 2888.5
 
 \end{frame}
 
-% Slide 49
 \begin{frame}{Voorbeeldcompressies}
 
 \begin{table}[H]
@@ -1213,43 +964,6 @@ Compressiefactor: 1
 
 \end{frame}
 
-% Slide 50
-\begin{frame}{Voorbeeldcompressies}
-
-\begin{table}[H]
-\centering
-\begin{tabular}{C{0.6\textwidth}  L{0.4\textwidth}}
-\includegraphics[height=6cm]{images/example_compression_Pavia_Centre_0_01.png}
-&
-Pavia Centre (Itali\"e)\newline
-Bron: ROSIS\newline
-\vspace{5mm}
-Relatieve fout: 0.0138
-Compressiefactor: 11.67
-\end{tabular}
-\end{table}
-
-\end{frame}
-
-% Slide 51
-\begin{frame}{Voorbeeldcompressies}
-
-\begin{table}[H]
-\centering
-\begin{tabular}{C{0.6\textwidth}  L{0.4\textwidth}}
-\includegraphics[height=6cm]{images/example_compression_Pavia_Centre_0_025.png}
-&
-Pavia Centre (Itali\"e)\newline
-Bron: ROSIS\newline
-\vspace{5mm}
-Relatieve fout: 0.0298
-Compressiefactor: 36.8
-\end{tabular}
-\end{table}
-
-\end{frame}
-
-% Slide 52
 \begin{frame}{Voorbeeldcompressies}
 
 \begin{table}[H]
@@ -1267,7 +981,6 @@ Compressiefactor: 90.7
 
 \end{frame}
 
-% Slide 53
 \begin{frame}{Voorbeeldcompressies}
 
 \begin{table}[H]
@@ -1285,25 +998,6 @@ Compressiefactor: 1
 
 \end{frame}
 
-% Slide 54
-\begin{frame}{Voorbeeldcompressies}
-
-\begin{table}[H]
-\centering
-\begin{tabular}{C{0.6\textwidth}  L{0.4\textwidth}}
-\includegraphics[height=6cm]{images/example_compression_Mauna_Kea_0_01.png}
-&
-Mauna Kea (VS)\newline
-Bron: AVIRIS\newline
-\vspace{5mm}
-Relatieve fout: 0.0104
-Compressiefactor: 121
-\end{tabular}
-\end{table}
-
-\end{frame}
-
-% Slide 55
 \begin{frame}{Voorbeeldcompressies}
 
 \begin{table}[H]
@@ -1321,7 +1015,6 @@ Compressiefactor: 392.67
 
 \end{frame}
 
-% Slide 56
 \begin{frame}{Voorbeeldcompressies}
 
 \begin{table}[H]
@@ -1339,20 +1032,6 @@ Compressiefactor: 1271.31
 
 \end{frame}
 
-% Slide 57
-\begin{frame}{Conclusies}
-\begin{itemize}
-\item Beperkte versnelling ST-HSOVD mogelijk
-\item Orthogonaliteitscompressie: perfect mogelijk met Householder-reflecties
-\item Quantisatie: veel betere als men structuur kerntensor/factormatrices in rekening brengt
-\item Encodering: adaptief, niet altijd Huffman-code vanwege overhead boom
-\item Parameterselectie: simpele selectiefuncties benaderen optimum beperkt
-\item TT-compressie over het algemeen beter dan Tucker-compressie
-\item T.o.v. videocompressie: hangt van dataset, doelfout en preset af
-\end{itemize}
-\end{frame}
-
-% Slide 58
 \begin{frame}{Verder onderzoek}
 Belangrijkste pistes:
 \begin{itemize}
@@ -1362,126 +1041,5 @@ Belangrijkste pistes:
 \item Combinatie met DCT
 \end{itemize}
 \end{frame}
-
-
-
-\iffalse
-
-\begin{split}
-A \approx & h(\dots h(h(B, r_{d-1} \times n_d) \times_1 U_{d-1}, r_{d-2} \times n_{d-1} \times n_d) \\
-& \times_1 U_{d-2} \dots, r_1 \times n_2 \times \dots \times n_d) \times_1 U_1
-\end{split}
-
-% Slide 9
-\begin{frame}{Quantisatie kerntensor}
-
-\begin{figure}[H]
-\centering
-\includegraphics[scale=0.5]{images/values_per_layer.png}
-\caption{log$_{10}$ van waarden per laag kerntensor}
-\end{figure}
-
-\end{frame}
-
-% Slide 10
-\begin{frame}{Quantisatie kerntensor}
-
-\begin{itemize}
-\item Grotere waarden op lagere indices
-\item Impact fout op waarden overal gelijk
-\end{itemize}
-$\rightarrow$ Vast aantal bits per waarde, aparte quantizatiestap per laag kerntensor
-
-\end{frame}
-
-% Slide 11
-\begin{frame}{Quantisatie factormatrices}
-
-\begin{itemize}
-\item Orthogonaal, dus elke waarde $\leqslant$ 1 en $\geqslant$ -1
-\end{itemize}
-$\rightarrow$ Vast aantal bits per waarde, vaste precisie voor alle waarden in alle factormatrices
-
-\end{frame}
-
-% Slide 12
-\begin{frame}{Bitstring-compressie}
-
-\begin{itemize}
-\item Lossless compressie van uiteindelijke bitstring zonder interpretatie
-\item DEFLATE-algoritme (gebruikt in zip, PNG, ...) via zlib-library
-\end{itemize}
-
-\end{frame}
-
-% Slide 13
-\begin{frame}{Globaal schema}
-\vfill
-\includegraphics[scale=0.19]{images/globaal_schema.png}
-\end{frame}
-
-% Titelslide 3
-\begin{frame}{}
-\begin{center}
-\topskip0pt
-\vspace*{\fill}
-\vspace*{\fill}
-\Huge
-Resultaten
-\normalsize
-\vspace*{\fill}
-\end{center}
-\end{frame}
-
-% Slide 14
-\begin{frame}{Cuprite, Nevada (VS) (bron: AVIRIS)}
-
-\begin{center}
-\includegraphics[scale=0.5]{images/cuprite_0-025.png}
-\end{center}
-
-Relatieve fout: 2,69\%\\
-Compressieratio: 2,51\%
-
-\end{frame}
-
-% Slide 15
-\begin{frame}{Indian pines, Indiana (VS) (bron: AVIRIS)}
-
-\begin{center}
-\includegraphics[scale=0.5]{images/indian_pines_0-025.png}
-\end{center}
-
-Relatieve fout: 2,60\%\\
-Compressieratio: 2,00\%
-
-\end{frame}
-
-% Slide 16
-\begin{frame}{Okavango-delta, Botswana (bron: NASA)}
-
-\begin{center}
-\includegraphics[scale=0.5]{images/botswana_0-025.png}
-\end{center}
-
-Relatieve fout: 2,84\%\\
-Compressieratio: 1,12\%
-
-\end{frame}
-
-% Slide X
-\begin{frame}{Verder onderzoek}
-
-\begin{itemize}
-\item Variabele quantisatie factormatrices
-\item Tensor trains
-\item Blokgewijse compressie
-\item Parameter tuning
-\item DCT
-\end{itemize}
-
-\end{frame}
-
-\fi
 
 \end{document}
