@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.io import loadmat
-from scipy.misc import imsave
+from imageio import imwrite
 from math import floor, sqrt
 
 import st_hosvd
@@ -77,6 +77,13 @@ def load_mauna_kea():
 	data = np.fromfile("../data/mauna_kea_preprocessed", dtype="uint16")
 	return data.reshape(lines, samples, data.size//(lines*samples))
 
+def load_moffett_field_cropped():
+	lines = 512
+	samples = 512
+	channels = 224
+	data = np.fromfile("../../tensor-decompositions/data/hyperspectral_images/moffett_field_cropped", dtype="int16").reshape((lines, samples, channels))
+	return data
+
 # End of loaders
 
 def filter_bands(raw_data, ranges_to_keep):
@@ -133,7 +140,7 @@ def print_cuprite_bands(steps=None, path="../data/bands/cuprite_bands"):
 		start = int(round(bands/steps*i))
 		end = int(round(bands/steps*(i + 1)))
 		image = np.sum(data[:, :, start:end], axis=2)
-		imsave(path + "_%s-%s.png"%(start, end), np.rint(image/max_value*255).astype(int))
+		imwrite(path + "_%s-%s.png"%(start, end), np.rint(image/max_value*255).astype(int))
 
 def plot_intensities(data):
 	

@@ -1,6 +1,5 @@
 import numpy as np
 from math import sin, cos, pi, floor
-from scipy.misc import imsave
 from tools import *
 
 def preprocess(input_data, output_filename, angle, start_x, start_y, width, height, ranges_to_keep):

@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.misc import imsave
+from imageio import imwrite
 import scipy.stats as stats
 from time import time, clock
 import gc
@@ -26,7 +26,7 @@ def save_cuprite_bands():
 
 def save_image(data, path):
 	image = np.sum(data, axis=2)
-	imsave(path, np.rint((image - np.amin(image))/(np.amax(image) - np.amin(image))*255).astype(int))
+	imwrite(path, np.rint((image - np.amin(image))/(np.amax(image) - np.amin(image))*255).astype(int))
 	
 def save_indian_pines_image():
 	save_image(load_indian_pines(), "../tekst/images/indian_pines_sum.png")

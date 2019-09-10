@@ -236,10 +236,14 @@ def compress_tucker(data, relative_target_error, method="tucker", extra_output=F
 		new_shape = []
 		for i in range(2):
 			new_shape_val = int(round(math.sqrt(data.shape[i])))
-			if new_shape_val**2 != data.shape[i]:
-				raise Exception("Can only reshape when spatial dimensions are perfect squares!")
-			new_shape.append(new_shape_val)
-			new_shape.append(new_shape_val)
+			if new_shape_val**2 == data.shape[i]:
+				new_shape.extend([new_shape_val]*2)
+			else:
+				new_shape_val = int(round(data.shape[i]**(1/3)))
+				if new_shape_val**3 == data.shape[i]:
+					new_shape.extend([new_shape_val]*3)
+				else:
+					raise Exception("Can only reshape when spatial dimensions are perfect squares or cubes!")
 		new_shape.append(data.shape[2])
 		core_tensor = np.reshape(core_tensor, new_shape)
 	

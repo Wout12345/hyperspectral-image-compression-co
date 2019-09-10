@@ -9,7 +9,7 @@ import other_compression
 from tools import *
 
 def main():
-	test_compress_jpeg()
+	test_moffett_field()
 
 def test_compression_ratio_tucker():
 	
@@ -36,6 +36,14 @@ def test_compression_ratio_tucker():
 	decompressed = st_hosvd.decompress_tucker(st_hosvd.decompress_orthogonality(decompressed1))
 	print("Compression ratio:", st_hosvd.get_compress_quantize_size(compressed3, print_intermediate_values=False)/st_hosvd.memory_size(data))
 	print_difference(data, decompressed)"""
+
+def test_moffett_field():
+	
+	data = load_moffett_field_cropped()
+	compressed = st_hosvd.compress(data, 0.025)
+	decompressed = st_hosvd.decompress(compressed)
+	print(st_hosvd.get_compression_factor_quantize(data, compressed))
+	print_difference(data, decompressed)
 
 def plot_mauna_kea_range():
 	
